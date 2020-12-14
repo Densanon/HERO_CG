@@ -61,6 +61,7 @@ public class PlayfabLogin : MonoBehaviour
     private void OnDisplayNameSuccess(UpdateUserTitleDisplayNameResult result)
     {
         Debug.Log($"You have updated the displayname of the playfab account!");
+        SceneController.LoadScene("MainMenu");
     }
     private void OnFailure(PlayFabError error)
     {
