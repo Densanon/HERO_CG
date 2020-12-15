@@ -5,16 +5,27 @@ using Photon.Realtime;
 
 public class PhotonConnector : MonoBehaviourPunCallbacks
 {
+    [SerializeField] private string nickName;
     public static Action GetPhotonFriends = delegate { };
     #region Unity Method
+    private void Awake()
+    {
+        nickName = PlayerPrefs.GetString("USERNAME");
+        UIInvite.OnRoomInviteAccept += HandleRoomInviteAccept;
+    }
     private void Start()
     {
-        string nickname = PlayerPrefs.GetString("USERNAME");
-        ConnectToPhoton(nickname);
+        ConnectToPhoton();
+    }
+
+    private void OnDestroy()
+    {
+        UIInvite.OnRoomInviteAccept -= HandleRoomInviteAccept;
     }
     #endregion
+
     #region Private Method
-    private void ConnectToPhoton(string nickName)
+    private void ConnectToPhoton()
     {
         Debug.Log($"Connect to Photon as {nickName}");
         PhotonNetwork.AuthValues = new AuthenticationValues(nickName);
@@ -30,9 +41,37 @@ public class PhotonConnector : MonoBehaviourPunCallbacks
         ro.MaxPlayers = 4;
         PhotonNetwork.JoinOrCreateRoom(roomName, ro, TypedLobby.Default);
     }
+    private void HandleRoomInviteAccept(string roomName)
+    {
+        PlayerPrefs.SetString("PHOTONROOM", roomName);
+        if (PhotonNetwork.InRoom)
+        {
+            PhotonNetwork.LeaveRoom();
+        }
+        else
+        {
+            if (PhotonNetwork.InLobby)
+            {
+                JoinPlayerRoom();
+            }
+        }
+    }
+
+    private void JoinPlayerRoom()
+    {
+        string roomName = PlayerPrefs.GetString("PHOTONROOM");
+        PlayerPrefs.SetString("PHOTONROOM", "");
+        PhotonNetwork.JoinRoom(roomName);
+    }
     #endregion
+
     #region Public Methods
+    public void OnCreateRoomClicked(string roomName)
+    {
+        CreatePhotonRoom(roomName);
+    }
     #endregion
+
     #region Photon Callbacks
     public override void OnConnectedToMaster()
     {
@@ -46,6 +85,11 @@ public class PhotonConnector : MonoBehaviourPunCallbacks
     {
         Debug.Log($"You have connected to a Photon Lobby");
         GetPhotonFriends?.Invoke();
+        string roomName = PlayerPrefs.GetString("PHOTONROOM");
+        if (!string.IsNullOrEmpty(roomName))
+        {
+            JoinPlayerRoom();
+        }
     }
     public override void OnCreatedRoom()
     {

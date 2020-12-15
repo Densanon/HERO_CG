@@ -3,16 +3,27 @@ using Photon.Chat;
 using Photon.Pun;
 using System;
 using UnityEngine;
+using System.Collections.Generic;
+using PlayFab.ClientModels;
 
 public class PhotonChatController : MonoBehaviour, IChatClientListener
 {
     [SerializeField] private string nickName;
     private ChatClient chatClient;
 
+    public static Action<string, string> OnRoomInvite = delegate { };
+    public static Action<ChatClient> OnChatConnected = delegate { };
+
     #region Unity Methods
     private void Awake()
     {
-        nickName = PlayerPrefs.GetString("USERNAME");   
+        nickName = PlayerPrefs.GetString("USERNAME");
+        UIFriend.OnInviteFriend += HandleFriendInvite;
+    } 
+
+    private void OnDestroy()
+    {
+        UIFriend.OnInviteFriend -= HandleFriendInvite;
     }
 
     private void Start()
@@ -38,9 +49,9 @@ public class PhotonChatController : MonoBehaviour, IChatClientListener
     #endregion
 
     #region Public Methods
-    public void SendDirectMessage(string recipient, string message)
+    public void HandleFriendInvite(string recipient)
     {
-        chatClient.SendPrivateMessage(recipient, message);
+        chatClient.SendPrivateMessage(recipient, PhotonNetwork.CurrentRoom.Name);
     }
     #endregion
 
@@ -54,12 +65,14 @@ public class PhotonChatController : MonoBehaviour, IChatClientListener
     public void OnDisconnected()
     {
         Debug.Log($"You have Disconnected to Photon Chat.");
+        chatClient.SetOnlineStatus(ChatUserStatus.Offline);
     }
 
     public void OnConnected()
     {
         Debug.Log($"You have connected to Photon Chat.");
-        SendDirectMessage("Ezell7", "Hi Ezell");
+        OnChatConnected?.Invoke(chatClient);
+        chatClient.SetOnlineStatus(ChatUserStatus.Online);
     }
 
     public void OnChatStateChange(ChatState state)
@@ -82,8 +95,8 @@ public class PhotonChatController : MonoBehaviour, IChatClientListener
             if (sender.Equals(senderName, StringComparison.OrdinalIgnoreCase))
             {
                 Debug.Log($"{sender}: {message}");
+                OnRoomInvite?.Invoke(sender, message.ToString());
             }
-            Debug.Log($"{sender}: {message}");
         }
     }
 
