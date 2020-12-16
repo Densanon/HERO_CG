@@ -13,6 +13,7 @@ public class PhotonChatController : MonoBehaviour, IChatClientListener
 
     public static Action<string, string> OnRoomInvite = delegate { };
     public static Action<ChatClient> OnChatConnected = delegate { };
+    public static Action<PhotonStatus> OnStatusUpdated = delegate { };
 
     #region Unity Methods
     private void Awake()
@@ -88,12 +89,13 @@ public class PhotonChatController : MonoBehaviour, IChatClientListener
 
     public void OnPrivateMessage(string sender, object message, string channelName)
     {
-        if (string.IsNullOrEmpty(message.ToString()))
+        if (!string.IsNullOrEmpty(message.ToString()))
         {
             // Channel Name format [Sender : Recipient]
-            string[] splitNames = channelName.Split(new char[] { ',' });
+            string[] splitNames = channelName.Split(new char[] { ':' });
             string senderName = splitNames[0];
-            if (sender.Equals(senderName, StringComparison.OrdinalIgnoreCase))
+
+            if (!sender.Equals(senderName, StringComparison.OrdinalIgnoreCase))
             {
                 Debug.Log($"{sender}: {message}");
                 OnRoomInvite?.Invoke(sender, message.ToString());
