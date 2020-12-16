@@ -51,6 +51,7 @@ public class PhotonChatController : MonoBehaviour, IChatClientListener
     #region Public Methods
     public void HandleFriendInvite(string recipient)
     {
+        if (!PhotonNetwork.InRoom) return;
         chatClient.SendPrivateMessage(recipient, PhotonNetwork.CurrentRoom.Name);
     }
     #endregion
