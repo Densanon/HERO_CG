@@ -40,12 +40,12 @@ public class UIFriend : MonoBehaviour
         OnGetRoomStatus?.Invoke();
     }
 
-    public void Initialize(FriendInfo friend)
+    /*public void Initialize(FriendInfo friend)
     {
         Debug.Log($"{friend.UserId} is online: {friend.IsOnline} ; in room: {friend.IsInRoom} ; room name: {friend.Room}");
 
         SetupUI();
-    }
+    }*/
     public void Initialize(string friendName)
     {
         Debug.Log($"{friendName} is added");
@@ -79,14 +79,17 @@ public class UIFriend : MonoBehaviour
 
     private void SetStatus(int status)
     {
+        Debug.Log($"Online: {ChatUserStatus.Online}; Offline: {ChatUserStatus.Offline}");
         if (status == ChatUserStatus.Online)
         {
+            Debug.Log("Set to Online.");
             onlineImage.color = onlineColor;
             isOnline = true;
             OnGetRoomStatus?.Invoke();
         }
         else
         {
+            Debug.Log("Set to Offline.");
             onlineImage.color = offlineColor;
             isOnline = false;
             inviteButton.SetActive(false);

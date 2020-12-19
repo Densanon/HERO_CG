@@ -1,8 +1,8 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using Photon.Realtime;
 using UnityEngine;
+using System.Linq;
 
 public class UIDisplayFriends : MonoBehaviour
 {
@@ -17,29 +17,35 @@ public class UIDisplayFriends : MonoBehaviour
         contentRect = friendContainer.GetComponent<RectTransform>();
         orginalSize = contentRect.sizeDelta;
         increaseSize = new Vector2(0, uiFriendPrefab.GetComponent<RectTransform>().sizeDelta.y);
-        PhotonFriendController.OnDisplayFriends += HandleDisplayFriends;
+        //PhotonFriendController.OnDisplayFriends += HandleDisplayFriends;
         PhotonChatFriendController.OnDisplayFriends += HandleDisplayChatFriends;
     }
 
     private void OnDestroy()
     {
-        PhotonFriendController.OnDisplayFriends -= HandleDisplayFriends;
+        //PhotonFriendController.OnDisplayFriends -= HandleDisplayFriends;
         PhotonChatFriendController.OnDisplayFriends -= HandleDisplayChatFriends;
     }
 
-    private void HandleDisplayFriends(List<FriendInfo> friends)
+    /*private void HandleDisplayFriends(List<FriendInfo> friends)
     {
         foreach(Transform child in friendContainer)
         {
             Destroy(child.gameObject);
         }
 
-        foreach(FriendInfo friend in friends)
+        Debug.Log($"UI instantiate friends display {friends.Count}");
+        contentRect.sizeDelta = orginalSize;
+
+        var sortedFriends = friends.OrderByDescending(o => o.IsOnline ? 1 : 0).ThenBy(u => u.UserId);
+
+        foreach (FriendInfo friend in sortedFriends)
         {
             UIFriend uifriend = Instantiate(uiFriendPrefab, friendContainer);
             uifriend.Initialize(friend);
+            contentRect.sizeDelta += increaseSize;
         }
-    }
+    }*/
 
     private void HandleDisplayChatFriends(List<string> friends)
     {

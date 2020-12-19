@@ -330,6 +330,9 @@ MonoBehaviour:
   friendContainer: {fileID: 863162101}
   uiFriendPrefab: {fileID: 7444793685479405333, guid: e55303fbfd7fa984090ec767417a4e82,
     type: 3}
+  contentRect: {fileID: 0}
+  orginalSize: {x: 0, y: 0}
+  increaseSize: {x: 0, y: 0}
 --- !u!1 &260286667
 GameObject:
   m_ObjectHideFlags: 0
@@ -2065,6 +2068,26 @@ PrefabInstance:
       propertyPath: m_Type
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 4064527660925460703, guid: e55303fbfd7fa984090ec767417a4e82,
+        type: 3}
+      propertyPath: m_Color.r
+      value: 0.03773582
+      objectReference: {fileID: 0}
+    - target: {fileID: 4064527660925460703, guid: e55303fbfd7fa984090ec767417a4e82,
+        type: 3}
+      propertyPath: m_Color.g
+      value: 0.03524383
+      objectReference: {fileID: 0}
+    - target: {fileID: 4064527660925460703, guid: e55303fbfd7fa984090ec767417a4e82,
+        type: 3}
+      propertyPath: m_Color.b
+      value: 0.03524383
+      objectReference: {fileID: 0}
+    - target: {fileID: 4064527660925460703, guid: e55303fbfd7fa984090ec767417a4e82,
+        type: 3}
+      propertyPath: m_Color.a
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 4767236403273946457, guid: e55303fbfd7fa984090ec767417a4e82,
         type: 3}
       propertyPath: m_textInfo.characterCount
@@ -2249,6 +2272,31 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Pivot.y
       value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 7444793685479405333, guid: e55303fbfd7fa984090ec767417a4e82,
+        type: 3}
+      propertyPath: offlineColor.r
+      value: 0.01886791
+      objectReference: {fileID: 0}
+    - target: {fileID: 7444793685479405333, guid: e55303fbfd7fa984090ec767417a4e82,
+        type: 3}
+      propertyPath: offlineColor.g
+      value: 0.01886791
+      objectReference: {fileID: 0}
+    - target: {fileID: 7444793685479405333, guid: e55303fbfd7fa984090ec767417a4e82,
+        type: 3}
+      propertyPath: offlineColor.b
+      value: 0.01886791
+      objectReference: {fileID: 0}
+    - target: {fileID: 7444793685479405333, guid: e55303fbfd7fa984090ec767417a4e82,
+        type: 3}
+      propertyPath: offlineColor.a
+      value: 0.92156863
+      objectReference: {fileID: 0}
+    - target: {fileID: 7444793685479405333, guid: e55303fbfd7fa984090ec767417a4e82,
+        type: 3}
+      propertyPath: onlineColor.a
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: e55303fbfd7fa984090ec767417a4e82, type: 3}
@@ -4267,7 +4315,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1849238906}
-  - component: {fileID: 1849238907}
   - component: {fileID: 1849238908}
   m_Layer: 0
   m_Name: Friends
@@ -4290,18 +4337,6 @@ Transform:
   m_Father: {fileID: 710984924}
   m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1849238907
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1849238905}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8187f137da913c84b892a3abf41dd7f8, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!114 &1849238908
 MonoBehaviour:
   m_ObjectHideFlags: 0

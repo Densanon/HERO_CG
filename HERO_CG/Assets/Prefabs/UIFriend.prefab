@@ -88,7 +88,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0.35617658, g: 0.6509434, b: 0.38825148, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
   m_Maskable: 1
   m_OnCullStateChanged:
@@ -121,8 +121,8 @@ MonoBehaviour:
   isOnline: 0
   onlineImage: {fileID: 4064527660925460703}
   inviteButton: {fileID: 4108667877735614407}
-  onlineColor: {r: 0.13009594, g: 0.8962264, b: 0.12682447, a: 0}
-  offlineColor: {r: 0.6132076, g: 0.6074226, b: 0.6074226, a: 0}
+  onlineColor: {r: 0.13009594, g: 0.8962264, b: 0.12682447, a: 1}
+  offlineColor: {r: 0, g: 0, b: 0, a: 1}
 --- !u!1 &3852356233315443445
 GameObject:
   m_ObjectHideFlags: 0
