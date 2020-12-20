@@ -7,6 +7,8 @@ public class PhotonConnector : MonoBehaviourPunCallbacks
 {
     [SerializeField] private string nickName;
     public static Action GetPhotonFriends = delegate { };
+    public static Action OnLobbyJoined = delegate { };
+
     #region Unity Method
     private void Awake()
     {

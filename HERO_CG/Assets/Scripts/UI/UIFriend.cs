@@ -86,6 +86,7 @@ public class UIFriend : MonoBehaviour
             onlineImage.color = onlineColor;
             isOnline = true;
             OnGetRoomStatus?.Invoke();
+            inviteButton.SetActive(true);
         }
         else
         {
