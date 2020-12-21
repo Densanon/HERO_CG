@@ -24,13 +24,11 @@ public class UIFriend : MonoBehaviour
     {
         PhotonChatController.OnStatusUpdated += HandleStatusUpdated;
         PhotonChatFriendController.OnStatusUpdated += HandleStatusUpdated;
-        //PhotonRoomController.OnRoomStatusChange += HandleInRoom;
     }
     private void OnDestroy()
     {
         PhotonChatController.OnStatusUpdated -= HandleStatusUpdated;
         PhotonChatFriendController.OnStatusUpdated -= HandleStatusUpdated;
-        //PhotonRoomController.OnRoomStatusChange -= HandleInRoom;
     }
 
     private void OnEnable()
@@ -40,12 +38,6 @@ public class UIFriend : MonoBehaviour
         OnGetRoomStatus?.Invoke();
     }
 
-    /*public void Initialize(FriendInfo friend)
-    {
-        Debug.Log($"{friend.UserId} is online: {friend.IsOnline} ; in room: {friend.IsInRoom} ; room name: {friend.Room}");
-
-        SetupUI();
-    }*/
     public void Initialize(string friendName)
     {
         Debug.Log($"{friendName} is added");
@@ -86,7 +78,6 @@ public class UIFriend : MonoBehaviour
             onlineImage.color = onlineColor;
             isOnline = true;
             OnGetRoomStatus?.Invoke();
-            inviteButton.SetActive(true);
         }
         else
         {

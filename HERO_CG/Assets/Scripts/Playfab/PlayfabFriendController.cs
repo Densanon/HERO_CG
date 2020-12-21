@@ -15,14 +15,19 @@ public class PlayfabFriendController : MonoBehaviour
     {
         friends = new List<FriendInfo>();
         PhotonConnector.GetPhotonFriends += HandleGetFriends;
-        UIAddFriend.OnAddFriend += HandleAddPlayfabFriend;
         UIFriend.OnRemoveFriend += HandleRemoveFriend;
+        UIDisplayInvites.OnFriendAdded += HandleAddPlayfabFriend;
+        PhotonChatController.OnAddAddedFriend += HandleAddPlayfabFriend;
+        PhotonChatController.OnFriendRemoved += HandleRemoveFriend;
     }
     private void OnDestroy()
     {
         PhotonConnector.GetPhotonFriends -= HandleGetFriends;
-        UIAddFriend.OnAddFriend -= HandleAddPlayfabFriend;
         UIFriend.OnRemoveFriend -= HandleRemoveFriend;
+        UIDisplayInvites.OnFriendAdded -= HandleAddPlayfabFriend;
+        PhotonChatController.OnAddAddedFriend -= HandleAddPlayfabFriend;
+        PhotonChatController.OnFriendRemoved -= HandleRemoveFriend;
+
     }
 
     private void HandleGetFriends()

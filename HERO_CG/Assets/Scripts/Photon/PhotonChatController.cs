@@ -12,19 +12,28 @@ public class PhotonChatController : MonoBehaviour, IChatClientListener
     private ChatClient chatClient;
 
     public static Action<string, string> OnRoomInvite = delegate { };
+    public static Action<string> OnFriendshipinvite = delegate { };
     public static Action<ChatClient> OnChatConnected = delegate { };
     public static Action<PhotonStatus> OnStatusUpdated = delegate { };
+    public static Action<string> OnAddAddedFriend = delegate { };
+    public static Action<string> OnFriendRemoved = delegate { };
 
     #region Unity Methods
     private void Awake()
     {
         nickName = PlayerPrefs.GetString("USERNAME");
         UIFriend.OnInviteFriend += HandleFriendInvite;
+        UIFriend.OnRemoveFriend += HandleRemoveFriend;
+        UIAddFriend.OnAddFriend += HandleAddFriendInvite;
+        UIDisplayInvites.OnFriendAdded += HandleFriendAddedResponse;
     } 
 
     private void OnDestroy()
     {
         UIFriend.OnInviteFriend -= HandleFriendInvite;
+        UIFriend.OnRemoveFriend -= HandleRemoveFriend;
+        UIAddFriend.OnAddFriend -= HandleAddFriendInvite;
+        UIDisplayInvites.OnFriendAdded -= HandleFriendAddedResponse;
     }
 
     private void Start()
@@ -50,10 +59,28 @@ public class PhotonChatController : MonoBehaviour, IChatClientListener
     #endregion
 
     #region Public Methods
+    private void HandleAddFriendInvite(string recipient)
+    {
+        if (string.IsNullOrEmpty(recipient)) return;
+        chatClient.SendPrivateMessage(recipient, "Add?");
+    }
+
+    private void HandleFriendAddedResponse(string recipient)
+    {
+        if (string.IsNullOrEmpty(recipient)) return;
+        chatClient.SendPrivateMessage(recipient, "Added");
+    }
+
     public void HandleFriendInvite(string recipient)
     {
         if (!PhotonNetwork.InRoom) return;
         chatClient.SendPrivateMessage(recipient, PhotonNetwork.CurrentRoom.Name);
+    }
+
+    public void HandleRemoveFriend(string recipient)
+    {
+        if (string.IsNullOrEmpty(recipient)) return;
+        chatClient.SendPrivateMessage(recipient, "Remove");
     }
     #endregion
 
@@ -98,7 +125,22 @@ public class PhotonChatController : MonoBehaviour, IChatClientListener
             if (!sender.Equals(senderName, StringComparison.OrdinalIgnoreCase))
             {
                 Debug.Log($"{sender}: {message}");
-                OnRoomInvite?.Invoke(sender, message.ToString());
+                if (message.ToString() == "Add?")
+                {
+                    OnFriendshipinvite?.Invoke(sender);
+                }
+                else if(message.ToString() == "Added")
+                {
+                    OnAddAddedFriend?.Invoke(sender);
+                }
+                else if(message.ToString() == "Remove")
+                {
+                    OnFriendRemoved?.Invoke(sender);
+                }
+                else
+                {
+                    OnRoomInvite?.Invoke(sender, message.ToString());
+                }
             }
         }
     }
