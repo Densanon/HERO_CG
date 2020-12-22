@@ -9,6 +9,8 @@ using UnityEngine;
 public class PlayfabFriendController : MonoBehaviour
 {
     public static Action<List<FriendInfo>> OnFriendListUpdated = delegate { };
+    public static Action<string, string> OnError = delegate { };
+
     private List<FriendInfo> friends;
 
     private void Awake()
@@ -73,5 +75,20 @@ public class PlayfabFriendController : MonoBehaviour
     private void OnFailure(PlayFabError error)
     {
         Debug.Log($"Error occured when adding a friend {error.GenerateErrorReport()}");
+
+    }
+
+    public bool IsFriend(string friend)
+    {
+        GetPlayfabFriends();
+        foreach(FriendInfo info in friends)
+        {
+            if (info.TitleDisplayName == friend)
+            {
+                OnError?.Invoke("Adding a Friend", $"You are already friends with {friend}.");
+                return true;
+            }
+        }
+        return false;
     }
 }

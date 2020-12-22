@@ -19,6 +19,7 @@ public class UIFriend : MonoBehaviour
     public static Action<string> OnInviteFriend = delegate { };
     public static Action<string> OnGetCurrentStatus = delegate { };
     public static Action OnGetRoomStatus = delegate { };
+    public static Action<bool> OnFriendsOnline = delegate { };
 
     private void Awake()
     {
@@ -71,17 +72,14 @@ public class UIFriend : MonoBehaviour
 
     private void SetStatus(int status)
     {
-        Debug.Log($"Online: {ChatUserStatus.Online}; Offline: {ChatUserStatus.Offline}");
         if (status == ChatUserStatus.Online)
         {
-            Debug.Log("Set to Online.");
             onlineImage.color = onlineColor;
             isOnline = true;
             OnGetRoomStatus?.Invoke();
         }
         else
         {
-            Debug.Log("Set to Offline.");
             onlineImage.color = offlineColor;
             isOnline = false;
             inviteButton.SetActive(false);

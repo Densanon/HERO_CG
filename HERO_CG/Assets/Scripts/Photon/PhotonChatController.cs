@@ -9,6 +9,7 @@ using PlayFab.ClientModels;
 public class PhotonChatController : MonoBehaviour, IChatClientListener
 {
     [SerializeField] private string nickName;
+    [SerializeField] private PlayfabFriendController fController;
     private ChatClient chatClient;
 
     public static Action<string, string> OnRoomInvite = delegate { };
@@ -17,6 +18,7 @@ public class PhotonChatController : MonoBehaviour, IChatClientListener
     public static Action<PhotonStatus> OnStatusUpdated = delegate { };
     public static Action<string> OnAddAddedFriend = delegate { };
     public static Action<string> OnFriendRemoved = delegate { };
+    public static Action<string, string> OnError = delegate { };
 
     #region Unity Methods
     private void Awake()
@@ -61,8 +63,9 @@ public class PhotonChatController : MonoBehaviour, IChatClientListener
     #region Public Methods
     private void HandleAddFriendInvite(string recipient)
     {
-        if (string.IsNullOrEmpty(recipient)) return;
+        if (string.IsNullOrEmpty(recipient) || fController.IsFriend(recipient)) return;
         chatClient.SendPrivateMessage(recipient, "Add?");
+        OnError?.Invoke("Add Friend", $"You have sent a friend invite to {recipient}.");
     }
 
     private void HandleFriendAddedResponse(string recipient)

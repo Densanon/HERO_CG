@@ -2,9 +2,11 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class UIDisplayInvites : MonoBehaviour
 {
+    [SerializeField] private Image inviteImage;
     [SerializeField] private Transform inviteContainer;
     [SerializeField] private UIInvite uiInvitePrefab;
     [SerializeField] private UIFriendInvite uiFriendInvitePrefab;
@@ -44,11 +46,16 @@ public class UIDisplayInvites : MonoBehaviour
 
     private void HandleFriendshipInvite(string friend)
     {
+        foreach(UIFriendInvite Invite in fInvites)
+        {
+            if (Invite._friendName == friend) return;
+        }
         Debug.Log($"{friend} has asked to be your friend");
         UIFriendInvite invite = Instantiate(uiFriendInvitePrefab, inviteContainer);
         invite.Initialize(friend);
         contentRect.sizeDelta += inceaseSize;
         fInvites.Add(invite);
+        CheckInbox();
     }
 
     private void HandleFriendInviteAccept(UIFriendInvite invite)
@@ -59,6 +66,7 @@ public class UIDisplayInvites : MonoBehaviour
             Destroy(invite.gameObject);
             OnFriendAdded?.Invoke(invite._friendName);
         }
+        CheckInbox();
     }
 
     private void HandleFriendInviteDecline(UIFriendInvite invite)
@@ -68,6 +76,7 @@ public class UIDisplayInvites : MonoBehaviour
             fInvites.Remove(invite);
             Destroy(invite.gameObject);
         }
+        CheckInbox();
     }
 
     private void HandleRoomInvite(string friend, string room)
@@ -77,6 +86,7 @@ public class UIDisplayInvites : MonoBehaviour
         uiInvite.Initialize(friend, room);
         contentRect.sizeDelta += inceaseSize;
         invites.Add(uiInvite);
+        CheckInbox();
     }
 
     private void HandleInviteAccpet(UIInvite invite)
@@ -86,6 +96,7 @@ public class UIDisplayInvites : MonoBehaviour
             invites.Remove(invite);
             Destroy(invite.gameObject);
         }
+        CheckInbox();
     }
 
     private void HandleInviteDecline(UIInvite invite)
@@ -94,6 +105,19 @@ public class UIDisplayInvites : MonoBehaviour
         {
             invites.Remove(invite);
             Destroy(invite.gameObject);
+        }
+        CheckInbox();
+    }
+
+    private void CheckInbox()
+    {
+        if(invites.Count > 0 || fInvites.Count > 0)
+        {
+            inviteImage.color = Color.green;
+        }
+        else
+        {
+            inviteImage.color = Color.white;
         }
     }
 }

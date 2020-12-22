@@ -3,9 +3,11 @@ using System.Collections.Generic;
 using Photon.Realtime;
 using UnityEngine;
 using System.Linq;
+using UnityEngine.UI;
 
 public class UIDisplayFriends : MonoBehaviour
 {
+    [SerializeField] private Image friendButton;
     [SerializeField] private Transform friendContainer;
     [SerializeField] private UIFriend uiFriendPrefab;
     [SerializeField] private RectTransform contentRect;
@@ -18,11 +20,23 @@ public class UIDisplayFriends : MonoBehaviour
         orginalSize = contentRect.sizeDelta;
         increaseSize = new Vector2(0, uiFriendPrefab.GetComponent<RectTransform>().sizeDelta.y);
         PhotonChatFriendController.OnDisplayFriends += HandleDisplayChatFriends;
+        PhotonChatFriendController.OnFriendOnline += HandleFriendImage;
     }
 
     private void OnDestroy()
     {
         PhotonChatFriendController.OnDisplayFriends -= HandleDisplayChatFriends;
+        PhotonChatFriendController.OnFriendOnline += HandleFriendImage;
+    }
+
+    private void HandleFriendImage(bool online)
+    {
+        if (online)
+        {
+            friendButton.color = Color.green;
+        }
+        else
+            friendButton.color = Color.white;
     }
 
     private void HandleDisplayChatFriends(List<string> friends)

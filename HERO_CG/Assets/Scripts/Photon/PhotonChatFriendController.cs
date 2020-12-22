@@ -14,6 +14,7 @@ public class PhotonChatFriendController : MonoBehaviour
 
     public static Action<List<string>> OnDisplayFriends = delegate { };
     public static Action<PhotonStatus> OnStatusUpdated = delegate { };
+    public static Action<bool> OnFriendOnline = delegate { };
 
     private void Awake()
     {
@@ -24,6 +25,7 @@ public class PhotonChatFriendController : MonoBehaviour
         PhotonChatController.OnChatConnected += HandleChatConnected;
         PhotonChatController.OnStatusUpdated += HandleStatusUpdated;
         UIFriend.OnGetCurrentStatus += HandleGetCurrentStatus;
+        UIFriend.OnRemoveFriend += HandleFriendRemoved;
     }
 
     private void OnDestroy()
@@ -32,6 +34,7 @@ public class PhotonChatFriendController : MonoBehaviour
         PhotonChatController.OnChatConnected -= HandleChatConnected;
         PhotonChatController.OnStatusUpdated -= HandleStatusUpdated;
         UIFriend.OnGetCurrentStatus -= HandleGetCurrentStatus;
+        UIFriend.OnRemoveFriend -= HandleFriendRemoved;
     }
 
     private void HandleFriendsUpdated(List<PlayfabFriendInfo> friends)
@@ -58,6 +61,17 @@ public class PhotonChatFriendController : MonoBehaviour
         {
             friendStatuses.Add(status.PlayerName, status);
         }
+
+        bool online = false;
+        foreach(KeyValuePair<string, PhotonStatus> stat in friendStatuses)
+        {
+            if(stat.Value.Status == 2)
+            {
+                online = true;
+                break;
+            }
+        }
+        OnFriendOnline?.Invoke(online);
     }
 
     private void HandleGetCurrentStatus(string name)
@@ -93,6 +107,20 @@ public class PhotonChatFriendController : MonoBehaviour
             chatClient.AddFriends(friendDisplayNames);
         }
         OnDisplayFriends?.Invoke(friendList);
+    }
+
+    private void HandleFriendRemoved(string friend)
+    {
+        bool online = false;
+        foreach (KeyValuePair<string, PhotonStatus> stat in friendStatuses)
+        {
+            if (stat.Value.Status == 2)
+            {
+                online = true;
+                break;
+            }
+        }
+        OnFriendOnline?.Invoke(online);
     }
 }
 
