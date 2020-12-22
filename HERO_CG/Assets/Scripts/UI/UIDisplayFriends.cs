@@ -26,7 +26,7 @@ public class UIDisplayFriends : MonoBehaviour
     private void OnDestroy()
     {
         PhotonChatFriendController.OnDisplayFriends -= HandleDisplayChatFriends;
-        PhotonChatFriendController.OnFriendOnline += HandleFriendImage;
+        PhotonChatFriendController.OnFriendOnline -= HandleFriendImage;
     }
 
     private void HandleFriendImage(bool online)
