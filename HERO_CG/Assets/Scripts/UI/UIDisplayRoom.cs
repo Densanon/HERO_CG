@@ -9,7 +9,6 @@ public class UIDisplayRoom : MonoBehaviour
 {
     [SerializeField] private TMP_Text _roomGameModeText;//_roomTitleText;
     //[SerializeField] private GameObject _startButton;
-    [SerializeField] private GameObject _exitButton;
     [SerializeField] private GameObject _roomContainer;
     [SerializeField] private GameObject[] _hideObjects;
     [SerializeField] private GameObject[] _showObjects;
@@ -35,9 +34,9 @@ public class UIDisplayRoom : MonoBehaviour
 
     private void HandleJoinRoom(GameMode gameMode)
     {
-        _roomGameModeText.SetText(PhotonNetwork.CurrentRoom.CustomProperties["GAMEMODE"].ToString());
+        _roomGameModeText.SetText("Name");//PhotonNetwork.CurrentRoom.CustomProperties["GAMEMODE"].ToString());
 
-        _exitButton.SetActive(true);
+        //_exitButton.SetActive(true);
         _roomContainer.SetActive(true);
 
         foreach (GameObject obj in _hideObjects)
@@ -50,8 +49,6 @@ public class UIDisplayRoom : MonoBehaviour
     {
         _roomGameModeText.SetText("JOINING ROOM");
 
-        //_startButton.SetActive(false);
-        _exitButton.SetActive(false);
         _roomContainer.SetActive(false);
         foreach (GameObject obj in _showObjects)
         {

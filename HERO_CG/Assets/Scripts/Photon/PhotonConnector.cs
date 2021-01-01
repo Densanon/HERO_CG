@@ -72,6 +72,11 @@ public class PhotonConnector : MonoBehaviourPunCallbacks
     {
         CreatePhotonRoom(roomName);
     }
+
+    public void OnRoomLeaveClicked()
+    {
+        PhotonNetwork.LeaveRoom();
+    }
     #endregion
 
     #region Photon Callbacks
