@@ -6,6 +6,7 @@ using Photon.Realtime;
 public class PhotonConnector : MonoBehaviourPunCallbacks
 {
     [SerializeField] private string nickName;
+    private string gameVersion = "1";
     public static Action GetPhotonFriends = delegate { };
     public static Action OnLobbyJoined = delegate { };
 
@@ -34,14 +35,15 @@ public class PhotonConnector : MonoBehaviourPunCallbacks
         PhotonNetwork.AutomaticallySyncScene = true;
         PhotonNetwork.NickName = nickName;
         PhotonNetwork.ConnectUsingSettings();
+        PhotonNetwork.GameVersion = gameVersion;
     }
     private void CreatePhotonRoom(string roomName)
     {
         RoomOptions ro = new RoomOptions();
         ro.IsOpen = true;
         ro.IsVisible = true;
-        ro.MaxPlayers = 4;
-        PhotonNetwork.JoinOrCreateRoom(roomName, ro, TypedLobby.Default);
+        ro.MaxPlayers = 2;
+        PhotonNetwork.CreateRoom(roomName, ro, TypedLobby.Default);
     }
     private void HandleRoomInviteAccept(string roomName)
     {
@@ -68,6 +70,11 @@ public class PhotonConnector : MonoBehaviourPunCallbacks
     #endregion
 
     #region Public Methods
+    public void OnRandomRoomClicked()
+    {
+        PhotonNetwork.JoinRandomRoom();
+    }
+
     public void OnCreateRoomClicked(string roomName)
     {
         CreatePhotonRoom(roomName);
@@ -113,6 +120,8 @@ public class PhotonConnector : MonoBehaviourPunCallbacks
     public override void OnJoinRandomFailed(short returnCode, string message)
     {
         Debug.Log($"You failed to join a Photon room {message}");
+
+        PhotonNetwork.CreateRoom(null, new RoomOptions());
     }
     public override void OnPlayerEnteredRoom(Player newPlayer)
     {
