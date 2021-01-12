@@ -34,10 +34,10 @@ public class UIDisplayRoom : MonoBehaviour
 
     private void HandleJoinRoom(GameMode gameMode)
     {
-        _roomGameModeText.SetText("Name");//PhotonNetwork.CurrentRoom.CustomProperties["GAMEMODE"].ToString());
+        _roomGameModeText.SetText(PhotonNetwork.CurrentRoom.CustomProperties["GAMEMODE"].ToString().ToUpper());
 
         //_exitButton.SetActive(true);
-        _roomContainer.SetActive(true);
+        //_roomContainer.SetActive(true);
 
         foreach (GameObject obj in _hideObjects)
         {

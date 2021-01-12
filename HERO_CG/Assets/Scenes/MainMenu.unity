@@ -212,7 +212,7 @@ MonoBehaviour:
   m_fontSizeMin: 18
   m_fontSizeMax: 72
   m_fontStyle: 0
-  m_textAlignment: 257
+  m_textAlignment: 514
   m_characterSpacing: 0
   m_wordSpacing: 0
   m_lineSpacing: 0
@@ -685,7 +685,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2c1a1f3a025287f45a146a0c86ca36ae, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _roomGameModeText: {fileID: 0}
+  _roomGameModeText: {fileID: 44756419}
   _roomContainer: {fileID: 542701993}
   _hideObjects: []
   _showObjects: []
@@ -702,7 +702,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _selectedGameMode: {fileID: 0}
-  _availableGameModes: []
+  _availableGameModes:
+  - {fileID: 11400000, guid: 21b1540f0302ce54981dc4b33ef257f5, type: 2}
+  - {fileID: 11400000, guid: ee925054fc2308249a567fcfcad401d3, type: 2}
+  - {fileID: 11400000, guid: f04d2e6fb60e1ba4fbf484053de57b4f, type: 2}
 --- !u!1 &152479499
 GameObject:
   m_ObjectHideFlags: 0
@@ -1361,6 +1364,7 @@ GameObject:
   - component: {fileID: 333524501}
   - component: {fileID: 333524500}
   - component: {fileID: 333524499}
+  - component: {fileID: 333524502}
   m_Layer: 5
   m_Name: 1VAIButton
   m_TagString: Untagged
@@ -1453,15 +1457,15 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
-      - m_Target: {fileID: 44756419}
-        m_MethodName: SetText
-        m_Mode: 5
+      - m_Target: {fileID: 333524502}
+        m_MethodName: SelectGameMode
+        m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
           m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
           m_IntArgument: 0
           m_FloatArgument: 0
-          m_StringArgument: AI Match
+          m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
 --- !u!114 &333524500
@@ -1501,6 +1505,19 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 333524497}
   m_CullTransparentMesh: 0
+--- !u!114 &333524502
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 333524497}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d3d8fd57107c97342bb47779820502d9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _gameMode: {fileID: 11400000, guid: f04d2e6fb60e1ba4fbf484053de57b4f, type: 2}
 --- !u!1 &350201572
 GameObject:
   m_ObjectHideFlags: 0
@@ -2069,6 +2086,7 @@ GameObject:
   - component: {fileID: 495918682}
   - component: {fileID: 495918681}
   - component: {fileID: 495918680}
+  - component: {fileID: 495918683}
   m_Layer: 5
   m_Name: 1V1Button
   m_TagString: Untagged
@@ -2161,8 +2179,8 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
-      - m_Target: {fileID: 1616156436}
-        m_MethodName: OnRandomRoomClicked
+      - m_Target: {fileID: 495918683}
+        m_MethodName: SelectGameMode
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -2170,17 +2188,6 @@ MonoBehaviour:
           m_IntArgument: 0
           m_FloatArgument: 0
           m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
-      - m_Target: {fileID: 44756419}
-        m_MethodName: SetText
-        m_Mode: 5
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 1 Vs. 1
           m_BoolArgument: 0
         m_CallState: 2
 --- !u!114 &495918681
@@ -2220,6 +2227,19 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 495918678}
   m_CullTransparentMesh: 0
+--- !u!114 &495918683
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 495918678}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d3d8fd57107c97342bb47779820502d9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _gameMode: {fileID: 11400000, guid: 21b1540f0302ce54981dc4b33ef257f5, type: 2}
 --- !u!1 &502353153
 GameObject:
   m_ObjectHideFlags: 0
@@ -4779,6 +4799,7 @@ GameObject:
   - component: {fileID: 965680477}
   - component: {fileID: 965680476}
   - component: {fileID: 965680475}
+  - component: {fileID: 965680478}
   m_Layer: 5
   m_Name: CustomMatchButton
   m_TagString: Untagged
@@ -4871,26 +4892,15 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
-      - m_Target: {fileID: 1616156436}
-        m_MethodName: OnCreateRoomClicked
-        m_Mode: 5
+      - m_Target: {fileID: 965680478}
+        m_MethodName: SelectGameMode
+        m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
           m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
           m_IntArgument: 0
           m_FloatArgument: 0
           m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
-      - m_Target: {fileID: 44756419}
-        m_MethodName: SetText
-        m_Mode: 5
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: Custom Match
           m_BoolArgument: 0
         m_CallState: 2
 --- !u!114 &965680476
@@ -4930,6 +4940,19 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 965680473}
   m_CullTransparentMesh: 0
+--- !u!114 &965680478
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 965680473}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d3d8fd57107c97342bb47779820502d9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _gameMode: {fileID: 11400000, guid: 50abc6a1a03c3ce40b717d146cf0bd31, type: 2}
 --- !u!1 &1037416920
 GameObject:
   m_ObjectHideFlags: 0
@@ -5223,7 +5246,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: <
+  m_text: Cancel
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -5251,7 +5274,7 @@ MonoBehaviour:
   m_outlineColor:
     serializedVersion: 2
     rgba: 4278190080
-  m_fontSize: 72
+  m_fontSize: 28.85
   m_fontSizeBase: 24
   m_fontWeight: 400
   m_enableAutoSizing: 1
@@ -5292,7 +5315,7 @@ MonoBehaviour:
   m_margin: {x: 0, y: 0, z: 0, w: 0}
   m_textInfo:
     textComponent: {fileID: 1066351609}
-    characterCount: 1
+    characterCount: 6
     spriteCount: 0
     spaceCount: 0
     wordCount: 1
@@ -7464,7 +7487,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -827, y: 446}
+  m_AnchoredPosition: {x: 1, y: -155}
   m_SizeDelta: {x: 90, y: 90}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1886200946
@@ -7524,6 +7547,17 @@ MonoBehaviour:
       - m_Target: {fileID: 2104404337}
         m_MethodName: SetActive
         m_Mode: 6
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 1
+        m_CallState: 2
+      - m_Target: {fileID: 1616156436}
+        m_MethodName: OnRoomLeaveClicked
+        m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
           m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine

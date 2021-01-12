@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 364e2ffd9c001e0419ada3421c969273, type: 3}
   m_Name: Offline
   m_EditorClassIdentifier: 
-  _name: offline
-  _maxPlayers: 2
+  _name: Offline
+  _maxPlayers: 1
   _hasTeams: 0
   _teamSize: 0

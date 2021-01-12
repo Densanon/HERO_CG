@@ -37,14 +37,14 @@ public class PhotonConnector : MonoBehaviourPunCallbacks
         PhotonNetwork.ConnectUsingSettings();
         PhotonNetwork.GameVersion = gameVersion;
     }
-    private void CreatePhotonRoom(string roomName)
+    /*private void CreatePhotonRoom(string roomName)
     {
         RoomOptions ro = new RoomOptions();
         ro.IsOpen = true;
         ro.IsVisible = true;
         ro.MaxPlayers = 2;
         PhotonNetwork.CreateRoom(roomName, ro, TypedLobby.Default);
-    }
+    }*/
     private void HandleRoomInviteAccept(string roomName)
     {
         PlayerPrefs.SetString("PHOTONROOM", roomName);
@@ -70,7 +70,7 @@ public class PhotonConnector : MonoBehaviourPunCallbacks
     #endregion
 
     #region Public Methods
-    public void OnRandomRoomClicked()
+    /*public void OnRandomRoomClicked()
     {
         PhotonNetwork.JoinRandomRoom();
     }
@@ -78,7 +78,7 @@ public class PhotonConnector : MonoBehaviourPunCallbacks
     public void OnCreateRoomClicked(string roomName)
     {
         CreatePhotonRoom(roomName);
-    }
+    }*/
 
     public void OnRoomLeaveClicked()
     {
@@ -105,7 +105,7 @@ public class PhotonConnector : MonoBehaviourPunCallbacks
             JoinPlayerRoom();
         }
     }
-    public override void OnCreatedRoom()
+    /*public override void OnCreatedRoom()
     {
         Debug.Log($"You have created a Photon Room named {PhotonNetwork.CurrentRoom.Name}");
     }
@@ -134,6 +134,6 @@ public class PhotonConnector : MonoBehaviourPunCallbacks
     public override void OnMasterClientSwitched(Player newMasterClient)
     {
         Debug.Log($"New Master Client is {newMasterClient.UserId}");
-    }
+    }*/
     #endregion
 }
