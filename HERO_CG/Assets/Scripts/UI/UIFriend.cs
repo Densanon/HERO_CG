@@ -25,11 +25,13 @@ public class UIFriend : MonoBehaviour
     {
         PhotonChatController.OnStatusUpdated += HandleStatusUpdated;
         PhotonChatFriendController.OnStatusUpdated += HandleStatusUpdated;
+        PhotonRoomController.OnRoomStatusChange += HandleInRoom;
     }
     private void OnDestroy()
     {
         PhotonChatController.OnStatusUpdated -= HandleStatusUpdated;
         PhotonChatFriendController.OnStatusUpdated -= HandleStatusUpdated;
+        PhotonRoomController.OnRoomStatusChange += HandleInRoom;
     }
 
     private void OnEnable()
@@ -61,6 +63,7 @@ public class UIFriend : MonoBehaviour
     private void HandleInRoom(bool inRoom)
     {
         Debug.Log($"Updating invite ui to {inRoom}");
+        if(inviteButton != null)
         inviteButton.SetActive(inRoom && isOnline);
     }
 

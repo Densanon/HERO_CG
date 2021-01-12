@@ -37,14 +37,7 @@ public class PhotonConnector : MonoBehaviourPunCallbacks
         PhotonNetwork.ConnectUsingSettings();
         PhotonNetwork.GameVersion = gameVersion;
     }
-    /*private void CreatePhotonRoom(string roomName)
-    {
-        RoomOptions ro = new RoomOptions();
-        ro.IsOpen = true;
-        ro.IsVisible = true;
-        ro.MaxPlayers = 2;
-        PhotonNetwork.CreateRoom(roomName, ro, TypedLobby.Default);
-    }*/
+
     private void HandleRoomInviteAccept(string roomName)
     {
         PlayerPrefs.SetString("PHOTONROOM", roomName);
@@ -70,16 +63,6 @@ public class PhotonConnector : MonoBehaviourPunCallbacks
     #endregion
 
     #region Public Methods
-    /*public void OnRandomRoomClicked()
-    {
-        PhotonNetwork.JoinRandomRoom();
-    }
-
-    public void OnCreateRoomClicked(string roomName)
-    {
-        CreatePhotonRoom(roomName);
-    }*/
-
     public void OnRoomLeaveClicked()
     {
         PhotonNetwork.LeaveRoom();
@@ -105,35 +88,5 @@ public class PhotonConnector : MonoBehaviourPunCallbacks
             JoinPlayerRoom();
         }
     }
-    /*public override void OnCreatedRoom()
-    {
-        Debug.Log($"You have created a Photon Room named {PhotonNetwork.CurrentRoom.Name}");
-    }
-    public override void OnJoinedRoom()
-    {
-        Debug.Log($"You have joined the Photon room {PhotonNetwork.CurrentRoom.Name}");
-    }
-    public override void OnLeftRoom()
-    {
-        Debug.Log($"You have left a Photon room");
-    }
-    public override void OnJoinRandomFailed(short returnCode, string message)
-    {
-        Debug.Log($"You failed to join a Photon room {message}");
-
-        PhotonNetwork.CreateRoom(null, new RoomOptions());
-    }
-    public override void OnPlayerEnteredRoom(Player newPlayer)
-    {
-        Debug.Log($"Another player has joined the room {newPlayer.UserId}");
-    }
-    public override void OnPlayerLeftRoom(Player otherPlayer)
-    {
-        Debug.Log($"Player has left the room {otherPlayer.UserId}");
-    }
-    public override void OnMasterClientSwitched(Player newMasterClient)
-    {
-        Debug.Log($"New Master Client is {newMasterClient.UserId}");
-    }*/
     #endregion
 }
