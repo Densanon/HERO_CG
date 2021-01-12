@@ -4,12 +4,14 @@ using Photon.Pun;
 using Photon.Realtime;
 using System.Collections.Generic;
 using ExitGames.Client.Photon;
+using UnityEngine.UI;
 
 public class PhotonRoomController : MonoBehaviourPunCallbacks
 {
     [SerializeField] private GameMode _selectedGameMode;
     [SerializeField] private GameMode[] _availableGameModes;
     private const string GAME_MODE = "GAMEMODE";
+    public Button playButton;
 
     public static Action<GameMode> OnJoinRoom = delegate { };
     public static Action<bool> OnRoomStatusChange = delegate { };
@@ -37,6 +39,11 @@ public class PhotonRoomController : MonoBehaviourPunCallbacks
 
     private void Update()
     {
+    }
+
+    public void PlayCustomLevel()
+    {
+        PhotonNetwork.LoadLevel("1VOnline");
     }
 
     #region Handle Methods
@@ -192,6 +199,7 @@ public class PhotonRoomController : MonoBehaviourPunCallbacks
         Debug.Log("You have left a Photon Room");
         _selectedGameMode = null;
         OnRoomStatusChange?.Invoke(PhotonNetwork.InRoom);
+        playButton.gameObject.SetActive(true);
     }
 
     public override void OnJoinRandomFailed(short returnCode, string message)
@@ -209,6 +217,17 @@ public class PhotonRoomController : MonoBehaviourPunCallbacks
     {
         Debug.Log($"Another player has joined the room {newPlayer.NickName}");
         DebugPlayerList();
+        if(PhotonNetwork.IsMasterClient && PhotonNetwork.CurrentRoom.PlayerCount == PhotonNetwork.CurrentRoom.MaxPlayers)
+        {
+            if(_selectedGameMode.Name == "Custom Match")
+            {
+                playButton.interactable = true;
+            }
+            else
+            { 
+                PhotonNetwork.LoadLevel("1VOnline");
+            }
+        }
     }
 
     public override void OnPlayerLeftRoom(Player otherPlayer)

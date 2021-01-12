@@ -7,7 +7,6 @@ using UnityEngine;
 
 public class UIDisplayRoom : MonoBehaviour
 {
-    [SerializeField] private TMP_Text _roomGameModeText;//_roomTitleText;
     //[SerializeField] private GameObject _startButton;
     [SerializeField] private GameObject _roomContainer;
     [SerializeField] private GameObject[] _hideObjects;
@@ -34,11 +33,6 @@ public class UIDisplayRoom : MonoBehaviour
 
     private void HandleJoinRoom(GameMode gameMode)
     {
-        _roomGameModeText.SetText(PhotonNetwork.CurrentRoom.CustomProperties["GAMEMODE"].ToString().ToUpper());
-
-        //_exitButton.SetActive(true);
-        //_roomContainer.SetActive(true);
-
         foreach (GameObject obj in _hideObjects)
         {
             obj.SetActive(false);
@@ -47,8 +41,6 @@ public class UIDisplayRoom : MonoBehaviour
 
     private void HandleRoomLeft()
     {
-        _roomGameModeText.SetText("JOINING ROOM");
-
         _roomContainer.SetActive(false);
         foreach (GameObject obj in _showObjects)
         {

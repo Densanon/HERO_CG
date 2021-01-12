@@ -4,9 +4,12 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using Photon.Pun;
 using Photon.Realtime;
+using UnityEngine.UI;
 
 public class PhotonGameManager : MonoBehaviourPunCallbacks
 {
+    public Button Play;
+
     #region Public Methods
 
     public void LeaveRoom()
@@ -38,7 +41,7 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
 
     #region Photon Callbacks
     /// <summary>
-    /// Called when the local plater left the room. We need to load the Main Menu.
+    /// Called when the local player left the room. We need to load the Main Menu.
     /// </summary>
     public override void OnLeftRoom()
     {
