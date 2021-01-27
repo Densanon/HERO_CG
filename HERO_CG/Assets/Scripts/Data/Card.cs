@@ -23,7 +23,7 @@ public class Card : MonoBehaviour
         image = Image;
     }
 
-    public Card(Type CardType, string Name, string Flavor, string Ability, Image Image)
+    public Card(Type CardType, string Name, string Ability, Image Image)
     {
         _myType = CardType;
         _name = Name;
@@ -38,14 +38,6 @@ public class Card : MonoBehaviour
         _name = Name;
         _attack = Attack;
         _defense = Defense;
-        _flavor = Flavor;
-        image = Image;
-    }
-
-    public Card(Type CardType, string Name, string Flavor, Image Image)
-    {
-        _myType = CardType;
-        _name = Name;
         _flavor = Flavor;
         image = Image;
     }

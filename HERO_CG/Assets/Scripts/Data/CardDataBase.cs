@@ -1,6 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UI;
 
 public class CardDataBase : MonoBehaviour
@@ -38,36 +36,36 @@ public class CardDataBase : MonoBehaviour
         Heros[18] = new Card(Card.Type.Character, "ZHAO", 70, 20, "<< Time to jumpstart this fallen world. >>", "(P) As long as Zhao is in play, all Allied heroes may gain +10 attack. (P) When Zhao is defeated/removed, you can play a card from your hand to the field.", HeroImages[18]);
         Heros[19] = new Card(Card.Type.Character, "ZOE", 50, 40, "<< (Hebrew) >>", "(A) Before performing an Action, heal any hero(es) of your choice.", HeroImages[19]);
 
-        Abilities[0] = new Card(Card.Type.Ability, "Name", "Flavor", "Ability", AbilityImages[0]);
-        Abilities[1] = new Card(Card.Type.Ability, "Name", "Flavor", "Ability", AbilityImages[1]);
-        Abilities[2] = new Card(Card.Type.Ability, "Name", "Flavor", "Ability", AbilityImages[2]);
-        Abilities[3] = new Card(Card.Type.Ability, "Name", "Flavor", "Ability", AbilityImages[3]);
-        Abilities[4] = new Card(Card.Type.Ability, "Name", "Flavor", "Ability", AbilityImages[4]);
-        Abilities[5] = new Card(Card.Type.Ability, "Name", "Flavor", "Ability", AbilityImages[5]);
-        Abilities[6] = new Card(Card.Type.Ability, "Name", "Flavor", "Ability", AbilityImages[6]);
-        Abilities[7] = new Card(Card.Type.Ability, "Name", "Flavor", "Ability", AbilityImages[7]);
-        Abilities[8] = new Card(Card.Type.Ability, "Name", "Flavor", "Ability", AbilityImages[8]);
-        Abilities[9] = new Card(Card.Type.Ability, "Name", "Flavor", "Ability", AbilityImages[9]);
-        Abilities[10] = new Card(Card.Type.Ability, "Name", "Flavor", "Ability", AbilityImages[10]);
-        Abilities[11] = new Card(Card.Type.Ability, "Name", "Flavor", "Ability", AbilityImages[11]);
-        Abilities[12] = new Card(Card.Type.Ability, "Name", "Flavor", "Ability", AbilityImages[12]);
-        Abilities[13] = new Card(Card.Type.Ability, "Name", "Flavor", "Ability", AbilityImages[13]);
-        Abilities[14] = new Card(Card.Type.Ability, "Name", "Flavor", "Ability", AbilityImages[14]);
-        Abilities[15] = new Card(Card.Type.Ability, "Name", "Flavor", "Ability", AbilityImages[15]);
-        Abilities[16] = new Card(Card.Type.Ability, "Name", "Flavor", "Ability", AbilityImages[16]);
-        Abilities[17] = new Card(Card.Type.Ability, "Name", "Flavor", "Ability", AbilityImages[17]);
-        Abilities[18] = new Card(Card.Type.Ability, "Name", "Flavor", "Ability", AbilityImages[18]);
-        Abilities[19] = new Card(Card.Type.Ability, "Name", "Flavor", "Ability", AbilityImages[19]);
+        Abilities[0] = new Card(Card.Type.Ability, "ACCELERATE", "(A) Target player draws 3 cards from their Enhancement Deck then discards 2 from their hand.", AbilityImages[0]);
+        Abilities[1] = new Card(Card.Type.Ability, "BACKFIRE", "(A) Target opponent reveals all of their Abilities on the field; you may use one of the Active Abilities as if it was your own, even if it is one that is found on a hero’s card, regardless of timing.", AbilityImages[1]);
+        Abilities[2] = new Card(Card.Type.Ability, "BOLSTER", "(P) For every strengthened hero on the field, this hero may gain +10 attack. It does not matter who the heroes belong to.", AbilityImages[2]);
+        Abilities[3] = new Card(Card.Type.Ability, "BOOST", "(A) Discard 2 cards from your hand to choose any one player who must draw one card for every hero (regardless of who the heroes belong to) on the field.", AbilityImages[3]);
+        Abilities[4] = new Card(Card.Type.Ability, "COLLATERAL DAMAGE", "(P) If this hero is used to defeat a hero, you may determine one other strengthened hero to be fatigued.", AbilityImages[4]);
+        Abilities[5] = new Card(Card.Type.Ability, "CONVERT", "(P) When this hero is defeated, you may take control of any hero, moving it to your play area, discarding all of its enhancements. If fatigued, hero must stay that way.", AbilityImages[5]);
+        Abilities[6] = new Card(Card.Type.Ability, "COUNTER-MEASURES", "(P) When attacked, this hero may combine its own Total Defense with the defense of the attacking hero(es), excluding their enhancements.", AbilityImages[6]);
+        Abilities[7] = new Card(Card.Type.Ability, "DROUGHT", "(P) When a Heroic Ability is used, you may discard this card to nullify its effects. The affected player may still take an action but cannot use ANY Abilities this turn.", AbilityImages[7]);
+        Abilities[8] = new Card(Card.Type.Ability, "FORTIFICATION", "(P) For every hero on the field, this hero may gain +10 defense.", AbilityImages[8]);
+        Abilities[9] = new Card(Card.Type.Ability, "GOING NUCLEAR", "(P) When this hero is attacked, all cards on the field, including this one must be removed, except for SkyBases.", AbilityImages[9]);
+        Abilities[10] = new Card(Card.Type.Ability, "HARDENED", "(P) For every opposing card on the field, this hero may gain +10 defense.", AbilityImages[10]);
+        Abilities[11] = new Card(Card.Type.Ability, "IMPEDE", "(P) You may prevent the effects of one Active Ability per opponent turn.", AbilityImages[11]);
+        Abilities[12] = new Card(Card.Type.Ability, "KAIROS", "(A) Discard this hero to recruit up to 2 heroes from the top of the Reserves straight to your play area.", AbilityImages[12]);
+        Abilities[13] = new Card(Card.Type.Ability, "PREVENTION", "(P) If this hero is attacked, you may discard this Ability to block the attack and all other attacks against your heroes until the start of your next turn.", AbilityImages[13]);
+        Abilities[14] = new Card(Card.Type.Ability, "PROTECT", "(P) When another hero is attacked, you may prevent that hero from fatigue and defeat until the end of your next turn.", AbilityImages[14]);
+        Abilities[15] = new Card(Card.Type.Ability, "REDUCTION", "(A) Fatigue one of your strengthened heroes to cause any player to discard 2 random cards from their hand.", AbilityImages[15]);
+        Abilities[16] = new Card(Card.Type.Ability, "REINFORCEMENT", "(P) For every card in your hand, this hero may gain +10 attack.", AbilityImages[16]);
+        Abilities[17] = new Card(Card.Type.Ability, "RESURRECT", "(P) When this hero is defeated, you may return this hero to play, under your control in a strengthened position, with no enhancements.", AbilityImages[17]);
+        Abilities[18] = new Card(Card.Type.Ability, "REVELATION", "(A) View one opponent’s hand, and discard any one card from their hand.", AbilityImages[18]);
+        Abilities[19] = new Card(Card.Type.Ability, "SHEILDING", "(P) If fatigued, this hero may gain +20 defense for every strengthened hero. This bonus is added after the Total Defense is halved.", AbilityImages[19]);
 
-        Enhancements[0] = new Card(Card.Type.Enhancement, "Attack 20", 20, 0, EnhanceImages[0]);
-        Enhancements[1] = new Card(Card.Type.Enhancement, "Attack 30", 30, 0, EnhanceImages[1]);
-        Enhancements[2] = new Card(Card.Type.Enhancement, "Defense 30", 0, 30, EnhanceImages[2]);
-        Enhancements[3] = new Card(Card.Type.Enhancement, "Defense 20", 0, 20, EnhanceImages[3]);
+        Enhancements[0] = new Card(Card.Type.Enhancement, "ATTACK 20", 20, 0, EnhanceImages[0]);
+        Enhancements[1] = new Card(Card.Type.Enhancement, "ATTACK 30", 30, 0, EnhanceImages[1]);
+        Enhancements[2] = new Card(Card.Type.Enhancement, "DEFENSE 30", 0, 30, EnhanceImages[2]);
+        Enhancements[3] = new Card(Card.Type.Enhancement, "DEFENSE 20", 0, 20, EnhanceImages[3]);
 
 
-        Feats[0] = new Card(Card.Type.Feat, "Absorb", "(H) Discard the Enhancements, if any, from any one hero. Then, replace with those from another hero.", FeatImages[0]);
-        Feats[1] = new Card(Card.Type.Feat, "Drain", "(H) Discard all of one opponenet's Enhancement Cards from the field.", FeatImages[1]);
-        Feats[2] = new Card(Card.Type.Feat, "Pay the Cost", "(H) Fatigue one hero in your play area, to remove one hero from the field.", FeatImages[2]);
-        Feats[3] = new Card(Card.Type.Feat, "Under Siege", "(H) Target opponent reveals their hand, then discards all non-hero cards.", FeatImages[3]);
+        Feats[0] = new Card(Card.Type.Feat, "ABSORB", "(H) Discard the Enhancements, if any, from any one hero. Then, replace with those from another hero.", FeatImages[0]);
+        Feats[1] = new Card(Card.Type.Feat, "DRAIN", "(H) Discard all of one opponenet's Enhancement Cards from the field.", FeatImages[1]);
+        Feats[2] = new Card(Card.Type.Feat, "PAY THE COST", "(H) Fatigue one hero in your play area, to remove one hero from the field.", FeatImages[2]);
+        Feats[3] = new Card(Card.Type.Feat, "UNDER SEIGE", "(H) Target opponent reveals their hand, then discards all non-hero cards.", FeatImages[3]);
     }
 }
