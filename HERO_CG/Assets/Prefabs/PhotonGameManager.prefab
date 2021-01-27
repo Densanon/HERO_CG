@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3568359947860690515}
   - component: {fileID: 1429444459656308942}
+  - component: {fileID: 8250957324734832675}
   m_Layer: 0
   m_Name: PhotonGameManager
   m_TagString: Untagged
@@ -43,3 +44,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 62df22ca57ecaf34598104f5676fca06, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  EndUI: {fileID: 0}
+  myBase: {fileID: 0}
+  oppBase: {fileID: 0}
+--- !u!114 &8250957324734832675
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8341300123937636903}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fdf5bcaa93b0f374c9f1d537c82f5671, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _health: 100
+  _exhausted: 0
+  _destroyed: 0
