@@ -1,20 +1,57 @@
 ﻿using UnityEngine;
-using UnityEngine.UI;
+using System.Collections.Generic;
+using System.Linq;
+using Photon.Pun;
+using System;
 
 public class CardDataBase : MonoBehaviour
 {
-    [SerializeField] private Image[] HeroImages = new Image[20];
-    [SerializeField] private Image[] AbilityImages = new Image[20];
-    [SerializeField] private Image[] EnhanceImages = new Image[4];
-    [SerializeField] private Image[] FeatImages = new Image[4];
+    PhotonView PV;
+    public GameObject CardHandPrefab;
+    public GameObject CardDraftPrefab;
+    public GameObject[] Hand = new GameObject[7];
+    public List<CardData> Draft = new List<CardData>();
+    public Transform DraftArea;
+
+    public static Action<bool> OnTurnDelcarationReceived = delegate { };
+
+    #region Card Data Base
+    [SerializeField] private Sprite[] HeroImages = new Sprite[20];
+    [SerializeField] private Sprite[] AbilityImages = new Sprite[20];
+    [SerializeField] private Sprite[] EnhanceImages = new Sprite[4];
+    [SerializeField] private Sprite[] FeatImages = new Sprite[4];
 
     Card[] Heros = new Card[20];
     Card[] Abilities = new Card[20];
     Card[] Enhancements = new Card[4];
     Card[] Feats = new Card[4];
 
+    Card[] CardBase = new Card[48];
+    #endregion
+
+    #region Dynamic card lists
+    List<Card> HeroSelection = new List<Card>();
+    List<Card> AbilityDraft = new List<Card>();
+
+    List<Card> P1Hand = new List<Card>();
+    List<Card> P1Field = new List<Card>();
+    List<Card> P1Deck = new List<Card>();
+    List<Card> P1Discard = new List<Card>();
+
+    List<Card> P2Hand = new List<Card>();
+    List<Card> P2Field = new List<Card>();
+    List<Card> P2Deck = new List<Card>();
+    List<Card> P2Discard = new List<Card>();
+    #endregion
+
+    #region Unity Methods
     private void Awake()
     {
+        PV = GetComponent<PhotonView>();
+        PhotonGameManager.OnTurnDecided += HandleTurnDeclaration;
+        PhotonGameManager.OnBuildHeroDraft += HandleBuildHeroDraft;
+        PhotonGameManager.OnCardCollected += HandleCardCollected;
+
         Heros[0] = new Card(Card.Type.Character, "AKIO", 20, 70, "<< Societal freedom is a mirage for true hope. >>", "(P) When Akio causes another hero to be fatigued, Akio is not fatigued. If Akio attacks and causes the hero he attacks to become fatigued, Akio is not fatigued and may continue attacking.", HeroImages[0]);
         Heros[1] = new Card(Card.Type.Character, "AYUMI", 40, 50, "<< The River will meet all your needs. >>", "(P) Whenever a hero is recruited, you may draw a card from your Enhancement Deck. If a player takes a Recruit Action and they choose to recruit 2 heroes, you may draw 2 cards.", HeroImages[1]);
         Heros[2] = new Card(Card.Type.Character, "BOULOS",90, 0, "<< The dystopic is our past, present, and future--yet there is still hope. >>", "For each card in your hand, Boulos gains +10 defense.", HeroImages[2]);
@@ -58,14 +95,216 @@ public class CardDataBase : MonoBehaviour
         Abilities[19] = new Card(Card.Type.Ability, "SHEILDING", "(P) If fatigued, this hero may gain +20 defense for every strengthened hero. This bonus is added after the Total Defense is halved.", AbilityImages[19]);
 
         Enhancements[0] = new Card(Card.Type.Enhancement, "ATTACK 20", 20, 0, EnhanceImages[0]);
+        for(int i = 0; i<4; i++)
+        {
+            P1Deck.Add(Enhancements[0]);
+        }
         Enhancements[1] = new Card(Card.Type.Enhancement, "ATTACK 30", 30, 0, EnhanceImages[1]);
+        for (int i = 0; i < 3; i++)
+        {
+            P1Deck.Add(Enhancements[1]);
+        }
         Enhancements[2] = new Card(Card.Type.Enhancement, "DEFENSE 30", 0, 30, EnhanceImages[2]);
+        for (int i = 0; i < 2; i++)
+        {
+            P1Deck.Add(Enhancements[2]);
+        }
         Enhancements[3] = new Card(Card.Type.Enhancement, "DEFENSE 20", 0, 20, EnhanceImages[3]);
+        for (int i = 0; i < 3; i++)
+        {
+            P1Deck.Add(Enhancements[3]);
+        }
 
 
         Feats[0] = new Card(Card.Type.Feat, "ABSORB", "(H) Discard the Enhancements, if any, from any one hero. Then, replace with those from another hero.", FeatImages[0]);
         Feats[1] = new Card(Card.Type.Feat, "DRAIN", "(H) Discard all of one opponenet's Enhancement Cards from the field.", FeatImages[1]);
         Feats[2] = new Card(Card.Type.Feat, "PAY THE COST", "(H) Fatigue one hero in your play area, to remove one hero from the field.", FeatImages[2]);
         Feats[3] = new Card(Card.Type.Feat, "UNDER SEIGE", "(H) Target opponent reveals their hand, then discards all non-hero cards.", FeatImages[3]);
+
+        foreach(Card item in Abilities)
+        {
+            AbilityDraft.Add(item);
+        }
+        foreach(Card item in Feats)
+        {
+            AbilityDraft.Add(item);
+        }
+
+        for(int i = 0; i < 48; i++)
+        {
+            if(i < 20)
+            {
+                CardBase[i] = Heros[i];
+            }else if(i < 40)
+            {
+                CardBase[i] = Abilities[i - 20];
+            }else if(i < 44)
+            {
+                CardBase[i] = Enhancements[i - 40];
+            }else if(i < 48)
+            {
+                CardBase[i] = Feats[i - 44];
+            }
+        }
+    }
+
+    private void OnDestroy()
+    {
+        PhotonGameManager.OnTurnDecided -= HandleTurnDeclaration;
+        PhotonGameManager.OnBuildHeroDraft -= HandleBuildHeroDraft;
+        PhotonGameManager.OnCardCollected -= HandleCardCollected;
+    }
+    #endregion
+
+    private void HandleBuildHeroDraft()
+    {
+        Debug.Log("I am supposed to handle the Hero Draft.");
+        List<Card> tempHero = Heros.ToList();
+        List<string> shareList = new List<string>();
+        for (int i = 0; i < 14; i++)
+        {
+            var picker = UnityEngine.Random.Range(0, tempHero.Count);
+            HeroSelection.Add(tempHero[picker]);
+            shareList.Add(tempHero[picker].Name);
+            tempHero.Remove(tempHero[picker]);
+        }
+
+        if (PV.IsMine)
+        {
+            PV.RPC("ShareCardList", RpcTarget.Others, "HeroSelection", shareList.ToArray());
+        }
+
+        DisplayDraft(HeroSelection);
+    }
+
+    private void HandleCardCollected(Card card, PhotonGameManager.GamePhase phase)
+    {
+        switch (phase)
+        {
+            case PhotonGameManager.GamePhase.HeroDraft:
+                Debug.Log($"Removing {card.Name} from the Draft and adding it to my hand.");
+                P1Hand.Add(card);
+                AddCardToHand(card);
+                HeroSelection.Remove(card);
+                PV.RPC("RemoveDraftOption", RpcTarget.All, card.Name);
+                Debug.Log($"{P1Hand.Count} cards in my hand.");
+                break;
+            case PhotonGameManager.GamePhase.AbilityDraft:
+                break;
+        }
+    }
+
+    [PunRPC]
+    private void RemoveDraftOption( string card)
+    {
+        foreach(CardData item in Draft)
+        {
+            if(item.Name == card)
+            {
+                Debug.Log($"Removing {item.Name} fromt he draft.");
+                Destroy(item.gameObject);
+                break;
+            }
+        }
+    }
+
+    private void DisplayDraft(List<Card> whichDeck)
+    {
+        DraftArea.gameObject.SetActive(true);
+        Draft.Clear();
+        foreach(Transform child in DraftArea)
+        {
+            Destroy(child);
+        }
+
+        foreach(Card card in whichDeck)
+        {
+            GameObject obj = Instantiate(CardDraftPrefab, DraftArea);
+            CardData cd = obj.GetComponent<CardData>();
+            cd.CardOverride(card);
+            Draft.Add(cd);
+        }
+    }
+
+    [PunRPC]
+    private void ShareCardList(string list, string[] listToShare)
+    {
+        switch (list)
+        {
+            case "HeroSelection":
+                foreach (string name in listToShare)
+                {
+                    foreach (Card card in Heros)
+                    {
+                        if (name == card.Name)
+                        {
+                            HeroSelection.Add(card);
+                        }
+                    }
+                }
+
+                DisplayDraft(HeroSelection);
+                break;
+            case "P2Hand":
+                foreach(string cardName in listToShare)
+                {
+                    foreach(Card card in CardBase)
+                    {
+                        if(card.Name == cardName)
+                        {
+                            P2Hand.Add(card);
+                            break;
+                        }
+                    }
+                }
+                break;
+            case "P2Discard":
+                foreach (string cardName in listToShare)
+                {
+                    foreach (Card card in CardBase)
+                    {
+                        if (card.Name == cardName)
+                        {
+                            P2Discard.Add(card);
+                            break;
+                        }
+                    }
+                }
+                break;
+        }
+    }
+
+    #region Turn Declaration
+    private void HandleTurnDeclaration(bool myTurn)
+    {
+        PV.RPC("DeclaredTurn", RpcTarget.Others, myTurn);
+    }
+
+    [PunRPC]
+    private void DeclaredTurn(bool myTurn)
+    {
+        Debug.Log("I have received a HandleTurnDeclaration RPC.");
+        OnTurnDelcarationReceived?.Invoke(myTurn);
+    }
+    #endregion
+
+
+    public void DrawRandomCard(List<Card> whatDeck)
+    {
+        var picker = UnityEngine.Random.Range(0, whatDeck.Count - 1);
+        Card pickedCard = whatDeck[picker];
+        P1Hand.Add(pickedCard);
+        whatDeck.Remove(whatDeck[picker]);
+
+        AddCardToHand(pickedCard);
+    }
+
+    private void AddCardToHand(Card cardToAdd)
+    {
+        if(P1Hand.Count < 7)
+        {
+            GameObject obj = Instantiate(CardHandPrefab, Hand[P1Hand.Count - 1].transform);
+            obj.GetComponent<CardData>().CardOverride(cardToAdd);
+        }
     }
 }

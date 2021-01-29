@@ -1,18 +1,19 @@
 ﻿using UnityEngine;
-using UnityEngine.UI;
 
-public class Card : MonoBehaviour
+public class Card 
 {
     public enum Type { Character, Ability, Enhancement, Feat}
-    [SerializeField] Type _myType;
-    [SerializeField] string _name;
-    [SerializeField] int _attack;
-    [SerializeField] int _defense;
-    [SerializeField] string _flavor;
-    [SerializeField] string _ability;
-    public Image image;
+    Type _myType;
+    bool _exhausted;
+    string _name;
+    int _attack;
+    int _defense;
+    string _flavor;
+    string _ability;
+    int abilityCounter;
+    public Sprite image;
 
-    public Card(Type CardType, string Name, int Attack, int Defense, string Flavor, string Ability, Image Image)
+    public Card(Type CardType, string Name, int Attack, int Defense, string Flavor, string Ability, Sprite Image)
     {
         _myType = CardType;
         _name = Name;
@@ -23,7 +24,7 @@ public class Card : MonoBehaviour
         image = Image;
     }
 
-    public Card(Type CardType, string Name, string Ability, Image Image)
+    public Card(Type CardType, string Name, string Ability, Sprite Image)
     {
         _myType = CardType;
         _name = Name;
@@ -32,7 +33,7 @@ public class Card : MonoBehaviour
         image = Image;
     }
 
-    public Card(Type CardType, string Name, int Attack, int Defense, Image Image)
+    public Card(Type CardType, string Name, int Attack, int Defense, Sprite Image)
     {
         _myType = CardType;
         _name = Name;
@@ -40,6 +41,12 @@ public class Card : MonoBehaviour
         _defense = Defense;
         _flavor = Flavor;
         image = Image;
+    }
+
+    public bool Exhausted
+    {
+        get { return _exhausted; }
+        private set { _exhausted = value; }
     }
 
     public Type CardType
@@ -78,13 +85,9 @@ public class Card : MonoBehaviour
         private set { _ability = value; }
     }
 
-    public void AdjustAttack(int amount)
+    public int AbilityCounter
     {
-        Attack += amount;
-    }
-
-    public void AdjustDefense(int amount)
-    {
-        Defense += amount;
+        get { return abilityCounter; }
+        private set { abilityCounter = value; }
     }
 }
