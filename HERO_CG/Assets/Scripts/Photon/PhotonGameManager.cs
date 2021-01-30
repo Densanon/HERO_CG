@@ -10,10 +10,13 @@ using TMPro;
 public class PhotonGameManager : MonoBehaviourPunCallbacks
 {
     public enum GamePhase { HeroDraft, AbilityDraft, HEROSelect, Heal, Enhance, Recruit, Overcome, Feat}
-    public GamePhase myPhase = GamePhase.HeroDraft;
+    public static GamePhase myPhase = GamePhase.HeroDraft;
+
+    public CardDataBase CB;
 
     public GameObject gCardZoom;
     public CardData gCard;
+    public GameObject gCardOption;
 
     public GameObject PhaseDeclarationUI;
     public TMP_Text PhaseText;
@@ -26,23 +29,23 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
     private bool bAbilityDraftStart = false;
     private bool selecting = false;
     private bool zoomed = false;
+    private bool heroDrafted = false;
 
-    public static Action<bool> OnTurnDecided = delegate { };
-    public static Action OnBuildHeroDraft = delegate { };
     public static Action<Card, GamePhase> OnCardCollected = delegate { };
 
     #region Unity Methods
     private void Awake()
     {
         PlayerBase.OnBaseDestroyed += OnBaseDestroyed;
-        CardDataBase.OnTurnDelcarationReceived += SwitchTurn;
         CardFunction.OnCardSelected += HandleCardSelecion;
+        CardFunction.OnCardDeselected += HandleDeselection;
     }
+
     private void OnDestroy()
     {
         PlayerBase.OnBaseDestroyed -= OnBaseDestroyed;
-        CardDataBase.OnTurnDelcarationReceived -= SwitchTurn;
         CardFunction.OnCardSelected -= HandleCardSelecion;
+        CardFunction.OnCardDeselected -= HandleDeselection;
     }
 
     private void Start()
@@ -54,17 +57,17 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
             {
                 Debug.Log("I go first.");
                 myTurn = true;
-                StartCoroutine(TurnDeclaration(myTurn));                
-                OnTurnDecided?.Invoke(!myTurn);
-                OnBuildHeroDraft?.Invoke();
+                StartCoroutine(TurnDeclaration(myTurn));
+                CB.HandleTurnDeclaration(!myTurn);
+                CB.HandleBuildHeroDraft();
             }
             else
             {
                 Debug.Log("I go last.");
                 myTurn = false;
                 StartCoroutine(TurnDeclaration(myTurn));
-                OnTurnDecided?.Invoke(!myTurn);
-                OnBuildHeroDraft?.Invoke();
+                CB.HandleTurnDeclaration(!myTurn);
+                CB.HandleBuildHeroDraft();
             }
         }
     }
@@ -86,6 +89,18 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
         }
     }
 
+    public void PhaseChange(GamePhase phaseToChangeTo)
+    {
+        myPhase = phaseToChangeTo;
+    }
+
+    public void SwitchTurn(bool turn)
+    {
+        Debug.Log("I am handling my turn from what I was told.");
+        myTurn = turn;
+        StartCoroutine(TurnDeclaration(myTurn));
+    }
+
     public void LeaveRoom()
     {
         PhotonNetwork.LeaveRoom();
@@ -100,10 +115,12 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
             case GamePhase.HeroDraft:
                 if (!zoomed)
                 {
+                    Debug.Log($"Zooming Card: {card.Name}");
                     CardZoom(card);
                 }
                 else
                 {
+                    Debug.Log($"Selecting Card: {card.Name}");
                     CardCollected(card, GamePhase.HeroDraft);
                 }
                 break;
@@ -132,26 +149,38 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
         }
     }
 
+    private void HandleDeselection()
+    {
+        zoomed = false;
+    }
+
     private void CardZoom(CardData card)
     {
+        zoomed = true;
         gCardZoom.SetActive(true);
         gCard.CardOverride(card);
+        if (myTurn) {
+            gCardOption.SetActive(true);
+        }
+        else
+        {
+            gCardOption.SetActive(false);
+        }
+        Debug.Log("Card Overriden.");
     }
 
     private void CardCollected(CardData card, GamePhase phase)
     {
-        OnCardCollected?.Invoke(card.myCard, phase);
+        zoomed = false;
+        Debug.Log("Sending Card Collected.");
+        CB.HandleCardCollected(card.myCard, phase);
+        SwitchTurn();
+        CB.HandleTurnDeclaration(!myTurn);
     }
 
     private void SwitchTurn()
     {
         myTurn = !myTurn;
-        StartCoroutine(TurnDeclaration(myTurn));
-    }
-    private void SwitchTurn(bool turn)
-    {
-        Debug.Log("I am handling my turn from what I was told.");
-        myTurn = turn;
         StartCoroutine(TurnDeclaration(myTurn));
     }
     #endregion
@@ -195,7 +224,7 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
     {
         PhaseText.text = phase;
         PhaseDeclarationUI.SetActive(true);
-        yield return new WaitForSeconds(4f);
+        yield return new WaitForSeconds(2f);
         PhaseDeclarationUI.SetActive(false);
     }
 
@@ -203,7 +232,7 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
     {
         PhaseText.text = myTurn ? "Your Turn!" : "Opponent's Turn";
         PhaseDeclarationUI.SetActive(true);
-        yield return new WaitForSeconds(3f);
+        yield return new WaitForSeconds(2f);
         PhaseDeclarationUI.SetActive(false);
         if (myTurn)
         {

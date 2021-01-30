@@ -12,6 +12,7 @@ public class CardDataBase : MonoBehaviour
     public GameObject[] Hand = new GameObject[7];
     public List<CardData> Draft = new List<CardData>();
     public Transform DraftArea;
+    public PhotonGameManager GM;
 
     public static Action<bool> OnTurnDelcarationReceived = delegate { };
 
@@ -48,9 +49,6 @@ public class CardDataBase : MonoBehaviour
     private void Awake()
     {
         PV = GetComponent<PhotonView>();
-        PhotonGameManager.OnTurnDecided += HandleTurnDeclaration;
-        PhotonGameManager.OnBuildHeroDraft += HandleBuildHeroDraft;
-        PhotonGameManager.OnCardCollected += HandleCardCollected;
 
         Heros[0] = new Card(Card.Type.Character, "AKIO", 20, 70, "<< Societal freedom is a mirage for true hope. >>", "(P) When Akio causes another hero to be fatigued, Akio is not fatigued. If Akio attacks and causes the hero he attacks to become fatigued, Akio is not fatigued and may continue attacking.", HeroImages[0]);
         Heros[1] = new Card(Card.Type.Character, "AYUMI", 40, 50, "<< The River will meet all your needs. >>", "(P) Whenever a hero is recruited, you may draw a card from your Enhancement Deck. If a player takes a Recruit Action and they choose to recruit 2 heroes, you may draw 2 cards.", HeroImages[1]);
@@ -147,16 +145,9 @@ public class CardDataBase : MonoBehaviour
             }
         }
     }
-
-    private void OnDestroy()
-    {
-        PhotonGameManager.OnTurnDecided -= HandleTurnDeclaration;
-        PhotonGameManager.OnBuildHeroDraft -= HandleBuildHeroDraft;
-        PhotonGameManager.OnCardCollected -= HandleCardCollected;
-    }
     #endregion
 
-    private void HandleBuildHeroDraft()
+    public void HandleBuildHeroDraft()
     {
         Debug.Log("I am supposed to handle the Hero Draft.");
         List<Card> tempHero = Heros.ToList();
@@ -177,7 +168,7 @@ public class CardDataBase : MonoBehaviour
         DisplayDraft(HeroSelection);
     }
 
-    private void HandleCardCollected(Card card, PhotonGameManager.GamePhase phase)
+    public void HandleCardCollected(Card card, PhotonGameManager.GamePhase phase)
     {
         switch (phase)
         {
@@ -194,6 +185,7 @@ public class CardDataBase : MonoBehaviour
         }
     }
 
+    #region Draft Methods
     [PunRPC]
     private void RemoveDraftOption( string card)
     {
@@ -201,28 +193,63 @@ public class CardDataBase : MonoBehaviour
         {
             if(item.Name == card)
             {
-                Debug.Log($"Removing {item.Name} fromt he draft.");
+                Debug.Log($"Removing {item.Name} from the draft.");
+                Draft.Remove(item);
                 Destroy(item.gameObject);
+                Debug.Log($"Cards Remaining: {Draft.Count}");
+                CheckDraft();
                 break;
             }
         }
     }
 
+    [PunRPC]
+    private void SetupAbilityDraft(bool yes)
+    {
+        for (int i = Draft.Count -1; i > 0; i--)
+        {
+            var item = Draft[i];
+            Draft.Remove(item);
+            Destroy(item.gameObject);
+        }
+        Draft.Clear();
+
+        GM.PhaseChange(PhotonGameManager.GamePhase.AbilityDraft);
+
+        DisplayDraft(AbilityDraft);
+    }
+
     private void DisplayDraft(List<Card> whichDeck)
     {
         DraftArea.gameObject.SetActive(true);
-        Draft.Clear();
-        foreach(Transform child in DraftArea)
-        {
-            Destroy(child);
-        }
 
+        Debug.Log($"Hero Count: {whichDeck.Count}");
         foreach(Card card in whichDeck)
         {
             GameObject obj = Instantiate(CardDraftPrefab, DraftArea);
             CardData cd = obj.GetComponent<CardData>();
             cd.CardOverride(card);
             Draft.Add(cd);
+        }
+        Debug.Log($"Hero Draft Count: {Draft.Count}");
+    }
+
+    private void CheckDraft()
+    {
+        switch (PhotonGameManager.myPhase)
+        {
+            case PhotonGameManager.GamePhase.HeroDraft:
+                if(Draft.Count == 12)
+                {
+                    if (PhotonGameManager.myTurn)
+                    {
+                        HandleCardCollected(HeroSelection[UnityEngine.Random.Range(0, 13)], PhotonGameManager.myPhase);
+                        PV.RPC("SetupAbilityDraft", RpcTarget.All, true);
+                    }
+                }
+                break;
+            case PhotonGameManager.GamePhase.AbilityDraft:
+                break;
         }
     }
 
@@ -274,8 +301,10 @@ public class CardDataBase : MonoBehaviour
         }
     }
 
+    #endregion
+
     #region Turn Declaration
-    private void HandleTurnDeclaration(bool myTurn)
+    public void HandleTurnDeclaration(bool myTurn)
     {
         PV.RPC("DeclaredTurn", RpcTarget.Others, myTurn);
     }
@@ -284,10 +313,9 @@ public class CardDataBase : MonoBehaviour
     private void DeclaredTurn(bool myTurn)
     {
         Debug.Log("I have received a HandleTurnDeclaration RPC.");
-        OnTurnDelcarationReceived?.Invoke(myTurn);
+        GM.SwitchTurn(myTurn);
     }
     #endregion
-
 
     public void DrawRandomCard(List<Card> whatDeck)
     {
