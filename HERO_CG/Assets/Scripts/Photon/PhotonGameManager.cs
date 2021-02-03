@@ -9,7 +9,7 @@ using TMPro;
 
 public class PhotonGameManager : MonoBehaviourPunCallbacks
 {
-    public enum GamePhase { HeroDraft, AbilityDraft, HEROSelect, Heal, Enhance, Recruit, Overcome, Feat}
+    public enum GamePhase { HeroDraft, AbilityDraft, HEROSelect, Heal, Enhance, Recruit, Overcome, Feat, TurnResponse}
     public static GamePhase myPhase = GamePhase.HeroDraft;
 
     public CardDataBase CB;
@@ -42,6 +42,7 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
         CardFunction.OnCardSelected += HandleCardSelecion;
         CardFunction.OnCardDeselected += HandleDeselection;
         CardFunction.OnCardCollected += HandleCardCollected;
+        UIConfirmation.OnHEROSelection += PhaseChange;
     }
 
     private void OnDestroy()
@@ -50,6 +51,7 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
         CardFunction.OnCardSelected -= HandleCardSelecion;
         CardFunction.OnCardDeselected -= HandleDeselection;
         CardFunction.OnCardCollected -= HandleCardCollected;
+        UIConfirmation.OnHEROSelection -= PhaseChange;
     }
 
     private void Start()
@@ -96,6 +98,7 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
     public void PhaseChange(GamePhase phaseToChangeTo)
     {
         myPhase = phaseToChangeTo;
+        HandlePhaseChange();
     }
 
     public void SwitchTurn(bool turn)
@@ -178,15 +181,46 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
     {
         myTurn = !myTurn;
         StartCoroutine(TurnDeclaration(myTurn));
-        if(myPhase == GamePhase.HEROSelect)
-        {
-            HEROSelectionBegin();
-        }
     }
 
     private void HEROSelectionBegin()
     {
+        gHEROSelect.SetActive(true);
+    }
 
+    private void HandlePhaseChange()
+    {
+        switch (myPhase)
+        {
+            case GamePhase.Heal:
+                //Select 1+ heros to be healed(any)
+                //Play up to 3 cards from hand
+                break;
+            case GamePhase.Enhance:
+                //Ask quantity
+                //CB.DrawCard(CardDataBase.CardDecks.P1Deck);
+                //Draw up to 3 cards from enhance deck
+                //Play up to 3 cards from your hand
+                break;
+            case GamePhase.Recruit:
+                //pick up to 2 Heros either from Reserve or HQ
+                break;
+            case GamePhase.Overcome:
+                //Declare attacking hero(s) as a single attack, directed towards a single target
+                //Calculate all attack power from total heros and abilities
+                //Calculate all defensive power from total hero & abilities
+                //Resolve, if defeated, place in discard, all attacking are exhausted
+                //Able to repeate
+                break;
+            case GamePhase.Feat:
+                //Resolve card
+                break;
+            case GamePhase.TurnResponse:
+                break;
+            case GamePhase.HEROSelect:
+                HEROSelectionBegin();
+                break;
+        }
     }
     #endregion
 

@@ -7,6 +7,9 @@ using System;
 public class CardDataBase : MonoBehaviour
 {
     PhotonView PV;
+
+    public enum CardDecks { P1Hand, P1Deck, P1Field, P1Discard, P2Hand, P2Deck, P2Field, P2Discard, Reserve, HQ}
+
     public GameObject CardHandPrefab;
     public GameObject CardDraftPrefab;
     public GameObject[] Hand = new GameObject[7];
@@ -32,6 +35,7 @@ public class CardDataBase : MonoBehaviour
 
     #region Dynamic card lists
     List<Card> HeroSelection = new List<Card>();
+    List<Card> HeroReserve = new List<Card>();
     List<Card> AbilityDraft = new List<Card>();
 
     List<Card> P1Hand = new List<Card>();
@@ -146,6 +150,7 @@ public class CardDataBase : MonoBehaviour
         }
     }
     #endregion
+
 
     #region Draft Methods
     public void HandleBuildHeroDraft()
@@ -310,7 +315,61 @@ public class CardDataBase : MonoBehaviour
     }
     #endregion
 
-    public void DrawRandomCard(List<Card> whatDeck)
+    private void FillReserves()
+    {
+        if(HeroSelection.Count > 0 && HeroReserve.Count < 3)
+        {
+            for(int i = HeroReserve.Count; i < 3; i++)
+            {
+                int picker = UnityEngine.Random.Range(0, HeroSelection.Count);
+                HeroReserve.Add(HeroSelection[picker]);
+                HeroSelection.Remove(HeroSelection[picker]);
+            }
+        }
+
+        PopulateReserve();
+    }
+
+    private void PopulateReserve()
+    {
+        //Take the container
+        //Add new heros
+    }
+
+    public void DrawCard(CardDecks Deck)
+    {
+        switch (Deck)
+        {
+            case CardDecks.P1Hand:
+                DrawRandomCard(P1Hand);
+                break;
+            case CardDecks.HQ:
+                DrawRandomCard(HeroSelection);
+                break;
+        }
+    }
+
+    public void DrawCard(CardDecks Deck, Card hero)
+    {
+        switch (Deck)
+        {
+            case CardDecks.Reserve:
+                break;
+        }
+
+        foreach (Card item in HeroReserve)
+        {
+            if (item.Name == hero.Name)
+            {
+                Debug.Log($"Removing {item.Name}.");
+                P1Hand.Add(item);
+                HeroReserve.Remove(item);
+                break;
+            }
+        }
+    }
+
+    private void DrawRandomCard(List<Card> whatDeck)
     {
         var picker = UnityEngine.Random.Range(0, whatDeck.Count - 1);
         Card pickedCard = whatDeck[picker];
