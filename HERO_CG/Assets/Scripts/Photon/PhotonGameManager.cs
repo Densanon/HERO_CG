@@ -21,6 +21,8 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
     public GameObject PhaseDeclarationUI;
     public TMP_Text PhaseText;
 
+    public GameObject gHEROSelect;
+
     public GameObject EndUI;
     public TMP_Text EndText;
 
@@ -39,6 +41,7 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
         PlayerBase.OnBaseDestroyed += OnBaseDestroyed;
         CardFunction.OnCardSelected += HandleCardSelecion;
         CardFunction.OnCardDeselected += HandleDeselection;
+        CardFunction.OnCardCollected += HandleCardCollected;
     }
 
     private void OnDestroy()
@@ -46,6 +49,7 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
         PlayerBase.OnBaseDestroyed -= OnBaseDestroyed;
         CardFunction.OnCardSelected -= HandleCardSelecion;
         CardFunction.OnCardDeselected -= HandleDeselection;
+        CardFunction.OnCardCollected -= HandleCardCollected;
     }
 
     private void Start()
@@ -108,6 +112,11 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
     #endregion
 
     #region Private Methods
+    private void HandleDeselection()
+    {
+        zoomed = false;
+    }
+
     private void HandleCardSelecion(CardData card)
     {
         switch (myPhase)
@@ -118,20 +127,12 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
                     Debug.Log($"Zooming Card: {card.Name}");
                     CardZoom(card);
                 }
-                else
-                {
-                    Debug.Log($"Selecting Card: {card.Name}");
-                    CardCollected(card, GamePhase.HeroDraft);
-                }
                 break;
             case GamePhase.AbilityDraft:
                 if (!zoomed)
                 {
+                    Debug.Log($"Zooming Card: {card.Name}");
                     CardZoom(card);
-                }
-                else
-                {
-                    CardCollected(card, GamePhase.AbilityDraft);
                 }
                 break;
             case GamePhase.HEROSelect:
@@ -149,11 +150,6 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
         }
     }
 
-    private void HandleDeselection()
-    {
-        zoomed = false;
-    }
-
     private void CardZoom(CardData card)
     {
         zoomed = true;
@@ -169,11 +165,11 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
         Debug.Log("Card Overriden.");
     }
 
-    private void CardCollected(CardData card, GamePhase phase)
+    private void HandleCardCollected(Card card)
     {
         zoomed = false;
         Debug.Log("Sending Card Collected.");
-        CB.HandleCardCollected(card.myCard, phase);
+        CB.HandleCardCollected(card, myPhase);
         SwitchTurn();
         CB.HandleTurnDeclaration(!myTurn);
     }
@@ -182,40 +178,15 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
     {
         myTurn = !myTurn;
         StartCoroutine(TurnDeclaration(myTurn));
-    }
-    #endregion
-
-    #region Photon Callbacks
-    /// <summary>
-    /// Called when the local player left the room. We need to load the Main Menu.
-    /// </summary>
-    public override void OnLeftRoom()
-    {
-        SceneManager.LoadScene("MainMenu");
-    }
-
-    public override void OnPlayerEnteredRoom(Player other)
-    {
-        //Not seen if you are the player connecting.
-        Debug.LogFormat("OnPlayerEnteredRoom() {0}", other.NickName);
-
-        if (PhotonNetwork.IsMasterClient)
+        if(myPhase == GamePhase.HEROSelect)
         {
-            //Called before OnPlayerLeftRoom
-            Debug.LogFormat("OnPlayerEnteredRoom IsMasterClient", PhotonNetwork.IsMasterClient);
+            HEROSelectionBegin();
         }
     }
 
-    public override void OnPlayerLeftRoom(Player other)
+    private void HEROSelectionBegin()
     {
-        //Seen when other disconnects
-        Debug.LogFormat("OnPlayerLeftRoom() {0}", other.NickName);
 
-        if (PhotonNetwork.IsMasterClient)
-        {
-            //Called before OnPlayerLeftRoom
-            Debug.LogFormat("OnPlayerLeftRoom IsMasterClient {0}", PhotonNetwork.IsMasterClient);
-        }
     }
     #endregion
 
@@ -252,6 +223,40 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
                     StartCoroutine(PhaseDeclaration("H.E.R.O. Decision"));
                     break;
             }
+        }
+    }
+    #endregion
+
+    #region Photon Callbacks
+    /// <summary>
+    /// Called when the local player left the room. We need to load the Main Menu.
+    /// </summary>
+    public override void OnLeftRoom()
+    {
+        SceneManager.LoadScene("MainMenu");
+    }
+
+    public override void OnPlayerEnteredRoom(Player other)
+    {
+        //Not seen if you are the player connecting.
+        Debug.LogFormat("OnPlayerEnteredRoom() {0}", other.NickName);
+
+        if (PhotonNetwork.IsMasterClient)
+        {
+            //Called before OnPlayerLeftRoom
+            Debug.LogFormat("OnPlayerEnteredRoom IsMasterClient", PhotonNetwork.IsMasterClient);
+        }
+    }
+
+    public override void OnPlayerLeftRoom(Player other)
+    {
+        //Seen when other disconnects
+        Debug.LogFormat("OnPlayerLeftRoom() {0}", other.NickName);
+
+        if (PhotonNetwork.IsMasterClient)
+        {
+            //Called before OnPlayerLeftRoom
+            Debug.LogFormat("OnPlayerLeftRoom IsMasterClient {0}", PhotonNetwork.IsMasterClient);
         }
     }
     #endregion

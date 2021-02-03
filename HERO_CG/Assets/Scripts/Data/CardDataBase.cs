@@ -147,6 +147,7 @@ public class CardDataBase : MonoBehaviour
     }
     #endregion
 
+    #region Draft Methods
     public void HandleBuildHeroDraft()
     {
         Debug.Log("I am supposed to handle the Hero Draft.");
@@ -168,24 +169,36 @@ public class CardDataBase : MonoBehaviour
         DisplayDraft(HeroSelection);
     }
 
-    public void HandleCardCollected(Card card, PhotonGameManager.GamePhase phase)
+    private void DisplayDraft(List<Card> whichDeck)
     {
-        switch (phase)
+        DraftArea.gameObject.SetActive(true);
+
+        Debug.Log($"Hero Count: {whichDeck.Count}");
+        foreach(Card card in whichDeck)
         {
-            case PhotonGameManager.GamePhase.HeroDraft:
-                Debug.Log($"Removing {card.Name} from the Draft and adding it to my hand.");
-                P1Hand.Add(card);
-                AddCardToHand(card);
-                HeroSelection.Remove(card);
-                PV.RPC("RemoveDraftOption", RpcTarget.All, card.Name);
-                Debug.Log($"{P1Hand.Count} cards in my hand.");
-                break;
-            case PhotonGameManager.GamePhase.AbilityDraft:
-                break;
+            GameObject obj = Instantiate(CardDraftPrefab, DraftArea);
+            CardData cd = obj.GetComponent<CardData>();
+            cd.CardOverride(card);
+            Draft.Add(cd);
         }
+        Debug.Log($"Hero Draft Count: {Draft.Count}");
     }
 
-    #region Draft Methods
+    [PunRPC]
+    private void SetupAbilityDraft(bool yes)
+    {
+        for (int i = Draft.Count -1; i > -1; i--)
+        {
+            var item = Draft[i];
+            Draft.Remove(item);
+            Destroy(item.gameObject);
+        }
+
+        GM.PhaseChange(PhotonGameManager.GamePhase.AbilityDraft);
+
+        DisplayDraft(AbilityDraft);
+    }
+
     [PunRPC]
     private void RemoveDraftOption( string card)
     {
@@ -203,52 +216,25 @@ public class CardDataBase : MonoBehaviour
         }
     }
 
-    [PunRPC]
-    private void SetupAbilityDraft(bool yes)
-    {
-        for (int i = Draft.Count -1; i > 0; i--)
-        {
-            var item = Draft[i];
-            Draft.Remove(item);
-            Destroy(item.gameObject);
-        }
-        Draft.Clear();
-
-        GM.PhaseChange(PhotonGameManager.GamePhase.AbilityDraft);
-
-        DisplayDraft(AbilityDraft);
-    }
-
-    private void DisplayDraft(List<Card> whichDeck)
-    {
-        DraftArea.gameObject.SetActive(true);
-
-        Debug.Log($"Hero Count: {whichDeck.Count}");
-        foreach(Card card in whichDeck)
-        {
-            GameObject obj = Instantiate(CardDraftPrefab, DraftArea);
-            CardData cd = obj.GetComponent<CardData>();
-            cd.CardOverride(card);
-            Draft.Add(cd);
-        }
-        Debug.Log($"Hero Draft Count: {Draft.Count}");
-    }
-
     private void CheckDraft()
     {
         switch (PhotonGameManager.myPhase)
         {
             case PhotonGameManager.GamePhase.HeroDraft:
-                if(Draft.Count == 12)
+                if(Draft.Count == 12 && PhotonGameManager.myTurn)
                 {
-                    if (PhotonGameManager.myTurn)
-                    {
+                    
                         HandleCardCollected(HeroSelection[UnityEngine.Random.Range(0, 13)], PhotonGameManager.myPhase);
                         PV.RPC("SetupAbilityDraft", RpcTarget.All, true);
-                    }
+   
                 }
                 break;
             case PhotonGameManager.GamePhase.AbilityDraft:
+                if(Draft.Count == 0 && PhotonGameManager.myTurn)
+                {
+                    Debug.Log("The Ability draft is over!");
+                    PV.RPC("EndAbilityDraft", RpcTarget.AllBufferedViaServer, true);
+                }
                 break;
         }
     }
@@ -301,6 +287,13 @@ public class CardDataBase : MonoBehaviour
         }
     }
 
+ 
+    
+    [PunRPC]
+    private void EndAbilityDraft(bool yes)
+    {
+        GM.PhaseChange(PhotonGameManager.GamePhase.HEROSelect);
+    }
     #endregion
 
     #region Turn Declaration
@@ -333,6 +326,28 @@ public class CardDataBase : MonoBehaviour
         {
             GameObject obj = Instantiate(CardHandPrefab, Hand[P1Hand.Count - 1].transform);
             obj.GetComponent<CardData>().CardOverride(cardToAdd);
+        }
+    }
+
+    public void HandleCardCollected(Card card, PhotonGameManager.GamePhase phase)
+    {
+        switch (phase)
+        {
+            case PhotonGameManager.GamePhase.HeroDraft:
+                Debug.Log($"Removing {card.Name} from the Draft and adding it to my hand.");
+                P1Hand.Add(card);
+                AddCardToHand(card);
+                HeroSelection.Remove(card);
+                PV.RPC("RemoveDraftOption", RpcTarget.All, card.Name);
+                Debug.Log($"{P1Hand.Count} cards in my hand.");
+                break;
+            case PhotonGameManager.GamePhase.AbilityDraft:
+                Debug.Log($"Removing {card.Name} from the Draft and adding it to my Enhancement deck.");
+                P1Deck.Add(card);
+                AbilityDraft.Remove(card);
+                PV.RPC("RemoveDraftOption", RpcTarget.All, card.Name);
+                Debug.Log($"{P1Deck.Count} cards in my deck.");
+                break;
         }
     }
 }

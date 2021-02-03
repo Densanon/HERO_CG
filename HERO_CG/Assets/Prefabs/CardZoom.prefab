@@ -573,7 +573,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 7573130869518943083}
-        m_MethodName: CardSelected
+        m_MethodName: CardCollected
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
