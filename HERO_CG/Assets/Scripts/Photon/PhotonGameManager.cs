@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System;
 using UnityEngine;
+using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using Photon.Pun;
 using Photon.Realtime;
@@ -22,6 +23,10 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
     public TMP_Text PhaseText;
 
     public GameObject gHEROSelect;
+    public GameObject gCardCountCollect;
+    public Button bCardCount1;
+    public Button bCardCount2;
+    public Button bCardCount3;
 
     public GameObject EndUI;
     public TMP_Text EndText;
@@ -106,6 +111,22 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
         Debug.Log("I am handling my turn from what I was told.");
         myTurn = turn;
         StartCoroutine(TurnDeclaration(myTurn));
+    }
+
+    public void SetCardCollectAmount(int amount)
+    {
+        for(int i = amount; i>0; i--)
+        {
+            CB.DrawCard(CardDataBase.CardDecks.P1Deck);
+        }
+        CardPlaySetup();
+    }
+
+    public void HandCardZoom()
+    {
+        zoomed = true;
+        gCardZoom.SetActive(true);
+        //NEED TO OVERRIDE CARD WITH THE CURRENT ACTIVE CARD FROM THE CB ACTIVECARD
     }
 
     public void LeaveRoom()
@@ -193,19 +214,46 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
         switch (myPhase)
         {
             case GamePhase.Heal:
+                gHEROSelect.SetActive(false);
                 //Select 1+ heros to be healed(any)
-                //Play up to 3 cards from hand
+                CardPlaySetup();
                 break;
             case GamePhase.Enhance:
-                //Ask quantity
-                //CB.DrawCard(CardDataBase.CardDecks.P1Deck);
+                //Ask quantity to draw
                 //Draw up to 3 cards from enhance deck
                 //Play up to 3 cards from your hand
+                gHEROSelect.SetActive(false);
+                gCardCountCollect.SetActive(true);
+                int i = CB.CardsRemaining(CardDataBase.CardDecks.P1Deck);
+                switch (i)
+                {
+                    case 0:
+                        gCardCountCollect.SetActive(false);
+                        CardPlaySetup();
+                        break;
+                    case 1:
+                        bCardCount1.interactable = true;
+                        bCardCount2.interactable = false;
+                        bCardCount3.interactable = false;
+                        break;
+                    case 2:
+                        bCardCount1.interactable = true;
+                        bCardCount2.interactable = true;
+                        bCardCount3.interactable = false;
+                        break;
+                    default:
+                        bCardCount1.interactable = true;
+                        bCardCount2.interactable = true;
+                        bCardCount3.interactable = true;
+                        break;
+                }
                 break;
             case GamePhase.Recruit:
+                gHEROSelect.SetActive(false);
                 //pick up to 2 Heros either from Reserve or HQ
                 break;
             case GamePhase.Overcome:
+                gHEROSelect.SetActive(false);
                 //Declare attacking hero(s) as a single attack, directed towards a single target
                 //Calculate all attack power from total heros and abilities
                 //Calculate all defensive power from total hero & abilities
@@ -213,6 +261,7 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
                 //Able to repeate
                 break;
             case GamePhase.Feat:
+                gHEROSelect.SetActive(false);
                 //Resolve card
                 break;
             case GamePhase.TurnResponse:
@@ -221,6 +270,12 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
                 HEROSelectionBegin();
                 break;
         }
+    }
+
+    private void CardPlaySetup()
+    {
+        //Prompt to play up to xamount, update as played
+        //
     }
     #endregion
 

@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEngine.UI;
 using System.Collections.Generic;
 using System.Linq;
 using Photon.Pun;
@@ -13,9 +14,12 @@ public class CardDataBase : MonoBehaviour
     public GameObject CardHandPrefab;
     public GameObject CardDraftPrefab;
     public GameObject[] Hand = new GameObject[7];
+    private List<CardData> lHandData = new List<CardData>();
+    public Slider sHandSlider;
     public List<CardData> Draft = new List<CardData>();
     public Transform DraftArea;
     public PhotonGameManager GM;
+    public CardData CurrentActiveCard;
 
     public static Action<bool> OnTurnDelcarationReceived = delegate { };
 
@@ -315,6 +319,12 @@ public class CardDataBase : MonoBehaviour
     }
     #endregion
 
+    #region Private Methods
+    private void UpdateHandSlider()
+    {
+        sHandSlider.maxValue = P1Hand.Count;
+    }
+
     private void FillReserves()
     {
         if(HeroSelection.Count > 0 && HeroReserve.Count < 3)
@@ -334,6 +344,75 @@ public class CardDataBase : MonoBehaviour
     {
         //Take the container
         //Add new heros
+    }
+
+    private void DrawRandomCard(List<Card> whatDeck)
+    {
+        var picker = UnityEngine.Random.Range(0, whatDeck.Count - 1);
+        Card pickedCard = whatDeck[picker];
+        P1Hand.Add(pickedCard);
+        UpdateHandSlider();
+        whatDeck.Remove(whatDeck[picker]);
+        AddCardToHand(pickedCard);
+    }
+
+    private void AddCardToHand(Card cardToAdd)
+    {
+        if(P1Hand.Count < 7)
+        {
+            GameObject obj = Instantiate(CardHandPrefab, Hand[P1Hand.Count - 1].transform);
+            CardData data = obj.GetComponent<CardData>();
+            data.CardOverride(cardToAdd);
+            lHandData.Add(data);
+            CheckActiveCard();
+        }
+
+    }
+
+    private void CheckActiveCard()
+    {
+        int i = P1Hand.Count;
+        switch (i)
+        {
+            case 0:
+                CurrentActiveCard = null;
+                break;
+            case 1:
+                CurrentActiveCard = lHandData[0];
+                break;
+            case 2:
+                CurrentActiveCard = lHandData[1];
+                break;
+            case 3:
+                CurrentActiveCard = lHandData[1];
+                break;
+            case 4:
+                CurrentActiveCard = lHandData[3];
+                break;
+            case 5:
+                CurrentActiveCard = lHandData[3];
+                break;
+            default:
+                CurrentActiveCard = lHandData[5];
+                break;
+        }
+        Debug.Log($"ActiveCardCheck: {CurrentActiveCard.Name}");
+    }
+    #endregion
+
+    #region Public Methods
+    public void HandCardOffset(int offset)
+    {
+        for(int i = 0; i < P1Hand.Count; i++)
+        {
+            int j = offset+i;
+            if(j >= P1Hand.Count)
+            {
+                j -= P1Hand.Count;
+            }
+            lHandData[i].CardOverride(P1Hand[j]);
+        }
+        CheckActiveCard();
     }
 
     public void DrawCard(CardDecks Deck)
@@ -363,29 +442,30 @@ public class CardDataBase : MonoBehaviour
             {
                 Debug.Log($"Removing {item.Name}.");
                 P1Hand.Add(item);
+                UpdateHandSlider();
                 HeroReserve.Remove(item);
+                AddCardToHand(item);
                 break;
             }
         }
     }
 
-    private void DrawRandomCard(List<Card> whatDeck)
+    public int CardsRemaining(CardDecks Deck)
     {
-        var picker = UnityEngine.Random.Range(0, whatDeck.Count - 1);
-        Card pickedCard = whatDeck[picker];
-        P1Hand.Add(pickedCard);
-        whatDeck.Remove(whatDeck[picker]);
-
-        AddCardToHand(pickedCard);
-    }
-
-    private void AddCardToHand(Card cardToAdd)
-    {
-        if(P1Hand.Count < 7)
+        int i = 0;
+        switch (Deck)
         {
-            GameObject obj = Instantiate(CardHandPrefab, Hand[P1Hand.Count - 1].transform);
-            obj.GetComponent<CardData>().CardOverride(cardToAdd);
+            case CardDecks.HQ:
+                i = HeroSelection.Count;
+                break;
+            case CardDecks.P1Deck:
+                i = P1Deck.Count;
+                break;
+            case CardDecks.P1Discard:
+                i = P1Discard.Count;
+                break;
         }
+        return i;
     }
 
     public void HandleCardCollected(Card card, PhotonGameManager.GamePhase phase)
@@ -395,6 +475,7 @@ public class CardDataBase : MonoBehaviour
             case PhotonGameManager.GamePhase.HeroDraft:
                 Debug.Log($"Removing {card.Name} from the Draft and adding it to my hand.");
                 P1Hand.Add(card);
+                UpdateHandSlider();
                 AddCardToHand(card);
                 HeroSelection.Remove(card);
                 PV.RPC("RemoveDraftOption", RpcTarget.All, card.Name);
@@ -403,10 +484,12 @@ public class CardDataBase : MonoBehaviour
             case PhotonGameManager.GamePhase.AbilityDraft:
                 Debug.Log($"Removing {card.Name} from the Draft and adding it to my Enhancement deck.");
                 P1Deck.Add(card);
+                UpdateHandSlider();
                 AbilityDraft.Remove(card);
                 PV.RPC("RemoveDraftOption", RpcTarget.All, card.Name);
                 Debug.Log($"{P1Deck.Count} cards in my deck.");
                 break;
         }
     }
+    #endregion
 }

@@ -34,8 +34,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 4.7164, y: -101.94}
-  m_SizeDelta: {x: 146.43396, y: 89.49103}
+  m_AnchoredPosition: {x: 0.0065746, y: -99.678}
+  m_SizeDelta: {x: 155.85349, y: 84.97507}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &2872010654235015239
 CanvasRenderer:
@@ -64,7 +64,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Ability
+  m_text: Ability that I am going to do to show what is going on here.
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -92,7 +92,7 @@ MonoBehaviour:
   m_outlineColor:
     serializedVersion: 2
     rgba: 4278190080
-  m_fontSize: 55.45
+  m_fontSize: 18.6
   m_fontSizeBase: 36
   m_fontWeight: 400
   m_enableAutoSizing: 1
@@ -106,7 +106,7 @@ MonoBehaviour:
   m_lineSpacingMax: 0
   m_paragraphSpacing: 0
   m_charWidthMaxAdj: 0
-  m_enableWordWrapping: 0
+  m_enableWordWrapping: 1
   m_wordWrappingRatios: 0.4
   m_overflowMode: 0
   m_firstOverflowCharacterIndex: -1
@@ -133,12 +133,12 @@ MonoBehaviour:
   m_margin: {x: 0, y: 0, z: 0, w: 0}
   m_textInfo:
     textComponent: {fileID: 967237316352583745}
-    characterCount: 7
+    characterCount: 60
     spriteCount: 0
-    spaceCount: 0
-    wordCount: 1
+    spaceCount: 13
+    wordCount: 14
     linkCount: 0
-    lineCount: 1
+    lineCount: 4
     pageCount: 1
     materialCount: 1
   m_isUsingLegacyAnimationComponent: 0
@@ -169,7 +169,7 @@ GameObject:
   - component: {fileID: 672799150295079234}
   - component: {fileID: 5106218245406052960}
   m_Layer: 5
-  m_Name: Card
+  m_Name: HandCard
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -255,6 +255,7 @@ MonoBehaviour:
   tAttack: {fileID: 1572175624635707574}
   tDefense: {fileID: 5823924016287149953}
   tAbility: {fileID: 967237316352583745}
+  inHand: 0
 --- !u!1 &5661021716745944898
 GameObject:
   m_ObjectHideFlags: 0
@@ -289,8 +290,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: -38}
-  m_SizeDelta: {x: 200, y: 38.38498}
+  m_AnchoredPosition: {x: 0.0066595, y: -23.830986}
+  m_SizeDelta: {x: 155.85342, y: 66.72301}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &1490570549028449340
 CanvasRenderer:
@@ -347,7 +348,7 @@ MonoBehaviour:
   m_outlineColor:
     serializedVersion: 2
     rgba: 4278190080
-  m_fontSize: 34.35
+  m_fontSize: 55.8
   m_fontSizeBase: 36
   m_fontWeight: 400
   m_enableAutoSizing: 1
@@ -361,7 +362,7 @@ MonoBehaviour:
   m_lineSpacingMax: 0
   m_paragraphSpacing: 0
   m_charWidthMaxAdj: 0
-  m_enableWordWrapping: 1
+  m_enableWordWrapping: 0
   m_wordWrappingRatios: 0.4
   m_overflowMode: 0
   m_firstOverflowCharacterIndex: -1
@@ -445,8 +446,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 130}
-  m_SizeDelta: {x: 200, y: 40}
+  m_AnchoredPosition: {x: 0.7595, y: 126.08}
+  m_SizeDelta: {x: 154.34772, y: 32.165604}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &824749103839188390
 CanvasRenderer:
@@ -503,7 +504,7 @@ MonoBehaviour:
   m_outlineColor:
     serializedVersion: 2
     rgba: 4278190080
-  m_fontSize: 35.8
+  m_fontSize: 28.75
   m_fontSizeBase: 36
   m_fontWeight: 400
   m_enableAutoSizing: 1
@@ -751,7 +752,7 @@ RectTransform:
   m_GameObject: {fileID: 7721786506435543044}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 1.0010092, y: 1.0010092, z: 1.0010092}
   m_Children: []
   m_Father: {fileID: 945710636339464140}
   m_RootOrder: 5
