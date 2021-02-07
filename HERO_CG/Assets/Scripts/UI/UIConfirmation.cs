@@ -45,12 +45,14 @@ public class UIConfirmation : MonoBehaviour
 
     public void Accept()
     {
+        Debug.Log($"Accepting {typeOfConfirmation}");
         switch (typeOfConfirmation)
         {
             case Confirmation.Heal:
                 OnHEROSelection?.Invoke(PhotonGameManager.GamePhase.Heal);
                 break;
             case Confirmation.Enhance:
+                Debug.Log("Sending Enhance Action");
                 OnHEROSelection?.Invoke(PhotonGameManager.GamePhase.Enhance);
                 break;
             case Confirmation.Recruit:

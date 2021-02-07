@@ -21,8 +21,13 @@ public class CardDataBase : MonoBehaviour
     public PhotonGameManager GM;
     public CardData CurrentActiveCard;
 
-    public static Action<bool> OnTurnDelcarationReceived = delegate { };
+    #region Debuging
+    public bool autoDraft = false;
+    #endregion
 
+    public static Action<bool> OnTurnDelcarationReceived = delegate { };
+    public static Action<Card> OnAutoDraftCollected = delegate { };
+ 
     #region Card Data Base
     [SerializeField] private Sprite[] HeroImages = new Sprite[20];
     [SerializeField] private Sprite[] AbilityImages = new Sprite[20];
@@ -320,6 +325,28 @@ public class CardDataBase : MonoBehaviour
     #endregion
 
     #region Private Methods
+    #region Debugging
+    public void SetAutoDraft(bool set)
+    {
+        autoDraft = set;
+    }
+
+    public void DrawDraftCard(string draftDeck)
+    {
+        switch (draftDeck)
+        {
+            case "HeroSelection":
+                Debug.Log("Picking random card for Auto hero draw.");
+                OnAutoDraftCollected?.Invoke(HeroSelection[UnityEngine.Random.Range(0, HeroSelection.Count)]);
+                break;
+            case "AbilityDraft":
+                Debug.Log("Picking random card for Auto ability draw.");
+                OnAutoDraftCollected?.Invoke(AbilityDraft[UnityEngine.Random.Range(0, AbilityDraft.Count)]);
+                break;
+        }
+    }
+    #endregion
+
     private void UpdateHandSlider()
     {
         sHandSlider.maxValue = P1Hand.Count;
@@ -420,6 +447,7 @@ public class CardDataBase : MonoBehaviour
         switch (Deck)
         {
             case CardDecks.P1Hand:
+                Debug.Log("Drawing a card from P1Hand.");
                 DrawRandomCard(P1Hand);
                 break;
             case CardDecks.HQ:
