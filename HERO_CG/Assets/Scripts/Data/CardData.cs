@@ -7,9 +7,12 @@ public class CardData : MonoBehaviour
     [SerializeField] TMP_Text Title;
     [SerializeField] TMP_Text tFlavor;
     [SerializeField] Image Icon;
+    [SerializeField] Image Highlight;
     [SerializeField] TMP_Text tAttack;
     [SerializeField] TMP_Text tDefense;
     [SerializeField] TMP_Text tAbility;
+    [SerializeField] Image[] gAbilityCounters;
+    [SerializeField] Button Target;
 
     public bool Exhausted { get; private set; }
 
@@ -31,8 +34,6 @@ public class CardData : MonoBehaviour
 
     public int AbilityCounter { get; private set; }
 
-    public bool inHand = false;
-
     public CardData(Card card)
     {
         Exhausted = false;
@@ -45,6 +46,21 @@ public class CardData : MonoBehaviour
         CardImage = card.image;
     }
 
+    #region Unity Methods
+    private void Awake()
+    {
+        CardDataBase.OnTargeting += HandleTargetting;
+
+        UISetup();
+    }
+
+    private void OnDestroy()
+    {
+        CardDataBase.OnTargeting -= HandleTargetting;
+    }
+    #endregion
+
+    #region Public Methods
     public void Exhaust()
     {
         Exhausted = true;
@@ -68,11 +84,17 @@ public class CardData : MonoBehaviour
     public void AdjustCounter(int amount)
     {
         AbilityCounter += amount;
-    }
-
-    private void Awake()
-    {
-        UISetup();
+        for(int i = 0; i > gAbilityCounters.Length; i++)
+        {
+            if(AbilityCounter >= i)
+            {
+                gAbilityCounters[i].color = Color.yellow;
+            }
+            else
+            {
+                gAbilityCounters[i].color = Color.clear;
+            }
+        }
     }
 
     public void CardOverride(Card card)
@@ -102,14 +124,23 @@ public class CardData : MonoBehaviour
 
         UISetup();
     }
+    #endregion
 
+    #region Private Methods
     private void UISetup()
     {
-        Title.text = Name;
-        tFlavor.text = Flavor;
+        if(Title.text != null) Title.text = Name;
+        if(tFlavor.text != null) tFlavor.text = Flavor;
         Icon.sprite = CardImage;
         tAttack.text = Attack.ToString();
         tDefense.text = Defense.ToString();
-        tAbility.text = Ability;
+        if(tAbility.text != null) tAbility.text = Ability;
     }
+
+    private void HandleTargetting(bool targetting)
+    {
+        Target.interactable = targetting;
+        Highlight.color = targetting ? Color.green : Color.clear;
+    }
+    #endregion
 }

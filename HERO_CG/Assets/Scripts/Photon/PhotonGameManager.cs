@@ -10,7 +10,7 @@ using TMPro;
 
 public class PhotonGameManager : MonoBehaviourPunCallbacks
 {
-    public enum GamePhase { HeroDraft, AbilityDraft, HEROSelect, Heal, Enhance, Recruit, Overcome, Feat, TurnResponse}
+    public enum GamePhase { HeroDraft, AbilityDraft, HEROSelect, Heal, Enhance, Recruit, Overcome, Feat, TurnResponse, Wait}
     public static GamePhase myPhase = GamePhase.HeroDraft;
 
     public CardDataBase CB;
@@ -36,9 +36,11 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
     private bool bAI = false;
     public static bool myTurn { get; private set; }
     private bool bAbilityDraftStart = false;
-    private bool selecting = false;
+    private bool targetting = false;
     private bool zoomed = false;
+    private bool handZoomed = false;
     private bool heroDrafted = false;
+    private int iTurnCounter = 0;
 
     public static Action<Card, GamePhase> OnCardCollected = delegate { };
 
@@ -51,6 +53,7 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
         CardFunction.OnCardCollected += HandleCardCollected;
         UIConfirmation.OnHEROSelection += PhaseChange;
         CardDataBase.OnAutoDraftCollected += HandleCardCollected;
+        CardDataBase.OnTargeting += HandleTargetting;
     }
 
     private void OnDestroy()
@@ -61,6 +64,7 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
         CardFunction.OnCardCollected -= HandleCardCollected;
         UIConfirmation.OnHEROSelection -= PhaseChange;
         CardDataBase.OnAutoDraftCollected -= HandleCardCollected;
+        CardDataBase.OnTargeting -= HandleTargetting;
     }
 
     private void Start()
@@ -132,10 +136,82 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
 
     public void HandCardZoom()
     {
-        zoomed = true;
+        handZoomed = true;
         gCardZoom.SetActive(true);
-        //NEED TO OVERRIDE CARD WITH THE CURRENT ACTIVE CARD FROM THE CB ACTIVECARD
+        gCard.CardOverride(CB.CurrentActiveCard);
+        if (myTurn)
+        {
+            switch (myPhase)
+            {
+                case GamePhase.HEROSelect:
+                    gCardOption.SetActive(false);
+                    break;
+                case GamePhase.AbilityDraft:
+                    gCardOption.SetActive(false);
+                    break;
+                case GamePhase.HeroDraft:
+                    gCardOption.SetActive(false);
+                    break;
+                case GamePhase.Heal:
+                    gCardOption.SetActive(true);
+                    break;
+                case GamePhase.Enhance:
+                    gCardOption.SetActive(true);
+                    break;
+                case GamePhase.Recruit:
+                    gCardOption.SetActive(false);
+                    break;
+                case GamePhase.Overcome:
+                    gCardOption.SetActive(true);
+                    break;
+                case GamePhase.Feat:
+                    gCardOption.SetActive(true);
+                    break;
+            }
+        }
+        else
+        {
+            if(myPhase == GamePhase.TurnResponse)
+            {
+                gCardOption.SetActive(true);
+            }
+            else if(myPhase == GamePhase.Wait)
+            {
+                gCardOption.SetActive(false);
+            }
+        }
     }
+
+    public void CheckHandZoomInEffect()
+    {
+        if (handZoomed)
+        {
+            gCard.CardOverride(CB.CurrentActiveCard);
+        }
+    }
+
+    public void FieldHeroZoom(CardData card)
+    {
+        gCardZoom.SetActive(true);
+        gCard.CardOverride(card);
+    }
+
+    public void HandleTargetting(bool targetting)
+    {
+        this.targetting = targetting;
+    }
+
+    #region Move Counter Methods
+    public int GetTurnCounter()
+    {
+        return iTurnCounter;
+    }
+
+    public void TurnCounterDecrement()
+    {
+        iTurnCounter--;
+    }
+    #endregion
 
     public void LeaveRoom()
     {
@@ -147,6 +223,7 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
     private void HandleDeselection()
     {
         zoomed = false;
+        handZoomed = false;
     }
 
     private void HandleCardSelecion(CardData card)
@@ -172,6 +249,7 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
             case GamePhase.Heal:
                 break;
             case GamePhase.Enhance:
+                CB.PlayCard(card.myCard);
                 break;
             case GamePhase.Recruit:
                 break;
@@ -194,7 +272,6 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
         {
             gCardOption.SetActive(false);
         }
-        Debug.Log("Card Overriden.");
     }
 
     private void HandleCardCollected(Card card)
@@ -256,6 +333,7 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
                         bCardCount3.interactable = true;
                         break;
                 }
+                iTurnCounter = 3;
                 break;
             case GamePhase.Recruit:
                 gHEROSelect.SetActive(false);
@@ -274,6 +352,10 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
                 //Resolve card
                 break;
             case GamePhase.TurnResponse:
+                gCardOption.SetActive(true);
+                break;
+            case GamePhase.Wait:
+                gCardOption.SetActive(false);
                 break;
             case GamePhase.HEROSelect:
                 HEROSelectionBegin();

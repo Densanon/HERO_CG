@@ -13,11 +13,15 @@ public class CardDataBase : MonoBehaviour
 
     public GameObject CardHandPrefab;
     public GameObject CardDraftPrefab;
+    public GameObject CardMyFieldPrefab;
+    public GameObject CardOppFieldPrefab;
     public GameObject[] Hand = new GameObject[7];
     private List<CardData> lHandData = new List<CardData>();
     public Slider sHandSlider;
     public List<CardData> Draft = new List<CardData>();
     public Transform DraftArea;
+    public Transform MyHeroArea;
+    public Transform OppHeroArea;
     public PhotonGameManager GM;
     public CardData CurrentActiveCard;
 
@@ -27,6 +31,7 @@ public class CardDataBase : MonoBehaviour
 
     public static Action<bool> OnTurnDelcarationReceived = delegate { };
     public static Action<Card> OnAutoDraftCollected = delegate { };
+    public static Action<bool> OnTargeting = delegate { };
  
     #region Card Data Base
     [SerializeField] private Sprite[] HeroImages = new Sprite[20];
@@ -349,7 +354,14 @@ public class CardDataBase : MonoBehaviour
 
     private void UpdateHandSlider()
     {
-        sHandSlider.maxValue = P1Hand.Count;
+        if(P1Hand.Count != 0)
+        {
+            sHandSlider.maxValue = P1Hand.Count-1;
+        }
+        else
+        {
+            sHandSlider.maxValue = 0;
+        }
     }
 
     private void FillReserves()
@@ -423,16 +435,37 @@ public class CardDataBase : MonoBehaviour
                 CurrentActiveCard = lHandData[5];
                 break;
         }
+        GM.CheckHandZoomInEffect();
         Debug.Log($"ActiveCardCheck: {CurrentActiveCard.Name}");
+    }
+
+    [PunRPC]
+    private void SpawnCharacterToOpponentField(string heroToSpawn)
+    {
+        foreach(Card card in Heros)
+        {
+            if(card.Name == heroToSpawn)
+            {
+                GameObject obj = Instantiate(CardOppFieldPrefab, OppHeroArea);
+                obj.GetComponent<CardData>().CardOverride(card);
+            }
+        }
+    }
+
+    private void SpawnCharacterToMyField(Card card)
+    {
+        GameObject obj = Instantiate(CardMyFieldPrefab, MyHeroArea);
+        obj.GetComponent<CardData>().CardOverride(card);
     }
     #endregion
 
     #region Public Methods
-    public void HandCardOffset(int offset)
+    public void HandCardOffset(System.Single offset)
     {
+        int o = (int)Math.Floor(offset);
         for(int i = 0; i < P1Hand.Count; i++)
         {
-            int j = offset+i;
+            int j = o+i;
             if(j >= P1Hand.Count)
             {
                 j -= P1Hand.Count;
@@ -440,6 +473,59 @@ public class CardDataBase : MonoBehaviour
             lHandData[i].CardOverride(P1Hand[j]);
         }
         CheckActiveCard();
+    }
+
+    public void PlayCard(Card card)
+    {
+        //Card should be determined based on type how it will be played.
+        bool endTurn = false;
+        switch (card.CardType)
+        {
+            case Card.Type.Ability:
+                //Target a Character
+                //Update character
+                //Count move down
+                OnTargeting?.Invoke(true);
+                GM.TurnCounterDecrement();
+                if (GM.GetTurnCounter() == 0)
+                {
+                    endTurn = true;
+                }
+                break;
+            case Card.Type.Character:
+                //Place Character on the field
+                //Spawn a Character on the field
+                SpawnCharacterToMyField(card);
+                PV.RPC("SpawnCharacterToOpponentField", RpcTarget.OthersBuffered, card.Name);
+                OnTargeting?.Invoke(true);
+                GM.TurnCounterDecrement();
+                if (GM.GetTurnCounter() == 0)
+                {
+                    endTurn = true;
+                }
+                break;
+            case Card.Type.Enhancement:
+                //Target a Character
+                //Update character
+                //Count move down
+                //If move amount is up, end turn
+                OnTargeting?.Invoke(true);
+                GM.TurnCounterDecrement();
+                if (GM.GetTurnCounter() == 0)
+                {
+                    endTurn = true;
+                }
+                break;
+            case Card.Type.Feat:
+                //Resolve Feat ability
+                endTurn = true;
+                break;
+        }
+        if (endTurn)
+        {
+            GM.SwitchTurn(false);
+            HandleTurnDeclaration(true);
+        }
     }
 
     public void DrawCard(CardDecks Deck)
