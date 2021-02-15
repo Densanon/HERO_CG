@@ -26,11 +26,12 @@ public class CardDataBase : MonoBehaviour
     public CardData CurrentActiveCard;
 
     #region Debuging
-    public bool autoDraft = false;
+    public bool AiDraft = false;
+    public bool AutoDraft = false;
     #endregion
 
     public static Action<bool> OnTurnDelcarationReceived = delegate { };
-    public static Action<Card> OnAutoDraftCollected = delegate { };
+    public static Action<Card> OnAiDraftCollected = delegate { };
     public static Action<bool> OnTargeting = delegate { };
  
     #region Card Data Base
@@ -51,6 +52,9 @@ public class CardDataBase : MonoBehaviour
     List<Card> HeroSelection = new List<Card>();
     List<Card> HeroReserve = new List<Card>();
     List<Card> AbilityDraft = new List<Card>();
+
+    List<Card> P1AutoAbilities = new List<Card>();
+    List<Card> P2AutoAbilities = new List<Card>();
 
     List<Card> P1Hand = new List<Card>();
     List<Card> P1Field = new List<Card>();
@@ -146,7 +150,33 @@ public class CardDataBase : MonoBehaviour
             AbilityDraft.Add(item);
         }
 
-        for(int i = 0; i < 48; i++)
+        P1AutoAbilities.Add(Feats[0]);
+        P1AutoAbilities.Add(Abilities[1]);
+        P1AutoAbilities.Add(Abilities[6]);
+        P1AutoAbilities.Add(Abilities[0]);
+        P1AutoAbilities.Add(Abilities[8]);
+        P1AutoAbilities.Add(Abilities[2]);
+        P1AutoAbilities.Add(Feats[3]);
+        P1AutoAbilities.Add(Abilities[3]);
+        P1AutoAbilities.Add(Abilities[7]);
+        P1AutoAbilities.Add(Abilities[14]);
+        P1AutoAbilities.Add(Abilities[13]);
+        P1AutoAbilities.Add(Abilities[4]);
+
+        P2AutoAbilities.Add(Feats[1]);
+        P2AutoAbilities.Add(Abilities[18]);
+        P2AutoAbilities.Add(Abilities[11]);
+        P2AutoAbilities.Add(Abilities[15]);
+        P2AutoAbilities.Add(Abilities[10]);
+        P2AutoAbilities.Add(Abilities[16]);
+        P2AutoAbilities.Add(Feats[2]);
+        P2AutoAbilities.Add(Abilities[9]);
+        P2AutoAbilities.Add(Abilities[17]);
+        P2AutoAbilities.Add(Abilities[5]);
+        P2AutoAbilities.Add(Abilities[12]);
+        P2AutoAbilities.Add(Abilities[19]);
+
+        for (int i = 0; i < 48; i++)
         {
             if(i < 20)
             {
@@ -206,16 +236,50 @@ public class CardDataBase : MonoBehaviour
     [PunRPC]
     private void SetupAbilityDraft(bool yes)
     {
-        for (int i = Draft.Count -1; i > -1; i--)
+        if(!AutoDraft)
         {
-            var item = Draft[i];
-            Draft.Remove(item);
-            Destroy(item.gameObject);
+            for (int i = Draft.Count - 1; i > -1; i--)
+            {
+                var item = Draft[i];
+                Draft.Remove(item);
+                Destroy(item.gameObject);
+            }
+
+            GM.PhaseChange(PhotonGameManager.GamePhase.AbilityDraft);
+
+            DisplayDraft(AbilityDraft);
+        }else if(AutoDraft && PhotonGameManager.player == PhotonGameManager.PlayerNum.P1)
+        {
+            foreach(Card card in P1AutoAbilities)
+            {
+                P1Deck.Add(card);
+            }
+            if (PhotonGameManager.myTurn)
+            {
+                GM.PhaseChange(PhotonGameManager.GamePhase.HEROSelect);
+            }
+            else
+            {
+                GM.PhaseChange(PhotonGameManager.GamePhase.Wait);
+            }
+            DraftArea.gameObject.SetActive(false);
         }
-
-        GM.PhaseChange(PhotonGameManager.GamePhase.AbilityDraft);
-
-        DisplayDraft(AbilityDraft);
+        else if(AutoDraft && PhotonGameManager.player == PhotonGameManager.PlayerNum.P2)
+        {
+            foreach (Card card in P2AutoAbilities)
+            {
+                P1Deck.Add(card);
+            }
+            if (PhotonGameManager.myTurn)
+            {
+                GM.PhaseChange(PhotonGameManager.GamePhase.HEROSelect);
+            }
+            else
+            {
+                GM.PhaseChange(PhotonGameManager.GamePhase.Wait);
+            }
+            DraftArea.gameObject.SetActive(false);
+        }
     }
 
     [PunRPC]
@@ -252,7 +316,8 @@ public class CardDataBase : MonoBehaviour
                 if(Draft.Count == 0 && PhotonGameManager.myTurn)
                 {
                     Debug.Log("The Ability draft is over!");
-                    PV.RPC("EndAbilityDraft", RpcTarget.AllBufferedViaServer, true);
+                    PV.RPC("EndAbilityDraft", RpcTarget.Others, true);
+                    GM.PhaseChange(PhotonGameManager.GamePhase.Wait);
                 }
                 break;
         }
@@ -316,6 +381,29 @@ public class CardDataBase : MonoBehaviour
     #endregion
 
     #region Turn Declaration
+    public void HandlePlayerDeclaration(int player)
+    {
+        PV.RPC("DeclarePlayer", RpcTarget.OthersBuffered, player);
+    }
+
+    [PunRPC]
+    private void DeclarePlayer(int currentPlayer)
+    {
+        switch (currentPlayer)
+        {
+            case 0:
+                GM.SetPlayerNum(PhotonGameManager.PlayerNum.P2);
+                break;
+            case 1:
+                GM.SetPlayerNum(PhotonGameManager.PlayerNum.P1);
+                break;
+            case 2:
+                break;
+            case 3:
+                break;
+        }
+    }
+
     public void HandleTurnDeclaration(bool myTurn)
     {
         PV.RPC("DeclaredTurn", RpcTarget.Others, myTurn);
@@ -331,9 +419,14 @@ public class CardDataBase : MonoBehaviour
 
     #region Private Methods
     #region Debugging
+    public void SetAiDraft(bool set)
+    {
+        AiDraft = set;
+    }
+
     public void SetAutoDraft(bool set)
     {
-        autoDraft = set;
+        AutoDraft = set;
     }
 
     public void DrawDraftCard(string draftDeck)
@@ -342,11 +435,11 @@ public class CardDataBase : MonoBehaviour
         {
             case "HeroSelection":
                 Debug.Log("Picking random card for Auto hero draw.");
-                OnAutoDraftCollected?.Invoke(HeroSelection[UnityEngine.Random.Range(0, HeroSelection.Count)]);
+                OnAiDraftCollected?.Invoke(HeroSelection[UnityEngine.Random.Range(0, HeroSelection.Count)]);
                 break;
             case "AbilityDraft":
                 Debug.Log("Picking random card for Auto ability draw.");
-                OnAutoDraftCollected?.Invoke(AbilityDraft[UnityEngine.Random.Range(0, AbilityDraft.Count)]);
+                OnAiDraftCollected?.Invoke(AbilityDraft[UnityEngine.Random.Range(0, AbilityDraft.Count)]);
                 break;
         }
     }
@@ -532,9 +625,9 @@ public class CardDataBase : MonoBehaviour
     {
         switch (Deck)
         {
-            case CardDecks.P1Hand:
+            case CardDecks.P1Deck:
                 Debug.Log("Drawing a card from P1Hand.");
-                DrawRandomCard(P1Hand);
+                DrawRandomCard(P1Deck);
                 break;
             case CardDecks.HQ:
                 DrawRandomCard(HeroSelection);

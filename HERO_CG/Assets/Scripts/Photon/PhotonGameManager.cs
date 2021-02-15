@@ -12,10 +12,13 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
 {
     public enum GamePhase { HeroDraft, AbilityDraft, HEROSelect, Heal, Enhance, Recruit, Overcome, Feat, TurnResponse, Wait}
     public static GamePhase myPhase = GamePhase.HeroDraft;
+    public enum PlayerNum { P1, P2, P3, P4}
+    public static PlayerNum player;
 
     public CardDataBase CB;
 
     public TMP_Text TurnIndicator;
+    public TMP_Text PhaseIndicator;
 
     public GameObject gCardZoom;
     public CardData gCard;
@@ -52,7 +55,7 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
         CardFunction.OnCardDeselected += HandleDeselection;
         CardFunction.OnCardCollected += HandleCardCollected;
         UIConfirmation.OnHEROSelection += PhaseChange;
-        CardDataBase.OnAutoDraftCollected += HandleCardCollected;
+        CardDataBase.OnAiDraftCollected += HandleCardCollected;
         CardDataBase.OnTargeting += HandleTargetting;
     }
 
@@ -63,13 +66,13 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
         CardFunction.OnCardDeselected -= HandleDeselection;
         CardFunction.OnCardCollected -= HandleCardCollected;
         UIConfirmation.OnHEROSelection -= PhaseChange;
-        CardDataBase.OnAutoDraftCollected -= HandleCardCollected;
+        CardDataBase.OnAiDraftCollected -= HandleCardCollected;
         CardDataBase.OnTargeting -= HandleTargetting;
     }
 
     private void Start()
     {
-        CB.autoDraft = true;
+        //CB.AiDraft = true;
         if (PhotonNetwork.IsMasterClient)
         {
             var turnStart = UnityEngine.Random.Range(0, 2);
@@ -77,6 +80,8 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
             {
                 Debug.Log("I go first.");
                 myTurn = true;
+                player = PlayerNum.P1;
+                CB.HandlePlayerDeclaration(0);
                 StartCoroutine(TurnDeclaration(myTurn));
                 CB.HandleTurnDeclaration(!myTurn);
                 CB.HandleBuildHeroDraft();
@@ -85,6 +90,8 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
             {
                 Debug.Log("I go last.");
                 myTurn = false;
+                player = PlayerNum.P2;
+                CB.HandlePlayerDeclaration(1);
                 StartCoroutine(TurnDeclaration(myTurn));
                 CB.HandleTurnDeclaration(!myTurn);
                 CB.HandleBuildHeroDraft();
@@ -114,6 +121,11 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
         Debug.Log($"Phase is being changed to {phaseToChangeTo}");
         myPhase = phaseToChangeTo;
         HandlePhaseChange();
+    }
+
+    public void SetPlayerNum(PlayerNum playerSet)
+    {
+        player = playerSet;
     }
 
     public void SwitchTurn(bool turn)
@@ -299,6 +311,7 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
         switch (myPhase)
         {
             case GamePhase.Heal:
+                PhaseIndicator.text = "Heal";
                 gHEROSelect.SetActive(false);
                 //Select 1+ heros to be healed(any)
                 CardPlaySetup();
@@ -308,6 +321,7 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
                 //Draw up to 3 cards from enhance deck
                 //Play up to 3 cards from your hand
                 Debug.Log("Handling the 'Enhance' Option");
+                PhaseIndicator.text = "Enhance";
                 gHEROSelect.SetActive(false);
                 gCardCountCollect.SetActive(true);
                 int i = CB.CardsRemaining(CardDataBase.CardDecks.P1Deck);
@@ -336,10 +350,12 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
                 iTurnCounter = 3;
                 break;
             case GamePhase.Recruit:
+                PhaseIndicator.text = "Recruit";
                 gHEROSelect.SetActive(false);
                 //pick up to 2 Heros either from Reserve or HQ
                 break;
             case GamePhase.Overcome:
+                PhaseIndicator.text = "Overcome";
                 gHEROSelect.SetActive(false);
                 //Declare attacking hero(s) as a single attack, directed towards a single target
                 //Calculate all attack power from total heros and abilities
@@ -348,17 +364,27 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
                 //Able to repeate
                 break;
             case GamePhase.Feat:
+                PhaseIndicator.text = "Feat";
                 gHEROSelect.SetActive(false);
                 //Resolve card
                 break;
             case GamePhase.TurnResponse:
+                PhaseIndicator.text = "Turn Response";
                 gCardOption.SetActive(true);
                 break;
             case GamePhase.Wait:
+                PhaseIndicator.text = "Wait";
                 gCardOption.SetActive(false);
                 break;
             case GamePhase.HEROSelect:
+                PhaseIndicator.text = "Hero Selection";
                 HEROSelectionBegin();
+                break;
+            case GamePhase.AbilityDraft:
+                PhaseIndicator.text = "Ability Draft";
+                break;
+            case GamePhase.HeroDraft:
+                PhaseIndicator.text = "Hero Draft";
                 break;
         }
     }
@@ -394,7 +420,7 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
             {
                 case GamePhase.HeroDraft:
                     StartCoroutine(PhaseDeclaration("Hero Drafting"));
-                    if (CB.autoDraft)
+                    if (CB.AiDraft)
                     {
                         Debug.Log("Taking auto turn in Hero Draft");
                         CB.DrawDraftCard("HeroSelection");
@@ -406,10 +432,14 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
                         StartCoroutine(PhaseDeclaration("Ability Drafting"));
                         bAbilityDraftStart = true;
                     }
-                    if (CB.autoDraft)
+                    if (CB.AiDraft)
                     {
                         Debug.Log("Taking auto turn in Ability Draft");
                         CB.DrawDraftCard("AbilityDraft");
+                    }
+                    if (CB.AutoDraft)
+                    {
+
                     }
                     break;
                 case GamePhase.HEROSelect:

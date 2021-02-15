@@ -129,12 +129,21 @@ public class CardData : MonoBehaviour
     #region Private Methods
     private void UISetup()
     {
-        if(Title.text != null) Title.text = Name;
-        if(tFlavor.text != null) tFlavor.text = Flavor;
+        if (Title.text != null)
+        {
+            Title.text = Name;
+        }
+        if (tFlavor.text != null)
+        {
+            tFlavor.text = Flavor;
+        }
         Icon.sprite = CardImage;
         tAttack.text = Attack.ToString();
         tDefense.text = Defense.ToString();
-        if(tAbility.text != null) tAbility.text = Ability;
+        if (tAbility.text != null)
+        {
+            tAbility.text = Ability;
+        }
     }
 
     private void HandleTargetting(bool targetting)
