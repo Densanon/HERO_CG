@@ -17,15 +17,20 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
 
     public CardDataBase CB;
 
+    public TMP_Text TurnActionIndicator;
     public TMP_Text TurnIndicator;
     public TMP_Text PhaseIndicator;
 
     public GameObject gCardZoom;
     public CardData gCard;
     public GameObject gCardOption;
+    public GameObject gCardSelect;
+    public GameObject gCardPlay;
 
     public GameObject PhaseDeclarationUI;
     public TMP_Text PhaseText;
+
+    public TMP_Text tOpponentHandCount;
 
     public GameObject gHEROSelect;
     public GameObject gCardCountCollect;
@@ -39,7 +44,6 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
     private bool bAI = false;
     public static bool myTurn { get; private set; }
     private bool bAbilityDraftStart = false;
-    private bool targetting = false;
     private bool zoomed = false;
     private bool handZoomed = false;
     private bool heroDrafted = false;
@@ -54,9 +58,9 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
         CardFunction.OnCardSelected += HandleCardSelecion;
         CardFunction.OnCardDeselected += HandleDeselection;
         CardFunction.OnCardCollected += HandleCardCollected;
+        CardFunction.OnCardPlayed += HandlePlayCard;
         UIConfirmation.OnHEROSelection += PhaseChange;
         CardDataBase.OnAiDraftCollected += HandleCardCollected;
-        CardDataBase.OnTargeting += HandleTargetting;
     }
 
     private void OnDestroy()
@@ -65,14 +69,16 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
         CardFunction.OnCardSelected -= HandleCardSelecion;
         CardFunction.OnCardDeselected -= HandleDeselection;
         CardFunction.OnCardCollected -= HandleCardCollected;
+        CardFunction.OnCardPlayed -= HandlePlayCard;
         UIConfirmation.OnHEROSelection -= PhaseChange;
         CardDataBase.OnAiDraftCollected -= HandleCardCollected;
-        CardDataBase.OnTargeting -= HandleTargetting;
     }
 
     private void Start()
     {
         //CB.AiDraft = true;
+        PhaseIndicator.text = "Hero Draft";
+        tOpponentHandCount.text = "0";
         if (PhotonNetwork.IsMasterClient)
         {
             var turnStart = UnityEngine.Random.Range(0, 2);
@@ -128,11 +134,16 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
         player = playerSet;
     }
 
+    public void SetOpponentHandCount(int number)
+    {
+        tOpponentHandCount.text = $"{number}";
+    }
+
     public void SwitchTurn(bool turn)
     {
-        Debug.Log("I am handling my turn from what I was told.");
         myTurn = turn;
         StartCoroutine(TurnDeclaration(myTurn));
+        PhaseAdjustment();
     }
 
     public void SetCardCollectAmount(int amount)
@@ -156,28 +167,44 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
             switch (myPhase)
             {
                 case GamePhase.HEROSelect:
+                    gCardSelect.SetActive(false);
                     gCardOption.SetActive(false);
+                    gCardPlay.SetActive(false);
                     break;
                 case GamePhase.AbilityDraft:
+                    gCardSelect.SetActive(false);
                     gCardOption.SetActive(false);
+                    gCardPlay.SetActive(false);
                     break;
                 case GamePhase.HeroDraft:
+                    gCardSelect.SetActive(false);
                     gCardOption.SetActive(false);
+                    gCardPlay.SetActive(false);
                     break;
                 case GamePhase.Heal:
-                    gCardOption.SetActive(true);
+                    gCardSelect.SetActive(true);
+                    gCardOption.SetActive(false);
+                    gCardPlay.SetActive(false);
                     break;
                 case GamePhase.Enhance:
-                    gCardOption.SetActive(true);
+                    gCardSelect.SetActive(false);
+                    gCardOption.SetActive(false);
+                    gCardPlay.SetActive(true);
                     break;
                 case GamePhase.Recruit:
+                    gCardSelect.SetActive(false);
                     gCardOption.SetActive(false);
+                    gCardPlay.SetActive(false);
                     break;
                 case GamePhase.Overcome:
-                    gCardOption.SetActive(true);
+                    gCardSelect.SetActive(true);
+                    gCardOption.SetActive(false);
+                    gCardPlay.SetActive(false);
                     break;
                 case GamePhase.Feat:
-                    gCardOption.SetActive(true);
+                    gCardSelect.SetActive(true);
+                    gCardOption.SetActive(false);
+                    gCardPlay.SetActive(false);
                     break;
             }
         }
@@ -185,11 +212,15 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
         {
             if(myPhase == GamePhase.TurnResponse)
             {
-                gCardOption.SetActive(true);
+                gCardSelect.SetActive(true);
+                gCardOption.SetActive(false);
+                gCardPlay.SetActive(false);
             }
             else if(myPhase == GamePhase.Wait)
             {
+                gCardSelect.SetActive(false);
                 gCardOption.SetActive(false);
+                gCardPlay.SetActive(false);
             }
         }
     }
@@ -202,17 +233,6 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
         }
     }
 
-    public void FieldHeroZoom(CardData card)
-    {
-        gCardZoom.SetActive(true);
-        gCard.CardOverride(card);
-    }
-
-    public void HandleTargetting(bool targetting)
-    {
-        this.targetting = targetting;
-    }
-
     #region Move Counter Methods
     public int GetTurnCounter()
     {
@@ -222,6 +242,7 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
     public void TurnCounterDecrement()
     {
         iTurnCounter--;
+        TurnActionIndicator.text = $"Actions Remaining: {iTurnCounter}";
     }
     #endregion
 
@@ -259,17 +280,60 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
             case GamePhase.HEROSelect:
                 break;
             case GamePhase.Heal:
+                if (!zoomed)
+                {
+                    Debug.Log($"Zooming Card: {card.Name}");
+                    CardZoom(card);
+                }
                 break;
             case GamePhase.Enhance:
-                CB.PlayCard(card.myCard);
+                if (!zoomed)
+                {
+                    Debug.Log($"Zooming Card: {card.Name}");
+                    CardZoom(card);
+                }
                 break;
             case GamePhase.Recruit:
+                if (!zoomed)
+                {
+                    Debug.Log($"Zooming Card: {card.Name}");
+                    CardZoom(card);
+                }
                 break;
             case GamePhase.Overcome:
+                if (!zoomed)
+                {
+                    Debug.Log($"Zooming Card: {card.Name}");
+                    CardZoom(card);
+                }
                 break;
             case GamePhase.Feat:
+                if (!zoomed)
+                {
+                    Debug.Log($"Zooming Card: {card.Name}");
+                    CardZoom(card);
+                }
+                break;
+            case GamePhase.TurnResponse:
+                if (!zoomed)
+                {
+                    Debug.Log($"Zooming Card: {card.Name}");
+                    CardZoom(card);
+                }
+                break;
+            case GamePhase.Wait:
+                if (!zoomed)
+                {
+                    Debug.Log($"Zooming Card: {card.Name}");
+                    CardZoom(card);
+                }
                 break;
         }
+    }
+
+    private void HandlePlayCard(Card card)
+    {
+        CB.PlayCard(card);
     }
 
     private void CardZoom(CardData card)
@@ -290,15 +354,16 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
     {
         zoomed = false;
         Debug.Log("Sending Card Collected.");
-        CB.HandleCardCollected(card, myPhase);
         SwitchTurn();
         CB.HandleTurnDeclaration(!myTurn);
+        CB.HandleCardCollected(card, myPhase);
     }
 
     private void SwitchTurn()
     {
         myTurn = !myTurn;
-        StartCoroutine(TurnDeclaration(myTurn)); 
+        StartCoroutine(TurnDeclaration(myTurn));
+        PhaseAdjustment();
     }
 
     private void HEROSelectionBegin()
@@ -348,6 +413,7 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
                         break;
                 }
                 iTurnCounter = 3;
+                TurnActionIndicator.text = $"Actions Remaining: {iTurnCounter}";
                 break;
             case GamePhase.Recruit:
                 PhaseIndicator.text = "Recruit";
@@ -389,10 +455,39 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
         }
     }
 
+    private void PhaseAdjustment()
+    {
+        switch (myPhase)
+        {
+            case GamePhase.Enhance:
+                PhaseChange(GamePhase.Wait);
+                break;
+            case GamePhase.Feat:
+                PhaseChange(GamePhase.Wait);
+                break;
+            case GamePhase.Heal:
+                PhaseChange(GamePhase.Wait);
+                break;
+            case GamePhase.Overcome:
+                PhaseChange(GamePhase.Wait);
+                break;
+            case GamePhase.Recruit:
+                PhaseChange(GamePhase.Wait);
+                break;
+            case GamePhase.TurnResponse:
+                PhaseChange(GamePhase.HEROSelect);
+                break;
+            case GamePhase.Wait:
+                PhaseChange(GamePhase.HEROSelect);
+                break;
+        }
+    }
+
     private void CardPlaySetup()
     {
         //Prompt to play up to xamount, update as played
         //
+        StartCoroutine(PhaseDeclaration("Play Cards"));
         Debug.Log("Ready to Select Cards to play.");
         gCardCountCollect.SetActive(false);
     }

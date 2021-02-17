@@ -32,7 +32,7 @@ public class CardDataBase : MonoBehaviour
 
     public static Action<bool> OnTurnDelcarationReceived = delegate { };
     public static Action<Card> OnAiDraftCollected = delegate { };
-    public static Action<bool> OnTargeting = delegate { };
+    public static Action<Card> OnTargeting = delegate { };
  
     #region Card Data Base
     [SerializeField] private Sprite[] HeroImages = new Sprite[20];
@@ -57,12 +57,12 @@ public class CardDataBase : MonoBehaviour
     List<Card> P2AutoAbilities = new List<Card>();
 
     List<Card> P1Hand = new List<Card>();
-    List<Card> P1Field = new List<Card>();
+    List<CardData> P1Field = new List<CardData>();
     List<Card> P1Deck = new List<Card>();
     List<Card> P1Discard = new List<Card>();
 
     List<Card> P2Hand = new List<Card>();
-    List<Card> P2Field = new List<Card>();
+    List<CardData> P2Field = new List<CardData>();
     List<Card> P2Deck = new List<Card>();
     List<Card> P2Discard = new List<Card>();
     #endregion
@@ -71,6 +71,9 @@ public class CardDataBase : MonoBehaviour
     private void Awake()
     {
         PV = GetComponent<PhotonView>();
+
+        UIConfirmation.OnTargetAccepted += HandleTargetAccepted;
+        CardData.OnNumericAdjustment += HandleCardAdjustment;
 
         Heros[0] = new Card(Card.Type.Character, "AKIO", 20, 70, "<< Societal freedom is a mirage for true hope. >>", "(P) When Akio causes another hero to be fatigued, Akio is not fatigued. If Akio attacks and causes the hero he attacks to become fatigued, Akio is not fatigued and may continue attacking.", HeroImages[0]);
         Heros[1] = new Card(Card.Type.Character, "AYUMI", 40, 50, "<< The River will meet all your needs. >>", "(P) Whenever a hero is recruited, you may draw a card from your Enhancement Deck. If a player takes a Recruit Action and they choose to recruit 2 heroes, you may draw 2 cards.", HeroImages[1]);
@@ -193,6 +196,12 @@ public class CardDataBase : MonoBehaviour
             }
         }
     }
+
+    private void OnDestroy()
+    {
+        UIConfirmation.OnTargetAccepted -= HandleTargetAccepted;
+        CardData.OnNumericAdjustment -= HandleCardAdjustment;
+    }
     #endregion
 
 
@@ -250,33 +259,27 @@ public class CardDataBase : MonoBehaviour
             DisplayDraft(AbilityDraft);
         }else if(AutoDraft && PhotonGameManager.player == PhotonGameManager.PlayerNum.P1)
         {
+            Debug.Log("I am setting up abilities as player1");
             foreach(Card card in P1AutoAbilities)
             {
                 P1Deck.Add(card);
             }
             if (PhotonGameManager.myTurn)
             {
-                GM.PhaseChange(PhotonGameManager.GamePhase.HEROSelect);
-            }
-            else
-            {
-                GM.PhaseChange(PhotonGameManager.GamePhase.Wait);
+                PV.RPC("EndAbilityDraft", RpcTarget.All, true);
             }
             DraftArea.gameObject.SetActive(false);
         }
         else if(AutoDraft && PhotonGameManager.player == PhotonGameManager.PlayerNum.P2)
         {
+            Debug.Log("I am setting up abilities as player2");
             foreach (Card card in P2AutoAbilities)
             {
                 P1Deck.Add(card);
             }
             if (PhotonGameManager.myTurn)
             {
-                GM.PhaseChange(PhotonGameManager.GamePhase.HEROSelect);
-            }
-            else
-            {
-                GM.PhaseChange(PhotonGameManager.GamePhase.Wait);
+                PV.RPC("EndAbilityDraft", RpcTarget.All, true);
             }
             DraftArea.gameObject.SetActive(false);
         }
@@ -316,8 +319,7 @@ public class CardDataBase : MonoBehaviour
                 if(Draft.Count == 0 && PhotonGameManager.myTurn)
                 {
                     Debug.Log("The Ability draft is over!");
-                    PV.RPC("EndAbilityDraft", RpcTarget.Others, true);
-                    GM.PhaseChange(PhotonGameManager.GamePhase.Wait);
+                    PV.RPC("EndAbilityDraft", RpcTarget.All, true);
                 }
                 break;
         }
@@ -343,6 +345,7 @@ public class CardDataBase : MonoBehaviour
                 DisplayDraft(HeroSelection);
                 break;
             case "P2Hand":
+                P2Hand.Clear();
                 foreach(string cardName in listToShare)
                 {
                     foreach(Card card in CardBase)
@@ -354,6 +357,7 @@ public class CardDataBase : MonoBehaviour
                         }
                     }
                 }
+                GM.SetOpponentHandCount(CardsRemaining(CardDecks.P2Hand));
                 break;
             case "P2Discard":
                 foreach (string cardName in listToShare)
@@ -376,7 +380,14 @@ public class CardDataBase : MonoBehaviour
     [PunRPC]
     private void EndAbilityDraft(bool yes)
     {
-        GM.PhaseChange(PhotonGameManager.GamePhase.HEROSelect);
+        if (PhotonGameManager.myTurn)
+        {
+            GM.PhaseChange(PhotonGameManager.GamePhase.HEROSelect);
+        }
+        else
+        {
+            GM.PhaseChange(PhotonGameManager.GamePhase.Wait);
+        }
     }
     #endregion
 
@@ -445,6 +456,102 @@ public class CardDataBase : MonoBehaviour
     }
     #endregion
 
+    private void HandleTargetAccepted(CardData card, Card cardToUse)
+    {
+        Card.Type type = cardToUse.CardType;
+        switch (type)
+        {
+            case Card.Type.Ability:
+                SpawnAbility(cardToUse.Name, card);
+                break;
+            case Card.Type.Enhancement:
+                if(cardToUse.Attack > 0)
+                {
+                    card.AdjustAttack(cardToUse.Attack);
+                }
+                if(cardToUse.Defense > 0)
+                {
+                    card.AdjustDefense(cardToUse.Defense);
+                }
+                break;
+            case Card.Type.Character:
+                break;
+        }
+        OnTargeting(cardToUse);
+        GM.TurnCounterDecrement();
+        if (GM.GetTurnCounter() == 0)
+        {
+            GM.SwitchTurn(false);
+            HandleTurnDeclaration(true);
+            if (PhotonGameManager.myPhase != PhotonGameManager.GamePhase.Wait)
+            {
+                GM.PhaseChange(PhotonGameManager.GamePhase.Wait);
+            }
+        }
+    }
+
+    private void HandleCardAdjustment(CardData cardToAdjust, string category, int newValue)
+    {
+        //could also set it to specific player
+        Debug.Log("Sending A Card Adjustment Request.");
+        PV.RPC("CardAdjustment", RpcTarget.OthersBuffered, cardToAdjust.Name, category, newValue);
+    }
+
+    [PunRPC]
+    private void CardAdjustment(string name, string category, int newValue)
+    {
+        //P2Field could be set to a specified player
+        Debug.Log($"Looking for {name} to adjust {category} to {newValue}.");
+        bool found = false;
+        foreach(CardData data in P2Field)
+        {
+            Debug.Log($"Checking to see if {data.Name} matches {name}");
+            if(data.Name == name)
+            {
+                Debug.Log($"Found a match {data.Name}, in my opponents Field");
+                switch (category)
+                {
+                    case "Attack":
+                        Debug.Log("Adjusting the Attack.");
+                        data.SetAttack(newValue);
+                        break;
+                    case "Defense":
+                        Debug.Log("Adjusting the Defense.");
+                        data.SetDefense(newValue);
+                        break;
+                }
+                found = true;
+                break;
+            }
+        }
+        if (!found)
+        {
+            foreach(CardData data in P1Field)
+            {
+                if (data.Name == name)
+                {
+                    Debug.Log($"Found a match {data.Name}, in my Field");
+                    switch (category)
+                    {
+                        case "Attack":
+                            Debug.Log("Adjusting the Attack.");
+                            data.SetAttack(newValue);
+                            break;
+                        case "Defense":
+                            Debug.Log("Adjusting the Defense.");
+                            data.SetDefense(newValue);
+                            break;
+                    }
+                    break;
+                }
+            }
+        }
+        else
+        {
+            Debug.Log("I found the Hero Card and adjusted it's values.");
+        }
+    }
+
     private void UpdateHandSlider()
     {
         if(P1Hand.Count != 0)
@@ -498,7 +605,27 @@ public class CardDataBase : MonoBehaviour
             lHandData.Add(data);
             CheckActiveCard();
         }
+        GetHandToShare();
+    }
 
+    private void RemoveCardFromHand(Card cardToRemove)
+    {
+        P1Hand.Remove(cardToRemove);
+        foreach(CardData data in lHandData)
+        {
+            if(data.myCard == cardToRemove)
+            {
+                lHandData.Remove(data);
+                if(P1Hand.Count < 7)
+                {
+                    Destroy(data.gameObject);
+                }
+                break;
+            }
+        }
+        UpdateHandSlider();
+        CheckActiveCard();
+        GetHandToShare();
     }
 
     private void CheckActiveCard()
@@ -532,6 +659,16 @@ public class CardDataBase : MonoBehaviour
         Debug.Log($"ActiveCardCheck: {CurrentActiveCard.Name}");
     }
 
+    private void GetHandToShare()
+    {
+        List<string> names = new List<string>();
+        foreach(Card card in P1Hand)
+        {
+            names.Add(card.Name);
+        }
+        PV.RPC("ShareCardList", RpcTarget.Others, "P2Hand" ,names.ToArray());
+    }
+
     [PunRPC]
     private void SpawnCharacterToOpponentField(string heroToSpawn)
     {
@@ -540,7 +677,10 @@ public class CardDataBase : MonoBehaviour
             if(card.Name == heroToSpawn)
             {
                 GameObject obj = Instantiate(CardOppFieldPrefab, OppHeroArea);
-                obj.GetComponent<CardData>().CardOverride(card);
+                CardData data = obj.GetComponent<CardData>();
+                data.CardOverride(card);
+                P2Field.Add(data);
+                break;
             }
         }
     }
@@ -549,6 +689,74 @@ public class CardDataBase : MonoBehaviour
     {
         GameObject obj = Instantiate(CardMyFieldPrefab, MyHeroArea);
         obj.GetComponent<CardData>().CardOverride(card);
+    }
+
+    private void SpawnAbility(string AbilityName, CardData cardToAttachTo)
+    {
+        switch (AbilityName)
+        {
+            case "ACCELERATE":
+                cardToAttachTo.gameObject.AddComponent<aAccelerate>();
+                break;
+            case "BACKFIRE":
+                cardToAttachTo.gameObject.AddComponent<aBackfire>();
+                break;
+            case "BOLSTER":
+                cardToAttachTo.gameObject.AddComponent<aBolster>();
+                break;
+            case "BOOST":
+                cardToAttachTo.gameObject.AddComponent<aBoost>();
+                break;
+            case "COLLATERAL DAMAGE":
+                cardToAttachTo.gameObject.AddComponent<aCollateralDamage>();
+                break;
+            case "CONVERT":
+                cardToAttachTo.gameObject.AddComponent<aConvert>();
+                break;
+            case "COUNTER-MEASURES":
+                cardToAttachTo.gameObject.AddComponent<aCounterMeasures>();
+                break;
+            case "DROUGHT":
+                cardToAttachTo.gameObject.AddComponent<aDrought>();
+                break;
+            case "FORTIFICATION":
+                cardToAttachTo.gameObject.AddComponent<aFortification>();
+                break;
+            case "GOING NUCLEAR":
+                cardToAttachTo.gameObject.AddComponent<aGoingNuclear>();
+                break;
+            case "HARDENED":
+                cardToAttachTo.gameObject.AddComponent<aHardened>();
+                break;
+            case "IMPEDE":
+                cardToAttachTo.gameObject.AddComponent<aImpede>();
+                break;
+            case "KAIROS":
+                cardToAttachTo.gameObject.AddComponent<aKairos>();
+                break;
+            case "PREVENTION":
+                cardToAttachTo.gameObject.AddComponent<aPrevention>();
+                break;
+            case "PROTECT":
+                cardToAttachTo.gameObject.AddComponent<aProtect>();
+                break;
+            case "REDUCTION":
+                cardToAttachTo.gameObject.AddComponent<aReduction>();
+                break;
+            case "REINFORCEMENT":
+                cardToAttachTo.gameObject.AddComponent<aReinforcement>();
+                break;
+            case "RESURRECT":
+                cardToAttachTo.gameObject.AddComponent<aResurrect>();
+                break;
+            case "REVELATION":
+                cardToAttachTo.gameObject.AddComponent<aRevelation>();
+                break;
+            case "SHEILDING":
+                cardToAttachTo.gameObject.AddComponent<aShielding>();
+                break;
+
+        }
     }
     #endregion
 
@@ -578,19 +786,15 @@ public class CardDataBase : MonoBehaviour
                 //Target a Character
                 //Update character
                 //Count move down
-                OnTargeting?.Invoke(true);
-                GM.TurnCounterDecrement();
-                if (GM.GetTurnCounter() == 0)
-                {
-                    endTurn = true;
-                }
+                OnTargeting?.Invoke(card);
                 break;
             case Card.Type.Character:
                 //Place Character on the field
                 //Spawn a Character on the field
+                Debug.Log($"Setting a Character card on the field: {card.Name}.");
                 SpawnCharacterToMyField(card);
                 PV.RPC("SpawnCharacterToOpponentField", RpcTarget.OthersBuffered, card.Name);
-                OnTargeting?.Invoke(true);
+                RemoveCardFromHand(card);
                 GM.TurnCounterDecrement();
                 if (GM.GetTurnCounter() == 0)
                 {
@@ -602,12 +806,7 @@ public class CardDataBase : MonoBehaviour
                 //Update character
                 //Count move down
                 //If move amount is up, end turn
-                OnTargeting?.Invoke(true);
-                GM.TurnCounterDecrement();
-                if (GM.GetTurnCounter() == 0)
-                {
-                    endTurn = true;
-                }
+                OnTargeting?.Invoke(card);
                 break;
             case Card.Type.Feat:
                 //Resolve Feat ability
@@ -618,6 +817,10 @@ public class CardDataBase : MonoBehaviour
         {
             GM.SwitchTurn(false);
             HandleTurnDeclaration(true);
+            if(PhotonGameManager.myPhase != PhotonGameManager.GamePhase.Wait)
+            {
+                GM.PhaseChange(PhotonGameManager.GamePhase.Wait);
+            }
         }
     }
 
@@ -626,7 +829,7 @@ public class CardDataBase : MonoBehaviour
         switch (Deck)
         {
             case CardDecks.P1Deck:
-                Debug.Log("Drawing a card from P1Hand.");
+                Debug.Log("Drawing a card from P1Deck.");
                 DrawRandomCard(P1Deck);
                 break;
             case CardDecks.HQ:
@@ -670,6 +873,9 @@ public class CardDataBase : MonoBehaviour
                 break;
             case CardDecks.P1Discard:
                 i = P1Discard.Count;
+                break;
+            case CardDecks.P2Deck:
+                i = P2Hand.Capacity;
                 break;
         }
         return i;

@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
+using System;
 
 public class CardData : MonoBehaviour
 {
@@ -13,6 +14,9 @@ public class CardData : MonoBehaviour
     [SerializeField] TMP_Text tAbility;
     [SerializeField] Image[] gAbilityCounters;
     [SerializeField] Button Target;
+
+    public static Action<CardData> IsTarget = delegate { };
+    public static Action<CardData, string, int> OnNumericAdjustment = delegate { };
 
     public bool Exhausted { get; private set; }
 
@@ -71,14 +75,42 @@ public class CardData : MonoBehaviour
         Exhausted = false;
     }
 
+    public void SetAttack(int amount)
+    {
+        Attack = amount;
+        tAttack.text = Attack.ToString();
+    }
+
     public void AdjustAttack(int amount)
     {
+        bool sendit = (Attack != (Attack + amount));
+        Debug.Log($"Adjusting Attack from {Attack} to {Attack + amount}");
         Attack += amount;
+        tAttack.text = Attack.ToString();
+        if (sendit)
+        {
+            Debug.Log($"Sending the new Attack Value. {Attack}");
+            OnNumericAdjustment?.Invoke(this, "Attack", Attack);
+        }
+    }
+
+    public void SetDefense(int amount)
+    {
+        Defense = amount;
+        tDefense.text = Defense.ToString();
     }
 
     public void AdjustDefense(int amount)
     {
+        bool sendit = (Defense != (Defense + amount));
+        Debug.Log($"Amount to adjust defense {amount}");
         Defense += amount;
+        tDefense.text = Defense.ToString();
+        if (sendit)
+        {
+            Debug.Log($"Sending the new Defense Value. {Defense}");
+            OnNumericAdjustment?.Invoke(this, "Defense", Defense);
+        }
     }
 
     public void AdjustCounter(int amount)
@@ -124,6 +156,11 @@ public class CardData : MonoBehaviour
 
         UISetup();
     }
+
+    public void Targeted()
+    {
+        IsTarget?.Invoke(this);
+    }
     #endregion
 
     #region Private Methods
@@ -146,10 +183,15 @@ public class CardData : MonoBehaviour
         }
     }
 
-    private void HandleTargetting(bool targetting)
+    private void HandleTargetting(Card card)
     {
-        Target.interactable = targetting;
-        Highlight.color = targetting ? Color.green : Color.clear;
+        if(Target != null)
+        {
+            bool targetting = !Target.interactable;
+            Target.gameObject.SetActive(targetting);
+            Target.interactable = targetting;
+            Highlight.color = targetting ? Color.green : Color.clear;
+        }
     }
     #endregion
 }

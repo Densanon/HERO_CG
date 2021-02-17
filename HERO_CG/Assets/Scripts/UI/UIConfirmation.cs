@@ -6,10 +6,52 @@ public class UIConfirmation : MonoBehaviour
 {
     public GameObject confirmationUI;
     public TMP_Text confirmationText;
-    public enum Confirmation { Heal, Enhance, Recruit, Overcome, Feat, Quit}
+    public enum Confirmation { Heal, Enhance, Recruit, Overcome, Feat, Quit, Enhancing, Ability}
     private Confirmation typeOfConfirmation = Confirmation.Heal;
+    private Card myCardToUse;
+    private CardData myTargetCard;
 
     public static Action<PhotonGameManager.GamePhase> OnHEROSelection = delegate { };
+    public static Action<CardData, Card> OnTargetAccepted = delegate { };
+
+    private void Awake()
+    {
+        CardDataBase.OnTargeting += HandleTargeting;
+        CardData.IsTarget += HandleTarget;
+
+    }
+
+    private void OnDestroy()
+    {
+        CardDataBase.OnTargeting -= HandleTargeting;
+        CardData.IsTarget -= HandleTarget;
+    }
+
+    private void HandleTargeting(Card cardToBePlayed)
+    {
+        myCardToUse = cardToBePlayed;
+        Card.Type type = cardToBePlayed.CardType;
+        switch (type)
+        {
+            case Card.Type.Ability:
+                confirmationText.text = "Confirm Ability to target.";
+                typeOfConfirmation = Confirmation.Ability;
+                break;
+            case Card.Type.Enhancement:
+                confirmationText.text = "Confirm Enhancement to target.";
+                typeOfConfirmation = Confirmation.Enhancing;
+                break;
+            case Card.Type.Character:
+                //will need to do something for attacking here.
+                break;
+        }
+    }
+
+    private void HandleTarget(CardData card)
+    {
+        myTargetCard = card;
+        confirmationUI.SetActive(true);
+    }
 
     public void OnConfirmationRequest(string type)
     {
@@ -17,27 +59,27 @@ public class UIConfirmation : MonoBehaviour
         switch (type)
         {
             case "Heal":
-                confirmationText.text = "Confirm you selected 'Heal'";
+                confirmationText.text = "Confirm 'Heal'";
                 typeOfConfirmation = Confirmation.Heal;
                 break;
             case "Enhance":
-                confirmationText.text = "Confirm you selected 'Enhance'";
+                confirmationText.text = "Confirm 'Enhance'";
                 typeOfConfirmation = Confirmation.Enhance;
                 break;
             case "Recruit":
-                confirmationText.text = "Confirm you selected 'Recruit'";
+                confirmationText.text = "Confirm 'Recruit'";
                 typeOfConfirmation = Confirmation.Recruit;
                 break;
             case "Overcome":
-                confirmationText.text = "Confirm you selected 'Overcome'";
+                confirmationText.text = "Confirm 'Overcome'";
                 typeOfConfirmation = Confirmation.Overcome;
                 break;
             case "Feat":
-                confirmationText.text = "Confirm you selected 'Feat'";
+                confirmationText.text = "Confirm 'Feat'";
                 typeOfConfirmation = Confirmation.Feat;
                 break;
             case "Leave":
-                confirmationText.text = "Confirm you selected 'Quit'";
+                confirmationText.text = "Confirm 'Quit'";
                 typeOfConfirmation = Confirmation.Quit;
                 break;
         }
@@ -65,6 +107,12 @@ public class UIConfirmation : MonoBehaviour
                 OnHEROSelection?.Invoke(PhotonGameManager.GamePhase.Feat);
                 break;
             case Confirmation.Quit:
+                break;
+            case Confirmation.Ability:
+                OnTargetAccepted?.Invoke(myTargetCard, myCardToUse);
+                break;
+            case Confirmation.Enhancing:
+                OnTargetAccepted?.Invoke(myTargetCard, myCardToUse);
                 break;
         }
         confirmationUI.SetActive(false);

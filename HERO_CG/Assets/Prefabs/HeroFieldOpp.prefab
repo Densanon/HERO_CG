@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5054869833939255858}
   - component: {fileID: 5054869833939255857}
+  - component: {fileID: 1573461883719618617}
   m_Layer: 5
   m_Name: HeroFieldOpp
   m_TagString: Untagged
@@ -64,7 +65,7 @@ MonoBehaviour:
   Title: {fileID: 0}
   tFlavor: {fileID: 0}
   Icon: {fileID: 5054869834860695208}
-  Highlight: {fileID: 5054869834860695208}
+  Highlight: {fileID: 5054869834384909739}
   tAttack: {fileID: 5054869833983036363}
   tDefense: {fileID: 5054869834568379916}
   tAbility: {fileID: 0}
@@ -77,6 +78,18 @@ MonoBehaviour:
   - {fileID: 5054869835198900876}
   - {fileID: 5054869835768103502}
   Target: {fileID: 5054869835418170716}
+--- !u!114 &1573461883719618617
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5054869833939255859}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 53ee9d65c355a1d4ebcf5ec1596ad8a0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &5054869833983036404
 GameObject:
   m_ObjectHideFlags: 0
@@ -832,12 +845,12 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 0}
-        m_MethodName: FieldHeroZoom
-        m_Mode: 2
+      - m_Target: {fileID: 1573461883719618617}
+        m_MethodName: CardSelected
+        m_Mode: 1
         m_Arguments:
-          m_ObjectArgument: {fileID: 5054869834860695209}
-          m_ObjectArgumentAssemblyTypeName: CardData, Assembly-CSharp
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
           m_IntArgument: 0
           m_FloatArgument: 0
           m_StringArgument: 
@@ -1287,12 +1300,12 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 0}
-        m_MethodName: 
+      - m_Target: {fileID: 5054869833939255857}
+        m_MethodName: Targeted
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: 
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
           m_IntArgument: 0
           m_FloatArgument: 0
           m_StringArgument: 
