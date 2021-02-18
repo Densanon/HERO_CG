@@ -2,6 +2,7 @@
 using TMPro;
 using UnityEngine.UI;
 using System;
+using System.Collections.Generic;
 
 public class CardData : MonoBehaviour
 {
@@ -14,6 +15,7 @@ public class CardData : MonoBehaviour
     [SerializeField] TMP_Text tAbility;
     [SerializeField] Image[] gAbilityCounters;
     [SerializeField] Button Target;
+    [SerializeField] List<Component> myAbilities = new List<Component>();
 
     public static Action<CardData> IsTarget = delegate { };
     public static Action<CardData, string, int> OnNumericAdjustment = delegate { };
@@ -113,20 +115,29 @@ public class CardData : MonoBehaviour
         }
     }
 
-    public void AdjustCounter(int amount)
+    public void AdjustCounter(int amount, Component ability)
     {
         AbilityCounter += amount;
-        for(int i = 0; i > gAbilityCounters.Length; i++)
+            for(int i = 0; i < gAbilityCounters.Length-1; i++)
+            {
+                if(AbilityCounter-1 >= i)
+                {
+                    gAbilityCounters[i].color = Color.yellow;
+                }
+                else
+                {
+                    gAbilityCounters[i].color = Color.clear;
+                }
+            }
+        if (amount > 0)
         {
-            if(AbilityCounter >= i)
-            {
-                gAbilityCounters[i].color = Color.yellow;
-            }
-            else
-            {
-                gAbilityCounters[i].color = Color.clear;
-            }
+            myAbilities.Add(ability);
         }
+        else
+        {
+            myAbilities.Remove(ability);
+        }
+
     }
 
     public void CardOverride(Card card)

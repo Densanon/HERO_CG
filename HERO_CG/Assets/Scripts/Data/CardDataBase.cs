@@ -328,6 +328,7 @@ public class CardDataBase : MonoBehaviour
     [PunRPC]
     private void ShareCardList(string list, string[] listToShare)
     {
+        Debug.Log($"{list}: Sent over.");
         switch (list)
         {
             case "HeroSelection":
@@ -352,11 +353,13 @@ public class CardDataBase : MonoBehaviour
                     {
                         if(card.Name == cardName)
                         {
+                            Debug.Log($"Received {card.Name}.");
                             P2Hand.Add(card);
                             break;
                         }
                     }
                 }
+                Debug.Log($"{P2Hand.Count} cards in opponents hand.");
                 GM.SetOpponentHandCount(CardsRemaining(CardDecks.P2Hand));
                 break;
             case "P2Discard":
@@ -462,7 +465,7 @@ public class CardDataBase : MonoBehaviour
         switch (type)
         {
             case Card.Type.Ability:
-                SpawnAbility(cardToUse.Name, card);
+                SpawnAbility(cardToUse.Name, card, false);
                 break;
             case Card.Type.Enhancement:
                 if(cardToUse.Attack > 0)
@@ -477,6 +480,7 @@ public class CardDataBase : MonoBehaviour
             case Card.Type.Character:
                 break;
         }
+        RemoveCardFromHand(cardToUse);
         OnTargeting(cardToUse);
         GM.TurnCounterDecrement();
         if (GM.GetTurnCounter() == 0)
@@ -664,6 +668,7 @@ public class CardDataBase : MonoBehaviour
         List<string> names = new List<string>();
         foreach(Card card in P1Hand)
         {
+            Debug.Log($"Handing over: {card.Name}");
             names.Add(card.Name);
         }
         PV.RPC("ShareCardList", RpcTarget.Others, "P2Hand" ,names.ToArray());
@@ -688,74 +693,114 @@ public class CardDataBase : MonoBehaviour
     private void SpawnCharacterToMyField(Card card)
     {
         GameObject obj = Instantiate(CardMyFieldPrefab, MyHeroArea);
-        obj.GetComponent<CardData>().CardOverride(card);
+        CardData data = obj.GetComponent<CardData>();
+        data.CardOverride(card);
+        P1Field.Add(data);
     }
 
-    private void SpawnAbility(string AbilityName, CardData cardToAttachTo)
+    private void SpawnAbility(string AbilityName, CardData cardToAttachTo, bool told)
     {
+        Debug.Log($"Spawning {AbilityName} on {cardToAttachTo}.");
+        Component comp = new Component();
         switch (AbilityName)
         {
             case "ACCELERATE":
-                cardToAttachTo.gameObject.AddComponent<aAccelerate>();
+                comp = cardToAttachTo.gameObject.AddComponent<aAccelerate>();
                 break;
             case "BACKFIRE":
-                cardToAttachTo.gameObject.AddComponent<aBackfire>();
+                comp = cardToAttachTo.gameObject.AddComponent<aBackfire>();
                 break;
             case "BOLSTER":
-                cardToAttachTo.gameObject.AddComponent<aBolster>();
+                comp = cardToAttachTo.gameObject.AddComponent<aBolster>();
                 break;
             case "BOOST":
-                cardToAttachTo.gameObject.AddComponent<aBoost>();
+                comp = cardToAttachTo.gameObject.AddComponent<aBoost>();
                 break;
             case "COLLATERAL DAMAGE":
-                cardToAttachTo.gameObject.AddComponent<aCollateralDamage>();
+                comp = cardToAttachTo.gameObject.AddComponent<aCollateralDamage>();
                 break;
             case "CONVERT":
-                cardToAttachTo.gameObject.AddComponent<aConvert>();
+                comp = cardToAttachTo.gameObject.AddComponent<aConvert>();
                 break;
             case "COUNTER-MEASURES":
-                cardToAttachTo.gameObject.AddComponent<aCounterMeasures>();
+                comp = cardToAttachTo.gameObject.AddComponent<aCounterMeasures>();
                 break;
             case "DROUGHT":
-                cardToAttachTo.gameObject.AddComponent<aDrought>();
+                comp = cardToAttachTo.gameObject.AddComponent<aDrought>();
                 break;
             case "FORTIFICATION":
-                cardToAttachTo.gameObject.AddComponent<aFortification>();
+                comp = cardToAttachTo.gameObject.AddComponent<aFortification>();
                 break;
             case "GOING NUCLEAR":
-                cardToAttachTo.gameObject.AddComponent<aGoingNuclear>();
+                comp = cardToAttachTo.gameObject.AddComponent<aGoingNuclear>();
                 break;
             case "HARDENED":
-                cardToAttachTo.gameObject.AddComponent<aHardened>();
+                comp = cardToAttachTo.gameObject.AddComponent<aHardened>();
                 break;
             case "IMPEDE":
-                cardToAttachTo.gameObject.AddComponent<aImpede>();
+                comp = cardToAttachTo.gameObject.AddComponent<aImpede>();
                 break;
             case "KAIROS":
-                cardToAttachTo.gameObject.AddComponent<aKairos>();
+                comp = cardToAttachTo.gameObject.AddComponent<aKairos>();
                 break;
             case "PREVENTION":
-                cardToAttachTo.gameObject.AddComponent<aPrevention>();
+                comp = cardToAttachTo.gameObject.AddComponent<aPrevention>();
                 break;
             case "PROTECT":
-                cardToAttachTo.gameObject.AddComponent<aProtect>();
+                comp = cardToAttachTo.gameObject.AddComponent<aProtect>();
                 break;
             case "REDUCTION":
-                cardToAttachTo.gameObject.AddComponent<aReduction>();
+                comp = cardToAttachTo.gameObject.AddComponent<aReduction>();
                 break;
             case "REINFORCEMENT":
-                cardToAttachTo.gameObject.AddComponent<aReinforcement>();
+                comp = cardToAttachTo.gameObject.AddComponent<aReinforcement>();
                 break;
             case "RESURRECT":
-                cardToAttachTo.gameObject.AddComponent<aResurrect>();
+                comp = cardToAttachTo.gameObject.AddComponent<aResurrect>();
                 break;
             case "REVELATION":
-                cardToAttachTo.gameObject.AddComponent<aRevelation>();
+                comp = cardToAttachTo.gameObject.AddComponent<aRevelation>();
                 break;
             case "SHEILDING":
-                cardToAttachTo.gameObject.AddComponent<aShielding>();
+                comp = cardToAttachTo.gameObject.AddComponent<aShielding>();
                 break;
+            default:
+                Debug.Log($"An ability was requested that doesn't exist. {AbilityName}");
+                break;
+        }
+        cardToAttachTo.AdjustCounter(1, comp);
+        if (!told)
+        {
+            PV.RPC("AttachAbility", RpcTarget.OthersBuffered, AbilityName, cardToAttachTo.Name);
+        }
+    }
 
+    [PunRPC]
+    private void AttachAbility(string abilityName, string cardName)
+    {
+        Debug.Log($"I was told to attach {abilityName} to {cardName}");
+        bool found = false;
+        foreach(CardData data in P2Field)
+        {
+            if(data.Name == cardName)
+            {
+                SpawnAbility(abilityName, data, true);
+                found = true;
+                break;
+            }
+        }
+        if (!found)
+        {
+            Debug.Log($"Searching my field for {cardName}");
+            foreach(CardData data in P1Field)
+            {
+                Debug.Log($"Found {data.Name}");
+                if(data.Name == cardName)
+                {
+                    SpawnAbility(abilityName, data, true);
+                    break;
+                }
+            }
         }
     }
     #endregion
@@ -764,7 +809,7 @@ public class CardDataBase : MonoBehaviour
     public void HandCardOffset(System.Single offset)
     {
         int o = (int)Math.Floor(offset);
-        for(int i = 0; i < P1Hand.Count; i++)
+        for(int i = 0; i < lHandData.Count; i++)
         {
             int j = o+i;
             if(j >= P1Hand.Count)
@@ -874,8 +919,8 @@ public class CardDataBase : MonoBehaviour
             case CardDecks.P1Discard:
                 i = P1Discard.Count;
                 break;
-            case CardDecks.P2Deck:
-                i = P2Hand.Capacity;
+            case CardDecks.P2Hand:
+                i = P2Hand.Count;
                 break;
         }
         return i;

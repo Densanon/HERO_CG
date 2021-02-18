@@ -136,6 +136,7 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
 
     public void SetOpponentHandCount(int number)
     {
+        Debug.Log($"Setting the hand text to {number}.");
         tOpponentHandCount.text = $"{number}";
     }
 
