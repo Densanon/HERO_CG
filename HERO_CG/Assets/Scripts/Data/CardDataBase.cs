@@ -15,6 +15,7 @@ public class CardDataBase : MonoBehaviour
     public GameObject CardDraftPrefab;
     public GameObject CardMyFieldPrefab;
     public GameObject CardOppFieldPrefab;
+    public GameObject CardHeroHQPrefab;
     public GameObject[] Hand = new GameObject[7];
     private List<CardData> lHandData = new List<CardData>();
     public Slider sHandSlider;
@@ -22,6 +23,8 @@ public class CardDataBase : MonoBehaviour
     public Transform DraftArea;
     public Transform MyHeroArea;
     public Transform OppHeroArea;
+    public Transform HQArea;
+    public List<CardData> HQHeros = new List<CardData>();
     public PhotonGameManager GM;
     public CardData CurrentActiveCard;
 
@@ -49,8 +52,8 @@ public class CardDataBase : MonoBehaviour
     #endregion
 
     #region Dynamic card lists
-    List<Card> HeroSelection = new List<Card>();
     List<Card> HeroReserve = new List<Card>();
+    List<Card> HQ = new List<Card>();
     List<Card> AbilityDraft = new List<Card>();
 
     List<Card> P1AutoAbilities = new List<Card>();
@@ -214,17 +217,17 @@ public class CardDataBase : MonoBehaviour
         for (int i = 0; i < 14; i++)
         {
             var picker = UnityEngine.Random.Range(0, tempHero.Count);
-            HeroSelection.Add(tempHero[picker]);
+            HeroReserve.Add(tempHero[picker]);
             shareList.Add(tempHero[picker].Name);
             tempHero.Remove(tempHero[picker]);
         }
 
         if (PV.IsMine)
         {
-            PV.RPC("ShareCardList", RpcTarget.Others, "HeroSelection", shareList.ToArray());
+            PV.RPC("ShareCardList", RpcTarget.Others, "HeroReserve", shareList.ToArray());
         }
 
-        DisplayDraft(HeroSelection);
+        DisplayDraft(HeroReserve);
     }
 
     private void DisplayDraft(List<Card> whichDeck)
@@ -310,7 +313,7 @@ public class CardDataBase : MonoBehaviour
                 if(Draft.Count == 12 && PhotonGameManager.myTurn)
                 {
                     
-                        HandleCardCollected(HeroSelection[UnityEngine.Random.Range(0, 13)], PhotonGameManager.myPhase);
+                        HandleCardCollected(HeroReserve[UnityEngine.Random.Range(0, 13)], PhotonGameManager.myPhase);
                         PV.RPC("SetupAbilityDraft", RpcTarget.All, true);
    
                 }
@@ -331,19 +334,19 @@ public class CardDataBase : MonoBehaviour
         Debug.Log($"{list}: Sent over.");
         switch (list)
         {
-            case "HeroSelection":
+            case "HeroReserve":
                 foreach (string name in listToShare)
                 {
                     foreach (Card card in Heros)
                     {
                         if (name == card.Name)
                         {
-                            HeroSelection.Add(card);
+                            HeroReserve.Add(card);
                         }
                     }
                 }
 
-                DisplayDraft(HeroSelection);
+                DisplayDraft(HeroReserve);
                 break;
             case "P2Hand":
                 P2Hand.Clear();
@@ -391,6 +394,7 @@ public class CardDataBase : MonoBehaviour
         {
             GM.PhaseChange(PhotonGameManager.GamePhase.Wait);
         }
+        FillHQ();
     }
     #endregion
 
@@ -447,9 +451,9 @@ public class CardDataBase : MonoBehaviour
     {
         switch (draftDeck)
         {
-            case "HeroSelection":
+            case "HeroReserve":
                 Debug.Log("Picking random card for Auto hero draw.");
-                OnAiDraftCollected?.Invoke(HeroSelection[UnityEngine.Random.Range(0, HeroSelection.Count)]);
+                OnAiDraftCollected?.Invoke(HeroReserve[UnityEngine.Random.Range(0, HeroReserve.Count)]);
                 break;
             case "AbilityDraft":
                 Debug.Log("Picking random card for Auto ability draw.");
@@ -568,25 +572,52 @@ public class CardDataBase : MonoBehaviour
         }
     }
 
-    private void FillReserves()
+    private void FillHQ()
     {
-        if(HeroSelection.Count > 0 && HeroReserve.Count < 3)
+        if(HeroReserve.Count > 0 && HQ.Count < 3)
         {
-            for(int i = HeroReserve.Count; i < 3; i++)
+            for(int i = HQ.Count; i < 3; i++)
             {
-                int picker = UnityEngine.Random.Range(0, HeroSelection.Count);
-                HeroReserve.Add(HeroSelection[picker]);
-                HeroSelection.Remove(HeroSelection[picker]);
+                int picker = UnityEngine.Random.Range(0, HeroReserve.Count);
+                HQ.Add(HeroReserve[picker]);
+                HeroReserve.Remove(HeroReserve[picker]);
             }
         }
 
-        PopulateReserve();
+        PopulateHQ();
     }
 
-    private void PopulateReserve()
+    private void RemoveHQCard(Card card)
+    {
+        foreach(CardData data in HQHeros)
+        {
+            if(data.Name == card.Name)
+            {
+                HQHeros.Remove(data);
+                Destroy(data.gameObject);
+                break;
+            }
+        }
+    }
+
+    private void PopulateHQ()
     {
         //Take the container
+        //Empty
         //Add new heros
+
+        foreach(CardData data in HQHeros)
+        {
+            HQHeros.Remove(data);
+            Destroy(data.gameObject);
+        }
+        foreach(Card card in HQ)
+        {
+            GameObject obj = Instantiate(CardHeroHQPrefab, HQArea);
+            CardData data = obj.GetComponent<CardData>();
+            data.CardOverride(card);
+            HQHeros.Add(data);
+        }
     }
 
     private void DrawRandomCard(List<Card> whatDeck)
@@ -877,32 +908,20 @@ public class CardDataBase : MonoBehaviour
                 Debug.Log("Drawing a card from P1Deck.");
                 DrawRandomCard(P1Deck);
                 break;
-            case CardDecks.HQ:
-                DrawRandomCard(HeroSelection);
+            case CardDecks.Reserve:
+                DrawRandomCard(HeroReserve);
                 break;
         }
     }
 
-    public void DrawCard(CardDecks Deck, Card hero)
+    public void DrawCard()
     {
-        switch (Deck)
-        {
-            case CardDecks.Reserve:
-                break;
-        }
-
-        foreach (Card item in HeroReserve)
-        {
-            if (item.Name == hero.Name)
-            {
-                Debug.Log($"Removing {item.Name}.");
-                P1Hand.Add(item);
-                UpdateHandSlider();
-                HeroReserve.Remove(item);
-                AddCardToHand(item);
-                break;
-            }
-        }
+        int picker = UnityEngine.Random.Range(0, HeroReserve.Count);
+        Card card = HeroReserve[picker];
+        P1Hand.Add(card);
+        HeroReserve.Remove(card);
+        UpdateHandSlider();
+        AddCardToHand(card);
     }
 
     public int CardsRemaining(CardDecks Deck)
@@ -911,7 +930,7 @@ public class CardDataBase : MonoBehaviour
         switch (Deck)
         {
             case CardDecks.HQ:
-                i = HeroSelection.Count;
+                i = HeroReserve.Count;
                 break;
             case CardDecks.P1Deck:
                 i = P1Deck.Count;
@@ -935,7 +954,7 @@ public class CardDataBase : MonoBehaviour
                 P1Hand.Add(card);
                 UpdateHandSlider();
                 AddCardToHand(card);
-                HeroSelection.Remove(card);
+                HeroReserve.Remove(card);
                 PV.RPC("RemoveDraftOption", RpcTarget.All, card.Name);
                 Debug.Log($"{P1Hand.Count} cards in my hand.");
                 break;
@@ -946,6 +965,11 @@ public class CardDataBase : MonoBehaviour
                 AbilityDraft.Remove(card);
                 PV.RPC("RemoveDraftOption", RpcTarget.All, card.Name);
                 Debug.Log($"{P1Deck.Count} cards in my deck.");
+                break;
+            case PhotonGameManager.GamePhase.Recruit:
+                Debug.Log($"Removing {card.Name} from the HQ.");
+                AddCardToHand(card);
+                RemoveHQCard(card);
                 break;
         }
     }

@@ -56,6 +56,7 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
     {
         PlayerBase.OnBaseDestroyed += OnBaseDestroyed;
         CardFunction.OnCardSelected += HandleCardSelecion;
+        CardFunction.OnHeroSelected += HandleHeroSelected;
         CardFunction.OnCardDeselected += HandleDeselection;
         CardFunction.OnCardCollected += HandleCardCollected;
         CardFunction.OnCardPlayed += HandlePlayCard;
@@ -67,6 +68,7 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
     {
         PlayerBase.OnBaseDestroyed -= OnBaseDestroyed;
         CardFunction.OnCardSelected -= HandleCardSelecion;
+        CardFunction.OnHeroSelected -= HandleHeroSelected;
         CardFunction.OnCardDeselected -= HandleDeselection;
         CardFunction.OnCardCollected -= HandleCardCollected;
         CardFunction.OnCardPlayed -= HandlePlayCard;
@@ -138,6 +140,12 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
     {
         Debug.Log($"Setting the hand text to {number}.");
         tOpponentHandCount.text = $"{number}";
+    }
+    public void EndTurn()
+    {
+        SwitchTurn();
+        CB.HandleTurnDeclaration(!myTurn);
+        TurnActionIndicator.text = "0";
     }
 
     public void SwitchTurn(bool turn)
@@ -254,6 +262,11 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
     #endregion
 
     #region Private Methods
+    private void HandleHeroSelected(Card card)
+    {
+
+    }
+
     private void HandleDeselection()
     {
         zoomed = false;
@@ -519,7 +532,7 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
                     if (CB.AiDraft)
                     {
                         Debug.Log("Taking auto turn in Hero Draft");
-                        CB.DrawDraftCard("HeroSelection");
+                        CB.DrawDraftCard("HeroReserve");
                     }
                     break;
                 case GamePhase.AbilityDraft:

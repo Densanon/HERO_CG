@@ -6,6 +6,7 @@ public class CardFunction : MonoBehaviour
     private CardData myCard;
 
     public static Action<CardData> OnCardSelected = delegate { };
+    public static Action<Card> OnHeroSelected = delegate { };
     public static Action OnCardDeselected = delegate { };
     public static Action<Card> OnCardCollected = delegate { };
     public static Action<Card> OnCardPlayed = delegate { };
@@ -23,6 +24,11 @@ public class CardFunction : MonoBehaviour
     public void CardSelected()
     {
         OnCardSelected?.Invoke(myCard);
+    }
+
+    public void HeroSelected()
+    {
+        OnHeroSelected?.Invoke(myCard.myCard);
     }
 
     public void Deselect()
