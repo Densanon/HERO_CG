@@ -207,7 +207,6 @@ public class CardDataBase : MonoBehaviour
     }
     #endregion
 
-
     #region Draft Methods
     public void HandleBuildHeroDraft()
     {
@@ -381,8 +380,6 @@ public class CardDataBase : MonoBehaviour
         }
     }
 
- 
-    
     [PunRPC]
     private void EndAbilityDraft(bool yes)
     {
@@ -398,7 +395,7 @@ public class CardDataBase : MonoBehaviour
     }
     #endregion
 
-    #region Turn Declaration
+    #region Player Declaration
     public void HandlePlayerDeclaration(int player)
     {
         PV.RPC("DeclarePlayer", RpcTarget.OthersBuffered, player);
@@ -421,7 +418,9 @@ public class CardDataBase : MonoBehaviour
                 break;
         }
     }
+    #endregion
 
+    #region Turn Declaration
     public void HandleTurnDeclaration(bool myTurn)
     {
         PV.RPC("DeclaredTurn", RpcTarget.Others, myTurn);
@@ -435,7 +434,6 @@ public class CardDataBase : MonoBehaviour
     }
     #endregion
 
-    #region Private Methods
     #region Debugging
     public void SetAiDraft(bool set)
     {
@@ -463,6 +461,7 @@ public class CardDataBase : MonoBehaviour
     }
     #endregion
 
+    #region Private Methods
     private void HandleTargetAccepted(CardData card, Card cardToUse)
     {
         Card.Type type = cardToUse.CardType;
@@ -584,19 +583,9 @@ public class CardDataBase : MonoBehaviour
             }
         }
 
-        PopulateHQ();
-    }
-
-    private void RemoveHQCard(Card card)
-    {
-        foreach(CardData data in HQHeros)
+        if (PhotonGameManager.myTurn)
         {
-            if(data.Name == card.Name)
-            {
-                HQHeros.Remove(data);
-                Destroy(data.gameObject);
-                break;
-            }
+            PopulateHQ();
         }
     }
 
@@ -617,6 +606,73 @@ public class CardDataBase : MonoBehaviour
             CardData data = obj.GetComponent<CardData>();
             data.CardOverride(card);
             HQHeros.Add(data);
+        }
+
+        string[] temp = new string[] { HQHeros[0].Name, HQHeros[1].Name, HQHeros[2].Name };
+
+        PV.RPC("PopulatedHQ", RpcTarget.OthersBuffered, temp);
+    }
+
+    [PunRPC]
+    private void PopulatedHQ(string[] heros)
+    {
+        List<string> cardNames = new List<string>();
+        List<Card> cardsToAdd = new List<Card>();
+        foreach(CardData card in HQHeros)
+        {
+            cardNames.Add(card.Name);
+        }
+
+        foreach(string name in heros)
+        {
+            if (!cardNames.Contains(name))
+            {
+                foreach(Card card in HeroReserve)
+                {
+                    if(name == card.Name)
+                    {
+                        cardsToAdd.Add(card);
+                    }
+                }
+            }
+        }
+
+        foreach(Card addCard in cardsToAdd)
+        {
+            HeroReserve.Remove(addCard);
+            HQ.Add(addCard);
+            GameObject obj = Instantiate(CardHeroHQPrefab, HQArea);
+            CardData data = obj.GetComponent<CardData>();
+            data.CardOverride(addCard);
+            HQHeros.Add(data);
+        }
+    }
+
+    private void RemoveHQCard(Card card)
+    {
+        foreach(CardData data in HQHeros)
+        {
+            if(data.Name == card.Name)
+            {
+                HQHeros.Remove(data);
+                Destroy(data.gameObject);
+                break;
+            }
+        }
+        PV.RPC("RemoveHQHero", RpcTarget.OthersBuffered, card.Name);
+    }
+
+    [PunRPC]
+    private void RemoveHQHero(string cardName)
+    {
+        foreach (CardData data in HQHeros)
+        {
+            if (data.Name == cardName)
+            {
+                HQHeros.Remove(data);
+                Destroy(data.gameObject);
+                break;
+            }
         }
     }
 
