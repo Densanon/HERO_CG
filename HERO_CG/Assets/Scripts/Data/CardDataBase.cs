@@ -216,8 +216,10 @@ public class CardDataBase : MonoBehaviour
         for (int i = 0; i < 14; i++)
         {
             var picker = UnityEngine.Random.Range(0, tempHero.Count);
+            Debug.Log($"Building Hero list: tempHero Count {tempHero.Count}");
             HeroReserve.Add(tempHero[picker]);
             shareList.Add(tempHero[picker].Name);
+            Debug.Log($"In Reserve Build: {tempHero[picker].Name}");
             tempHero.Remove(tempHero[picker]);
         }
 
@@ -233,7 +235,6 @@ public class CardDataBase : MonoBehaviour
     {
         DraftArea.gameObject.SetActive(true);
 
-        Debug.Log($"Hero Count: {whichDeck.Count}");
         foreach(Card card in whichDeck)
         {
             GameObject obj = Instantiate(CardDraftPrefab, DraftArea);
@@ -241,7 +242,6 @@ public class CardDataBase : MonoBehaviour
             cd.CardOverride(card);
             Draft.Add(cd);
         }
-        Debug.Log($"Hero Draft Count: {Draft.Count}");
     }
 
     [PunRPC]
@@ -268,7 +268,8 @@ public class CardDataBase : MonoBehaviour
             }
             if (PhotonGameManager.myTurn)
             {
-                PV.RPC("EndAbilityDraft", RpcTarget.All, true);
+                PV.RPC("EndAbilityDraft", RpcTarget.Others, false);
+                EndAbilityDraft(true);
             }
             DraftArea.gameObject.SetActive(false);
         }
@@ -281,7 +282,8 @@ public class CardDataBase : MonoBehaviour
             }
             if (PhotonGameManager.myTurn)
             {
-                PV.RPC("EndAbilityDraft", RpcTarget.All, true);
+                PV.RPC("EndAbilityDraft", RpcTarget.Others, false);
+                EndAbilityDraft(true);
             }
             DraftArea.gameObject.SetActive(false);
         }
@@ -298,7 +300,10 @@ public class CardDataBase : MonoBehaviour
                 Draft.Remove(item);
                 Destroy(item.gameObject);
                 Debug.Log($"Cards Remaining: {Draft.Count}");
-                CheckDraft();
+                if (PhotonGameManager.myTurn)
+                {
+                    CheckDraft();
+                }
                 break;
             }
         }
@@ -321,7 +326,8 @@ public class CardDataBase : MonoBehaviour
                 if(Draft.Count == 0 && PhotonGameManager.myTurn)
                 {
                     Debug.Log("The Ability draft is over!");
-                    PV.RPC("EndAbilityDraft", RpcTarget.All, true);
+                    PV.RPC("EndAbilityDraft", RpcTarget.Others, false);
+                    EndAbilityDraft(true);
                 }
                 break;
         }
@@ -334,12 +340,14 @@ public class CardDataBase : MonoBehaviour
         switch (list)
         {
             case "HeroReserve":
+                HeroReserve.Clear();
                 foreach (string name in listToShare)
                 {
                     foreach (Card card in Heros)
                     {
                         if (name == card.Name)
                         {
+                            Debug.Log($"In building Reserve from server: {name}");
                             HeroReserve.Add(card);
                         }
                     }
@@ -381,9 +389,9 @@ public class CardDataBase : MonoBehaviour
     }
 
     [PunRPC]
-    private void EndAbilityDraft(bool yes)
+    private void EndAbilityDraft(bool told)
     {
-        if (PhotonGameManager.myTurn)
+        if (PhotonGameManager.player == PhotonGameManager.PlayerNum.P1)
         {
             GM.PhaseChange(PhotonGameManager.GamePhase.HEROSelect);
         }
@@ -430,7 +438,7 @@ public class CardDataBase : MonoBehaviour
     private void DeclaredTurn(bool myTurn)
     {
         Debug.Log("I have received a HandleTurnDeclaration RPC.");
-        GM.SwitchTurn(myTurn);
+        GM.ToldSwitchTurn(myTurn);
     }
     #endregion
 
@@ -488,7 +496,7 @@ public class CardDataBase : MonoBehaviour
         GM.TurnCounterDecrement();
         if (GM.GetTurnCounter() == 0)
         {
-            GM.SwitchTurn(false);
+            GM.ToldSwitchTurn(false);
             HandleTurnDeclaration(true);
             if (PhotonGameManager.myPhase != PhotonGameManager.GamePhase.Wait)
             {
@@ -610,16 +618,19 @@ public class CardDataBase : MonoBehaviour
 
         string[] temp = new string[] { HQHeros[0].Name, HQHeros[1].Name, HQHeros[2].Name };
 
-        PV.RPC("PopulatedHQ", RpcTarget.OthersBuffered, temp);
+        PV.RPC("PopulatedHQ", RpcTarget.Others, temp);
     }
 
     [PunRPC]
     private void PopulatedHQ(string[] heros)
     {
+        Debug.Log($"I have received {heros[0]}, {heros[1]}, {heros[2]} to show.");
         List<string> cardNames = new List<string>();
         List<Card> cardsToAdd = new List<Card>();
+
         foreach(CardData card in HQHeros)
         {
+            Debug.Log($"{card.Name} was already in HQ");
             cardNames.Add(card.Name);
         }
 
@@ -627,18 +638,26 @@ public class CardDataBase : MonoBehaviour
         {
             if (!cardNames.Contains(name))
             {
-                foreach(Card card in HeroReserve)
+                foreach(Card card in Heros)
                 {
+                    Debug.Log($"Naming hero in HeroReserve {card.Name}");
                     if(name == card.Name)
                     {
                         cardsToAdd.Add(card);
+                        break;
                     }
                 }
             }
         }
 
+        if(cardsToAdd.Count < 3)
+        {
+            Debug.Log("We left someone behind...");
+        }
+
         foreach(Card addCard in cardsToAdd)
         {
+            Debug.Log($"Adding {addCard.Name} to HQ");
             HeroReserve.Remove(addCard);
             HQ.Add(addCard);
             GameObject obj = Instantiate(CardHeroHQPrefab, HQArea);
@@ -659,7 +678,8 @@ public class CardDataBase : MonoBehaviour
                 break;
             }
         }
-        PV.RPC("RemoveHQHero", RpcTarget.OthersBuffered, card.Name);
+
+        PV.RPC("RemoveHQHero", RpcTarget.Others, card.Name);
     }
 
     [PunRPC]
@@ -947,7 +967,7 @@ public class CardDataBase : MonoBehaviour
         }
         if (endTurn)
         {
-            GM.SwitchTurn(false);
+            GM.ToldSwitchTurn(false);
             HandleTurnDeclaration(true);
             if(PhotonGameManager.myPhase != PhotonGameManager.GamePhase.Wait)
             {
@@ -970,7 +990,7 @@ public class CardDataBase : MonoBehaviour
         }
     }
 
-    public void DrawCard()
+    /*public void DrawCard()
     {
         int picker = UnityEngine.Random.Range(0, HeroReserve.Count);
         Card card = HeroReserve[picker];
@@ -978,7 +998,7 @@ public class CardDataBase : MonoBehaviour
         HeroReserve.Remove(card);
         UpdateHandSlider();
         AddCardToHand(card);
-    }
+    }*/
 
     public int CardsRemaining(CardDecks Deck)
     {
