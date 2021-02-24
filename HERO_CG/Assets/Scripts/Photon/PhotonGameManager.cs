@@ -192,6 +192,11 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
     {
         iTurnCounter--;
         TurnActionIndicator.text = $"Actions Remaining: {iTurnCounter}";
+        if(iTurnCounter == 0)
+        {
+            CB.FillHQ();
+            SwitchTurn();
+        }
     }
     #endregion
 
@@ -387,7 +392,7 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
     private void HandleCardCollected(Card card)
     {
         zoomed = false;
-        Debug.Log("Sending Card Collected.");
+        Debug.Log($"Sending Card Collected: {card.Name}.");
         CB.HandleCardCollected(card, myPhase);
         if(myPhase != GamePhase.Recruit)
         {

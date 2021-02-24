@@ -579,11 +579,13 @@ public class CardDataBase : MonoBehaviour
         }
     }
 
-    private void FillHQ()
+    public void FillHQ()
     {
         if(HeroReserve.Count > 0 && HQ.Count < 3)
         {
-            for(int i = HQ.Count; i < 3; i++)
+            Debug.Log($"HQ Count: {HQ.Count}");
+            int numToAdd = 3 - HQ.Count;
+            for(int i = 0; i < numToAdd; i++)
             {
                 int picker = UnityEngine.Random.Range(0, HeroReserve.Count);
                 HQ.Add(HeroReserve[picker]);
@@ -602,21 +604,27 @@ public class CardDataBase : MonoBehaviour
         //Take the container
         //Empty
         //Add new heros
+        string[] temp = new string[] { HQ[0].Name, HQ[1].Name, HQ[2].Name };
+        List<string> namesAlready = new List<string>();
 
-        foreach(CardData data in HQHeros)
+        if(HQHeros != null)
         {
-            HQHeros.Remove(data);
-            Destroy(data.gameObject);
-        }
-        foreach(Card card in HQ)
-        {
-            GameObject obj = Instantiate(CardHeroHQPrefab, HQArea);
-            CardData data = obj.GetComponent<CardData>();
-            data.CardOverride(card);
-            HQHeros.Add(data);
+            foreach(CardData cd in HQHeros)
+            {
+                namesAlready.Add(cd.Name);
+            }
         }
 
-        string[] temp = new string[] { HQHeros[0].Name, HQHeros[1].Name, HQHeros[2].Name };
+        foreach (Card card in HQ)
+        {
+            if (!namesAlready.Contains(card.Name))
+            {
+                GameObject obj = Instantiate(CardHeroHQPrefab, HQArea);
+                CardData data = obj.GetComponent<CardData>();
+                data.CardOverride(card);
+                HQHeros.Add(data);
+            }
+        }
 
         PV.RPC("PopulatedHQ", RpcTarget.Others, temp);
     }
@@ -701,7 +709,6 @@ public class CardDataBase : MonoBehaviour
         var picker = UnityEngine.Random.Range(0, whatDeck.Count - 1);
         Card pickedCard = whatDeck[picker];
         P1Hand.Add(pickedCard);
-        UpdateHandSlider();
         whatDeck.Remove(whatDeck[picker]);
         AddCardToHand(pickedCard);
     }
@@ -716,6 +723,7 @@ public class CardDataBase : MonoBehaviour
             lHandData.Add(data);
             CheckActiveCard();
         }
+        UpdateHandSlider();
         GetHandToShare();
     }
 
@@ -913,6 +921,7 @@ public class CardDataBase : MonoBehaviour
     #endregion
 
     #region Public Methods
+
     public void HandCardOffset(System.Single offset)
     {
         int o = (int)Math.Floor(offset);
@@ -984,21 +993,18 @@ public class CardDataBase : MonoBehaviour
                 Debug.Log("Drawing a card from P1Deck.");
                 DrawRandomCard(P1Deck);
                 break;
-            case CardDecks.Reserve:
-                DrawRandomCard(HeroReserve);
-                break;
         }
     }
 
-    /*public void DrawCard()
+    public void DrawReserveCard()
     {
-        int picker = UnityEngine.Random.Range(0, HeroReserve.Count);
-        Card card = HeroReserve[picker];
-        P1Hand.Add(card);
-        HeroReserve.Remove(card);
-        UpdateHandSlider();
-        AddCardToHand(card);
-    }*/
+        if(PhotonGameManager.myTurn && PhotonGameManager.myPhase == PhotonGameManager.GamePhase.Recruit)
+        {
+            Debug.Log("Drawing a card from the Reserve.");
+            DrawRandomCard(HeroReserve);
+            GM.TurnCounterDecrement();
+        }
+    }
 
     public int CardsRemaining(CardDecks Deck)
     {
@@ -1028,7 +1034,6 @@ public class CardDataBase : MonoBehaviour
             case PhotonGameManager.GamePhase.HeroDraft:
                 Debug.Log($"Removing {card.Name} from the Draft and adding it to my hand.");
                 P1Hand.Add(card);
-                UpdateHandSlider();
                 AddCardToHand(card);
                 HeroReserve.Remove(card);
                 PV.RPC("RemoveDraftOption", RpcTarget.All, card.Name);
@@ -1044,8 +1049,10 @@ public class CardDataBase : MonoBehaviour
                 break;
             case PhotonGameManager.GamePhase.Recruit:
                 Debug.Log($"Removing {card.Name} from the HQ.");
+                P1Hand.Add(card);
                 AddCardToHand(card);
                 RemoveHQCard(card);
+                HQ.Remove(card);
                 break;
         }
     }
