@@ -16,6 +16,7 @@ public class CardDataBase : MonoBehaviour
     public GameObject CardMyFieldPrefab;
     public GameObject CardOppFieldPrefab;
     public GameObject CardHeroHQPrefab;
+    public Button ReserveButton;
     public GameObject[] Hand = new GameObject[7];
     private List<CardData> lHandData = new List<CardData>();
     public Slider sHandSlider;
@@ -52,13 +53,12 @@ public class CardDataBase : MonoBehaviour
     #endregion
 
     #region Dynamic card lists
+    List<Card> AbilityDraft = new List<Card>();
     List<Card> HeroReserve = new List<Card>();
     List<Card> HQ = new List<Card>();
-    List<Card> AbilityDraft = new List<Card>();
 
     List<Card> P1AutoAbilities = new List<Card>();
     List<Card> P2AutoAbilities = new List<Card>();
-
     List<Card> P1Hand = new List<Card>();
     List<CardData> P1Field = new List<CardData>();
     List<Card> P1Deck = new List<Card>();
@@ -357,19 +357,17 @@ public class CardDataBase : MonoBehaviour
                 break;
             case "P2Hand":
                 P2Hand.Clear();
-                foreach(string cardName in listToShare)
+                foreach (string cardName in listToShare)
                 {
-                    foreach(Card card in CardBase)
+                    foreach (Card card in CardBase)
                     {
-                        if(card.Name == cardName)
+                        if (card.Name == cardName)
                         {
-                            Debug.Log($"Received {card.Name}.");
                             P2Hand.Add(card);
                             break;
                         }
                     }
                 }
-                Debug.Log($"{P2Hand.Count} cards in opponents hand.");
                 GM.SetOpponentHandCount(CardsRemaining(CardDecks.P2Hand));
                 break;
             case "P2Discard":
@@ -393,13 +391,17 @@ public class CardDataBase : MonoBehaviour
     {
         if (PhotonGameManager.player == PhotonGameManager.PlayerNum.P1)
         {
+            Debug.Log("Setting one player to HEROSelect");
+            GM.SetTurnGauge(9);
             GM.PhaseChange(PhotonGameManager.GamePhase.HEROSelect);
+            FillHQ();
+            Debug.Log("FilledHQ");
         }
         else
         {
+            GM.SetTurnGauge(8);
             GM.PhaseChange(PhotonGameManager.GamePhase.Wait);
         }
-        FillHQ();
     }
     #endregion
 
@@ -579,24 +581,46 @@ public class CardDataBase : MonoBehaviour
         }
     }
 
+    #region HQ and Reserve
     public void FillHQ()
     {
-        if(HeroReserve.Count > 0 && HQ.Count < 3)
+        Debug.Log("FillHQ was called.");
+        Debug.Log($"MY HQHeros Count: {HQHeros.Count}");
+        Debug.Log($"My HQ Count: {HQ.Count}");
+        Debug.Log($"My Reserve Count: {HeroReserve.Count}");
+        if(HeroReserve.Count == 0)
+        {
+            ReserveButton.interactable = false;
+        }
+
+        if (HeroReserve.Count > 0 && HQ.Count < 3)
         {
             Debug.Log($"HQ Count: {HQ.Count}");
-            int numToAdd = 3 - HQ.Count;
-            for(int i = 0; i < numToAdd; i++)
+            while(HQ.Count < 3)
             {
+                if(HeroReserve.Count == 0)
+                {
+                    break;
+                }
+
                 int picker = UnityEngine.Random.Range(0, HeroReserve.Count);
+                if(picker == HeroReserve.Count)
+                {
+                    picker = HeroReserve.Count -1;
+                }
                 HQ.Add(HeroReserve[picker]);
                 HeroReserve.Remove(HeroReserve[picker]);
             }
-        }
 
-        if (PhotonGameManager.myTurn)
-        {
+            Debug.Log($"HQ Count after fill: {HQ.Count}");
             PopulateHQ();
         }
+        else
+        {
+            Debug.Log($"Reserves: {HeroReserve.Count}, HQ: {HQ.Count}");
+        }
+
+
     }
 
     private void PopulateHQ()
@@ -604,7 +628,7 @@ public class CardDataBase : MonoBehaviour
         //Take the container
         //Empty
         //Add new heros
-        string[] temp = new string[] { HQ[0].Name, HQ[1].Name, HQ[2].Name };
+        List<string> temp = new List<string>();
         List<string> namesAlready = new List<string>();
 
         if(HQHeros != null)
@@ -623,55 +647,78 @@ public class CardDataBase : MonoBehaviour
                 CardData data = obj.GetComponent<CardData>();
                 data.CardOverride(card);
                 HQHeros.Add(data);
+                temp.Add(card.Name);
             }
         }
 
-        PV.RPC("PopulatedHQ", RpcTarget.Others, temp);
+        if(temp.Count == 0 || temp == null)
+        {
+            temp.Add("None");
+            temp.Add("Nada");
+        }else if(temp.Count == 1)
+        {
+            temp.Add("Null");
+        }
+        Debug.Log($"HQHeros Count: {HQHeros.Count}");
+
+
+        PV.RPC("PopulatedHQ", RpcTarget.Others, temp.ToArray());
     }
 
     [PunRPC]
     private void PopulatedHQ(string[] heros)
     {
-        Debug.Log($"I have received {heros[0]}, {heros[1]}, {heros[2]} to show.");
-        List<string> cardNames = new List<string>();
-        List<Card> cardsToAdd = new List<Card>();
-
-        foreach(CardData card in HQHeros)
+        if (heros[0] != "None")
         {
-            Debug.Log($"{card.Name} was already in HQ");
-            cardNames.Add(card.Name);
-        }
-
-        foreach(string name in heros)
-        {
-            if (!cardNames.Contains(name))
+            string Names = "I have received; ";
+            foreach (string name in heros)
             {
-                foreach(Card card in Heros)
+                Names += $" {name},";
+            }
+            Debug.Log(Names);
+
+            List<string> cardNames = new List<string>();
+            List<Card> cardsToAdd = new List<Card>();
+
+            foreach (CardData card in HQHeros)
+            {
+                cardNames.Add(card.Name);
+            }
+
+            foreach (string name in heros)
+            {
+                if (!cardNames.Contains(name))
                 {
-                    Debug.Log($"Naming hero in HeroReserve {card.Name}");
-                    if(name == card.Name)
+                    if(name == "Null")
                     {
-                        cardsToAdd.Add(card);
-                        break;
+                        continue;
+                    }
+                    foreach (Card card in Heros)
+                    {
+                        //Debug.Log($"Naming hero in HeroReserve {card.Name}");
+                        if (name == card.Name)
+                        {
+                            cardsToAdd.Add(card);
+                            break;
+                        }
                     }
                 }
             }
-        }
 
-        if(cardsToAdd.Count < 3)
-        {
-            Debug.Log("We left someone behind...");
+            foreach (Card addCard in cardsToAdd)
+            {
+                Debug.Log($"Adding {addCard.Name} to HQ");
+                HeroReserve.Remove(addCard);
+                HQ.Add(addCard);
+                GameObject obj = Instantiate(CardHeroHQPrefab, HQArea);
+                CardData data = obj.GetComponent<CardData>();
+                data.CardOverride(addCard);
+                HQHeros.Add(data);
+            }
         }
-
-        foreach(Card addCard in cardsToAdd)
+        if (HeroReserve.Count == 0)
         {
-            Debug.Log($"Adding {addCard.Name} to HQ");
-            HeroReserve.Remove(addCard);
-            HQ.Add(addCard);
-            GameObject obj = Instantiate(CardHeroHQPrefab, HQArea);
-            CardData data = obj.GetComponent<CardData>();
-            data.CardOverride(addCard);
-            HQHeros.Add(data);
+            ReserveButton.interactable = false;
         }
     }
 
@@ -682,6 +729,7 @@ public class CardDataBase : MonoBehaviour
             if(data.Name == card.Name)
             {
                 HQHeros.Remove(data);
+                HQ.Remove(card);
                 Destroy(data.gameObject);
                 break;
             }
@@ -698,12 +746,32 @@ public class CardDataBase : MonoBehaviour
             if (data.Name == cardName)
             {
                 HQHeros.Remove(data);
+                HQ.Remove(data.myCard);
                 Destroy(data.gameObject);
                 break;
             }
         }
     }
 
+    [PunRPC]
+    private void RemoveHeroFromReserve(string hero)
+    {
+        foreach(Card card in HeroReserve)
+        {
+            if(card.Name == hero)
+            {
+                HeroReserve.Remove(card);
+                break;
+            }
+        }
+        if (HeroReserve.Count == 0)
+        {
+            ReserveButton.interactable = false;
+        }
+    }
+    #endregion
+
+    #region Hand and Cards
     private void DrawRandomCard(List<Card> whatDeck)
     {
         var picker = UnityEngine.Random.Range(0, whatDeck.Count - 1);
@@ -711,6 +779,15 @@ public class CardDataBase : MonoBehaviour
         P1Hand.Add(pickedCard);
         whatDeck.Remove(whatDeck[picker]);
         AddCardToHand(pickedCard);
+
+        if(whatDeck == HeroReserve)
+        {
+            PV.RPC("RemoveHeroFromReserve", RpcTarget.Others, pickedCard.Name);
+            if (HeroReserve.Count == 0)
+            {
+                ReserveButton.interactable = false;
+            }
+        }
     }
 
     private void AddCardToHand(Card cardToAdd)
@@ -788,7 +865,9 @@ public class CardDataBase : MonoBehaviour
         }
         PV.RPC("ShareCardList", RpcTarget.Others, "P2Hand" ,names.ToArray());
     }
+    #endregion
 
+    #region Spawn Character and Ability
     [PunRPC]
     private void SpawnCharacterToOpponentField(string heroToSpawn)
     {
@@ -918,6 +997,7 @@ public class CardDataBase : MonoBehaviour
             }
         }
     }
+    #endregion
     #endregion
 
     #region Public Methods
@@ -1052,7 +1132,6 @@ public class CardDataBase : MonoBehaviour
                 P1Hand.Add(card);
                 AddCardToHand(card);
                 RemoveHQCard(card);
-                HQ.Remove(card);
                 break;
         }
     }

@@ -48,6 +48,7 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
     private bool handZoomed = false;
     private bool heroDrafted = false;
     private int iTurnCounter = 0;
+    private int iTurnGauge = 0;
 
     public static Action<Card, GamePhase> OnCardCollected = delegate { };
 
@@ -135,6 +136,11 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
         player = playerSet;
     }
 
+    public void SetTurnGauge(int newNum)
+    {
+        iTurnGauge = newNum;
+    }
+
     public void SetOpponentHandCount(int number)
     {
         Debug.Log($"Setting the hand text to {number}.");
@@ -194,7 +200,10 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
         TurnActionIndicator.text = $"Actions Remaining: {iTurnCounter}";
         if(iTurnCounter == 0)
         {
-            CB.FillHQ();
+            if(myPhase == GamePhase.Recruit)
+            {
+                CB.FillHQ();
+            }
             SwitchTurn();
         }
     }
@@ -541,6 +550,7 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
                 PhaseChange(GamePhase.HEROSelect);
                 break;
             case GamePhase.Wait:
+                if(iTurnGauge >= 9)
                 PhaseChange(GamePhase.HEROSelect);
                 break;
         }
@@ -558,6 +568,10 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
 
     private IEnumerator TurnDeclaration(bool myTurn)
     {
+        if (myTurn)
+        { 
+            iTurnGauge++;
+        }
         PhaseText.text = myTurn ? "Your Turn!" : "Opponent's Turn";
         TurnIndicator.text = myTurn ? "My Turn" : "Opponent's Turn";
         PhaseDeclarationUI.SetActive(true);

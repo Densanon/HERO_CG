@@ -258,6 +258,7 @@ MonoBehaviour:
     type: 3}
   CardHeroHQPrefab: {fileID: 4170959337981425709, guid: a66f2b29b651e9545b95f6e9bada5401,
     type: 3}
+  ReserveButton: {fileID: 1206925426}
   Hand:
   - {fileID: 346013303}
   - {fileID: 1689737759}
@@ -7213,7 +7214,7 @@ MonoBehaviour:
     m_SelectedTrigger: Selected
     m_DisabledTrigger: Disabled
   m_Interactable: 1
-  m_TargetGraphic: {fileID: 0}
+  m_TargetGraphic: {fileID: 1206925428}
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
