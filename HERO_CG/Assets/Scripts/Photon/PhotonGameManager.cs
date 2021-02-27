@@ -182,10 +182,7 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
 
     public void CheckHandZoomInEffect()
     {
-        if (handZoomed)
-        {
-            gCard.CardOverride(CB.CurrentActiveCard);
-        }
+       gCard.CardOverride(CB.CurrentActiveCard);
     }
 
     #region Move Counter Methods
@@ -205,6 +202,7 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
                 CB.FillHQ();
             }
             SwitchTurn();
+            CB.HandleTurnDeclaration(!myTurn);
         }
     }
     #endregion
@@ -339,9 +337,18 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
                     gCardPlay.SetActive(false);
                     break;
                 case GamePhase.Enhance:
-                    gCardSelect.SetActive(false);
-                    gCardOption.SetActive(false);
-                    gCardPlay.SetActive(true);
+                    if (!handZoomed)
+                    {
+                        gCardSelect.SetActive(false);
+                        gCardOption.SetActive(false);
+                        gCardPlay.SetActive(false);
+                    }
+                    else
+                    {
+                        gCardSelect.SetActive(false);
+                        gCardOption.SetActive(false);
+                        gCardPlay.SetActive(true);
+                    }
                     break;
                 case GamePhase.Recruit:
                     if (!handZoomed)
@@ -389,7 +396,7 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
                     gCardPlay.SetActive(true);
                     break;
                 case GamePhase.Wait:
-                    gCardSelect.SetActive(false);
+                    gCardSelect.SetActive(true);
                     gCardOption.SetActive(false);
                     gCardPlay.SetActive(false);
                     break;

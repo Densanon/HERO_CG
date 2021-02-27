@@ -28,6 +28,7 @@ public class CardDataBase : MonoBehaviour
     public List<CardData> HQHeros = new List<CardData>();
     public PhotonGameManager GM;
     public CardData CurrentActiveCard;
+    public static bool bTargeting = false;
 
     #region Debuging
     public bool AiDraft = false;
@@ -494,17 +495,8 @@ public class CardDataBase : MonoBehaviour
                 break;
         }
         RemoveCardFromHand(cardToUse);
-        OnTargeting(cardToUse);
+        bTargeting = false;
         GM.TurnCounterDecrement();
-        if (GM.GetTurnCounter() == 0)
-        {
-            GM.ToldSwitchTurn(false);
-            HandleTurnDeclaration(true);
-            if (PhotonGameManager.myPhase != PhotonGameManager.GamePhase.Wait)
-            {
-                GM.PhaseChange(PhotonGameManager.GamePhase.Wait);
-            }
-        }
     }
 
     private void HandleCardAdjustment(CardData cardToAdjust, string category, int newValue)
@@ -806,27 +798,28 @@ public class CardDataBase : MonoBehaviour
 
     private void RemoveCardFromHand(Card cardToRemove)
     {
-        P1Hand.Remove(cardToRemove);
-        foreach(CardData data in lHandData)
+        if(P1Hand.Count < 7)
         {
-            if(data.myCard == cardToRemove)
+            foreach(CardData data in lHandData)
             {
-                lHandData.Remove(data);
-                if(P1Hand.Count < 7)
+                if(data.myCard == cardToRemove)
                 {
+                    lHandData.Remove(data);
                     Destroy(data.gameObject);
+                    break;
                 }
-                break;
             }
         }
+        P1Hand.Remove(cardToRemove);
         UpdateHandSlider();
-        CheckActiveCard();
+        HandCardOffset(0);
         GetHandToShare();
     }
 
     private void CheckActiveCard()
     {
         int i = P1Hand.Count;
+        Debug.Log($"Hand Count to be checked: {i}");
         switch (i)
         {
             case 0:
@@ -1020,7 +1013,6 @@ public class CardDataBase : MonoBehaviour
     public void PlayCard(Card card)
     {
         //Card should be determined based on type how it will be played.
-        bool endTurn = false;
         switch (card.CardType)
         {
             case Card.Type.Ability:
@@ -1028,6 +1020,7 @@ public class CardDataBase : MonoBehaviour
                 //Update character
                 //Count move down
                 OnTargeting?.Invoke(card);
+                bTargeting = true;
                 break;
             case Card.Type.Character:
                 //Place Character on the field
@@ -1037,10 +1030,6 @@ public class CardDataBase : MonoBehaviour
                 PV.RPC("SpawnCharacterToOpponentField", RpcTarget.OthersBuffered, card.Name);
                 RemoveCardFromHand(card);
                 GM.TurnCounterDecrement();
-                if (GM.GetTurnCounter() == 0)
-                {
-                    endTurn = true;
-                }
                 break;
             case Card.Type.Enhancement:
                 //Target a Character
@@ -1048,20 +1037,13 @@ public class CardDataBase : MonoBehaviour
                 //Count move down
                 //If move amount is up, end turn
                 OnTargeting?.Invoke(card);
+                bTargeting = true;
                 break;
             case Card.Type.Feat:
                 //Resolve Feat ability
-                endTurn = true;
+                GM.ToldSwitchTurn(false);
+                HandleTurnDeclaration(true);
                 break;
-        }
-        if (endTurn)
-        {
-            GM.ToldSwitchTurn(false);
-            HandleTurnDeclaration(true);
-            if(PhotonGameManager.myPhase != PhotonGameManager.GamePhase.Wait)
-            {
-                GM.PhaseChange(PhotonGameManager.GamePhase.Wait);
-            }
         }
     }
 

@@ -198,7 +198,7 @@ public class CardData : MonoBehaviour
     {
         if(Target != null)
         {
-            bool targetting = !Target.interactable;
+            bool targetting = CardDataBase.bTargeting;
             Target.gameObject.SetActive(targetting);
             Target.interactable = targetting;
             Highlight.color = targetting ? Color.green : Color.clear;
