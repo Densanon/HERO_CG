@@ -6,6 +6,9 @@ using System.Collections.Generic;
 
 public class CardData : MonoBehaviour
 {
+    public enum FieldPlacement { Mine, Opp, Draft, HQ, Zoom, Hand}
+    FieldPlacement myPlacement;
+
     [SerializeField] TMP_Text Title;
     [SerializeField] TMP_Text tFlavor;
     [SerializeField] Image Icon;
@@ -15,10 +18,12 @@ public class CardData : MonoBehaviour
     [SerializeField] TMP_Text tAbility;
     [SerializeField] Image[] gAbilityCounters;
     [SerializeField] Button Target;
+    [SerializeField] Button OvercomeTargetButton;
     [SerializeField] List<Component> myAbilities = new List<Component>();
 
     public static Action<CardData> IsTarget = delegate { };
     public static Action<CardData, string, int> OnNumericAdjustment = delegate { };
+    public static Action<CardData> OnDestroyed = delegate { };
 
     public bool Exhausted { get; private set; }
 
@@ -40,8 +45,9 @@ public class CardData : MonoBehaviour
 
     public int AbilityCounter { get; private set; }
 
-    public CardData(Card card)
+    public CardData(Card card, FieldPlacement placement)
     {
+        myPlacement = placement;
         Exhausted = false;
         CardType = card.CardType;
         Name = card.Name;
@@ -56,6 +62,8 @@ public class CardData : MonoBehaviour
     private void Awake()
     {
         CardDataBase.OnTargeting += HandleTargetting;
+        PhotonGameManager.OnOvercomeTime += HandleActivateOvercome;
+        PhotonGameManager.OnOvercomeSwitch += HandleSwitchOvercome;
 
         UISetup();
     }
@@ -63,10 +71,34 @@ public class CardData : MonoBehaviour
     private void OnDestroy()
     {
         CardDataBase.OnTargeting -= HandleTargetting;
+        PhotonGameManager.OnOvercomeTime -= HandleActivateOvercome;
+        PhotonGameManager.OnOvercomeSwitch -= HandleSwitchOvercome;
     }
+
     #endregion
 
     #region Public Methods
+    public void DamageCheck(int dmg)
+    {
+        if(dmg >= Defense)
+        {
+            //Destroy
+            Debug.Log($"{Name} has been destroyed.");
+            OnDestroyed?.Invoke(this);
+        }else if (dmg >= Defense/2)
+        {
+            Exhaust();
+            Debug.Log($"{Name} has been exhausted.");
+            //Exhaust
+        }
+        else
+        {
+            Debug.Log($"{Name} has blocked.");
+            //Block
+        }
+        Highlight.color = Color.clear;
+    }
+
     public void Exhaust()
     {
         Exhausted = true;
@@ -140,8 +172,9 @@ public class CardData : MonoBehaviour
 
     }
 
-    public void CardOverride(Card card)
+    public void CardOverride(Card card, FieldPlacement placement)
     {
+        myPlacement = placement;
         myCard = card;
         CardType = card.CardType;
         Name = card.Name;
@@ -154,8 +187,9 @@ public class CardData : MonoBehaviour
         UISetup();
     }
 
-    public void CardOverride(CardData card)
+    public void CardOverride(CardData card, FieldPlacement placement)
     {
+        myPlacement = placement;
         myCard = card.myCard;
         CardType = card.CardType;
         Name = card.Name;
@@ -171,6 +205,25 @@ public class CardData : MonoBehaviour
     public void Targeted()
     {
         IsTarget?.Invoke(this);
+    }
+
+    public void OvercomeTarget(bool targeting)
+    {
+        if (targeting)
+        {
+            if (myPlacement == FieldPlacement.Mine)
+            {
+                Highlight.color = Color.blue;
+            }
+            else
+            {
+                Highlight.color = Color.red;
+            }
+        }
+        else
+        {
+            Highlight.color = Color.clear;
+        }
     }
     #endregion
 
@@ -200,9 +253,74 @@ public class CardData : MonoBehaviour
         {
             bool targetting = CardDataBase.bTargeting;
             Target.gameObject.SetActive(targetting);
-            Target.interactable = targetting;
             Highlight.color = targetting ? Color.green : Color.clear;
         }
     }
+
+    private void HandleActivateOvercome(bool onOff)
+    {
+        if (onOff)
+        {
+            switch (myPlacement)
+            {
+                case FieldPlacement.Mine:
+                    if (!Exhausted)
+                    {
+                        OvercomeTargetButton.gameObject.SetActive(true);
+                        OvercomeTargetButton.interactable = true;
+                    }
+                    break;
+                case FieldPlacement.Opp:
+                    OvercomeTargetButton.gameObject.SetActive(true);
+                    OvercomeTargetButton.interactable = false;
+                    break;
+            }
+        }
+        else
+        {
+            switch (myPlacement)
+            {
+                case FieldPlacement.Mine:
+                    OvercomeTargetButton.gameObject.SetActive(false);
+                    break;
+                case FieldPlacement.Opp:
+                    OvercomeTargetButton.gameObject.SetActive(false);
+                    break;
+            }
+        }
+        
+    }
+
+    private void HandleSwitchOvercome()
+    {
+        if (PhotonGameManager.AttDef)
+        {
+            switch (myPlacement)
+            {
+                case FieldPlacement.Mine:
+                    if (!Exhausted)
+                    {
+                        OvercomeTargetButton.interactable = true;
+                    }
+                    break;
+                case FieldPlacement.Opp:
+                    OvercomeTargetButton.interactable = false;
+                    break;
+            }
+        }
+        else
+        {
+            switch (myPlacement)
+            {
+                case FieldPlacement.Mine:
+                    OvercomeTargetButton.interactable = false;
+                    break;
+                case FieldPlacement.Opp:
+                    OvercomeTargetButton.interactable = true;
+                    break;
+            }
+        }
+    }
+
     #endregion
 }

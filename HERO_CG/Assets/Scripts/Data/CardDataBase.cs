@@ -240,7 +240,7 @@ public class CardDataBase : MonoBehaviour
         {
             GameObject obj = Instantiate(CardDraftPrefab, DraftArea);
             CardData cd = obj.GetComponent<CardData>();
-            cd.CardOverride(card);
+            cd.CardOverride(card, CardData.FieldPlacement.Draft);
             Draft.Add(cd);
         }
     }
@@ -637,7 +637,7 @@ public class CardDataBase : MonoBehaviour
             {
                 GameObject obj = Instantiate(CardHeroHQPrefab, HQArea);
                 CardData data = obj.GetComponent<CardData>();
-                data.CardOverride(card);
+                data.CardOverride(card, CardData.FieldPlacement.HQ);
                 HQHeros.Add(data);
                 temp.Add(card.Name);
             }
@@ -704,7 +704,7 @@ public class CardDataBase : MonoBehaviour
                 HQ.Add(addCard);
                 GameObject obj = Instantiate(CardHeroHQPrefab, HQArea);
                 CardData data = obj.GetComponent<CardData>();
-                data.CardOverride(addCard);
+                data.CardOverride(addCard, CardData.FieldPlacement.HQ);
                 HQHeros.Add(data);
             }
         }
@@ -788,7 +788,7 @@ public class CardDataBase : MonoBehaviour
         {
             GameObject obj = Instantiate(CardHandPrefab, Hand[P1Hand.Count - 1].transform);
             CardData data = obj.GetComponent<CardData>();
-            data.CardOverride(cardToAdd);
+            data.CardOverride(cardToAdd, CardData.FieldPlacement.Hand);
             lHandData.Add(data);
             CheckActiveCard();
         }
@@ -870,7 +870,7 @@ public class CardDataBase : MonoBehaviour
             {
                 GameObject obj = Instantiate(CardOppFieldPrefab, OppHeroArea);
                 CardData data = obj.GetComponent<CardData>();
-                data.CardOverride(card);
+                data.CardOverride(card, CardData.FieldPlacement.Opp);
                 P2Field.Add(data);
                 break;
             }
@@ -881,7 +881,7 @@ public class CardDataBase : MonoBehaviour
     {
         GameObject obj = Instantiate(CardMyFieldPrefab, MyHeroArea);
         CardData data = obj.GetComponent<CardData>();
-        data.CardOverride(card);
+        data.CardOverride(card, CardData.FieldPlacement.Mine);
         P1Field.Add(data);
     }
 
@@ -994,6 +994,12 @@ public class CardDataBase : MonoBehaviour
     #endregion
 
     #region Public Methods
+    public bool CheckIfMyCard(CardData card)
+    {
+        bool isMyCard = P1Field.Contains(card);
+
+        return isMyCard;
+    }
 
     public void HandCardOffset(System.Single offset)
     {
@@ -1005,7 +1011,7 @@ public class CardDataBase : MonoBehaviour
             {
                 j -= P1Hand.Count;
             }
-            lHandData[i].CardOverride(P1Hand[j]);
+            lHandData[i].CardOverride(P1Hand[j], CardData.FieldPlacement.Hand);
         }
         CheckActiveCard();
     }

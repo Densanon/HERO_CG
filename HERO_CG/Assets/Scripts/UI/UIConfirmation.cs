@@ -6,7 +6,7 @@ public class UIConfirmation : MonoBehaviour
 {
     public GameObject confirmationUI;
     public TMP_Text confirmationText;
-    public enum Confirmation { Heal, Enhance, Recruit, Overcome, Feat, Quit, Enhancing, Ability}
+    public enum Confirmation { Heal, Enhance, Recruit, Overcome, Feat, Quit, Enhancing, Ability, AtDef}
     private Confirmation typeOfConfirmation = Confirmation.Heal;
     private Card myCardToUse;
     private CardData myTargetCard;
@@ -43,6 +43,8 @@ public class UIConfirmation : MonoBehaviour
                 break;
             case Card.Type.Character:
                 //will need to do something for attacking here.
+                confirmationText.text = $"Target {cardToBePlayed.Name}?";
+                typeOfConfirmation = Confirmation.Overcome;
                 break;
         }
     }
@@ -113,6 +115,9 @@ public class UIConfirmation : MonoBehaviour
                 break;
             case Confirmation.Enhancing:
                 OnTargetAccepted?.Invoke(myTargetCard, myCardToUse);
+                break;
+            case Confirmation.AtDef:
+                OnTargetAccepted?.Invoke(myTargetCard, null);
                 break;
         }
         confirmationUI.SetActive(false);

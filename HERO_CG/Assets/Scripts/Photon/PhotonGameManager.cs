@@ -50,7 +50,16 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
     private int iTurnCounter = 0;
     private int iTurnGauge = 0;
 
+    public GameObject gOvercome;
+    public Button bSwitch;
+    public Button bBattle;
+    private List<CardData> AttackingHeros;
+    private CardData DefendingHero;
+    public static bool AttDef = true;
+
     public static Action<Card, GamePhase> OnCardCollected = delegate { };
+    public static Action<bool> OnOvercomeTime = delegate { };
+    public static Action OnOvercomeSwitch = delegate { };
 
     #region Unity Methods
     private void Awake()
@@ -127,6 +136,11 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
     public void PhaseChange(GamePhase phaseToChangeTo)
     {
         Debug.Log($"Phase is being changed to {phaseToChangeTo}");
+        if(myPhase == GamePhase.Overcome)
+        {
+            gOvercome.SetActive(false);
+            OnOvercomeTime?.Invoke(false);
+        }
         myPhase = phaseToChangeTo;
         HandlePhaseChange();
     }
@@ -153,6 +167,34 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
         TurnActionIndicator.text = "0";
     }
 
+    #region Overcome Method/Functions
+    public void CalculateBattle()
+    {
+        if (AttackingHeros.Count > 0 && DefendingHero != null)
+        {
+            int tDmg = 0;
+            foreach(CardData data in AttackingHeros)
+            {
+                tDmg += data.Attack;
+                data.Exhaust();
+                data.OvercomeTarget(false);
+            }
+
+            DefendingHero.DamageCheck(tDmg);
+        }
+    }
+
+    public void SwitchAttDef()
+    {
+        AttDef = !AttDef;
+        OnOvercomeSwitch?.Invoke();
+        if (!AttDef)
+        {
+            //turn off switch interactible
+        }
+    }
+    #endregion
+
     public void ToldSwitchTurn(bool turn)
     {
         myTurn = turn;
@@ -176,13 +218,13 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
     {
         handZoomed = true;
         gCardZoom.SetActive(true);
-        gCard.CardOverride(CB.CurrentActiveCard);
+        gCard.CardOverride(CB.CurrentActiveCard, CardData.FieldPlacement.Zoom);
         HandleCardButtons();
     }
 
     public void CheckHandZoomInEffect()
     {
-       gCard.CardOverride(CB.CurrentActiveCard);
+       gCard.CardOverride(CB.CurrentActiveCard, CardData.FieldPlacement.Hand);
     }
 
     #region Move Counter Methods
@@ -214,9 +256,45 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
     #endregion
 
     #region Private Methods
-    private void HandleHeroSelected(Card card)
+    private void HandleHeroSelected(CardData card)
     {
-
+        if (CB.CheckIfMyCard(card))
+        {
+            if (!card.Exhausted)
+            {
+                if (AttackingHeros.Contains(card))
+                {
+                    //Untarget Card
+                    AttackingHeros.Remove(card);
+                    card.OvercomeTarget(false);
+                }
+                else
+                {
+                    //Target Card
+                    AttackingHeros.Add(card);
+                    card.OvercomeTarget(true);
+                }
+            }
+        }
+        else
+        {
+            if (!AttDef)
+            {
+                if(DefendingHero == card)
+                {
+                    //Untarget Card
+                    DefendingHero = null;
+                    card.OvercomeTarget(false);
+                }
+                else
+                {
+                    //Target Card
+                    DefendingHero = card;
+                    card.OvercomeTarget(true);
+                    //turn on interactible for calculate
+                }
+            }
+        }
     }
 
     private void HandleDeselection()
@@ -267,11 +345,6 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
                 }
                 break;
             case GamePhase.Overcome:
-                if (!zoomed)
-                {
-                    Debug.Log($"Zooming Card: {card.Name}");
-                    CardZoom(card);
-                }
                 break;
             case GamePhase.Feat:
                 if (!zoomed)
@@ -306,7 +379,7 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
     {
         zoomed = true;
         gCardZoom.SetActive(true);
-        gCard.CardOverride(card);
+        gCard.CardOverride(card, CardData.FieldPlacement.Zoom);
         HandleCardButtons();
     }
 
@@ -496,7 +569,10 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
             case GamePhase.Overcome:
                 PhaseIndicator.text = "Overcome";
                 gHEROSelect.SetActive(false);
+                gOvercome.SetActive(true);
                 TurnActionIndicator.text = $"Actions Remaining: ~";
+                AttDef = true;
+                OnOvercomeTime?.Invoke(true);
                 //Declare attacking hero(s) as a single attack, directed towards a single target
                 //Calculate all attack power from total heros and abilities
                 //Calculate all defensive power from total hero & abilities
@@ -548,6 +624,8 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
                 PhaseChange(GamePhase.Wait);
                 break;
             case GamePhase.Overcome:
+                gOvercome.SetActive(false);
+                OnOvercomeTime?.Invoke(false);
                 PhaseChange(GamePhase.Wait);
                 break;
             case GamePhase.Recruit:
