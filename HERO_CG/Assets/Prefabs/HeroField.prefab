@@ -166,7 +166,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &658108927146812688
 RectTransform:
   m_ObjectHideFlags: 0
@@ -230,7 +230,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 658108927146812691}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
   m_Name: 
@@ -908,7 +908,6 @@ GameObject:
   - component: {fileID: 658108928448476568}
   - component: {fileID: 658108928448476647}
   - component: {fileID: 658108928448476646}
-  - component: {fileID: 658108928448476569}
   m_Layer: 5
   m_Name: Highlight
   m_TagString: Untagged
@@ -972,36 +971,6 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
---- !u!114 &658108928448476569
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 658108928448476571}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 77e0b76ece2c6244ca2c261bb75d6631, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  Title: {fileID: 0}
-  tFlavor: {fileID: 0}
-  Icon: {fileID: 658108928448476646}
-  Highlight: {fileID: 0}
-  tAttack: {fileID: 658108928043981702}
-  tDefense: {fileID: 658108928533446209}
-  tAbility: {fileID: 0}
-  gAbilityCounters:
-  - {fileID: 658108928137863915}
-  - {fileID: 658108928022519568}
-  - {fileID: 658108927742681797}
-  - {fileID: 658108928515393753}
-  - {fileID: 658108928515393753}
-  - {fileID: 658108927097486017}
-  - {fileID: 658108927602135555}
-  Target: {fileID: 0}
-  OvercomeTargetButton: {fileID: 0}
-  myAbilities: []
 --- !u!1 &658108928515393752
 GameObject:
   m_ObjectHideFlags: 0
@@ -1372,7 +1341,6 @@ GameObject:
   - component: {fileID: 658108928776937187}
   - component: {fileID: 658108928776937186}
   - component: {fileID: 658108928776937189}
-  - component: {fileID: 658108928776937188}
   m_Layer: 5
   m_Name: HeroImage
   m_TagString: Untagged
@@ -1436,36 +1404,6 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
---- !u!114 &658108928776937188
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 658108928776937191}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 77e0b76ece2c6244ca2c261bb75d6631, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  Title: {fileID: 0}
-  tFlavor: {fileID: 0}
-  Icon: {fileID: 658108928776937189}
-  Highlight: {fileID: 0}
-  tAttack: {fileID: 658108928043981702}
-  tDefense: {fileID: 658108928533446209}
-  tAbility: {fileID: 0}
-  gAbilityCounters:
-  - {fileID: 658108928137863915}
-  - {fileID: 658108928022519568}
-  - {fileID: 658108927742681797}
-  - {fileID: 658108928515393753}
-  - {fileID: 658108928515393753}
-  - {fileID: 658108927097486017}
-  - {fileID: 658108927602135555}
-  Target: {fileID: 0}
-  OvercomeTargetButton: {fileID: 0}
-  myAbilities: []
 --- !u!1 &658108928837442630
 GameObject:
   m_ObjectHideFlags: 0
