@@ -219,7 +219,7 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
         handZoomed = true;
         gCardZoom.SetActive(true);
         gCard.CardOverride(CB.CurrentActiveCard, CardData.FieldPlacement.Zoom);
-        HandleCardButtons();
+        HandleCardButtons(CardData.FieldPlacement.Hand);
     }
 
     public void CheckHandZoomInEffect()
@@ -380,19 +380,17 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
         zoomed = true;
         gCardZoom.SetActive(true);
         gCard.CardOverride(card, CardData.FieldPlacement.Zoom);
-        HandleCardButtons();
+        HandleCardButtons(card.myPlacement);
     }
 
-    private void HandleCardButtons()
+    private void HandleCardButtons(CardData.FieldPlacement placement)
     {
         if (myTurn)
         {
             switch (myPhase)
             {
                 case GamePhase.HEROSelect:
-                    gCardSelect.SetActive(false);
-                    gCardOption.SetActive(false);
-                    gCardPlay.SetActive(false);
+                    NullZoomButtons();
                     break;
                 case GamePhase.AbilityDraft:
                     gCardSelect.SetActive(false);
@@ -410,37 +408,84 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
                     gCardPlay.SetActive(false);
                     break;
                 case GamePhase.Enhance:
-                    if (!handZoomed)
+                    switch (placement)
                     {
-                        gCardSelect.SetActive(false);
-                        gCardOption.SetActive(false);
-                        gCardPlay.SetActive(false);
-                    }
-                    else
-                    {
-                        gCardSelect.SetActive(false);
-                        gCardOption.SetActive(false);
-                        gCardPlay.SetActive(true);
+                        case CardData.FieldPlacement.Hand:
+                            gCardSelect.SetActive(false);
+                            gCardOption.SetActive(false);
+                            gCardPlay.SetActive(true);
+                            break;
+                        case CardData.FieldPlacement.HQ:
+                            NullZoomButtons();
+                            break;
+                        case CardData.FieldPlacement.Mine:
+                            NullZoomButtons();
+                            break;
+                        case CardData.FieldPlacement.Opp:
+                            NullZoomButtons();
+                            break;
                     }
                     break;
                 case GamePhase.Recruit:
-                    if (!handZoomed)
+                    switch (placement)
                     {
-                        gCardSelect.SetActive(false);
-                        gCardOption.SetActive(true);
-                        gCardPlay.SetActive(false);
-                    }
-                    else
-                    {
-                        gCardSelect.SetActive(false);
-                        gCardOption.SetActive(false);
-                        gCardPlay.SetActive(false);
+                        case CardData.FieldPlacement.Hand:
+                            NullZoomButtons();
+                            break;
+                        case CardData.FieldPlacement.HQ:
+                            gCardSelect.SetActive(false);
+                            gCardOption.SetActive(true);
+                            gCardPlay.SetActive(false);
+                            break;
+                        case CardData.FieldPlacement.Mine:
+                            NullZoomButtons();
+                            break;
+                        case CardData.FieldPlacement.Opp:
+                            NullZoomButtons();
+                            break;
                     }
                     break;
                 case GamePhase.Overcome:
-                    gCardSelect.SetActive(true);
-                    gCardOption.SetActive(false);
-                    gCardPlay.SetActive(false);
+                    if (AttDef)
+                    {
+                        switch (placement)
+                        {
+                            case CardData.FieldPlacement.Hand:
+                                NullZoomButtons();
+                                break;
+                            case CardData.FieldPlacement.HQ:
+                                NullZoomButtons();
+                                break;
+                            case CardData.FieldPlacement.Mine:
+                                gCardSelect.SetActive(true);
+                                gCardOption.SetActive(false);
+                                gCardPlay.SetActive(false);
+                                break;
+                            case CardData.FieldPlacement.Opp:
+                                NullZoomButtons();
+                                break;
+                        }
+                    }
+                    else
+                    {
+                        switch (placement)
+                    {
+                        case CardData.FieldPlacement.Hand:
+                                NullZoomButtons();
+                                break;
+                        case CardData.FieldPlacement.HQ:
+                                NullZoomButtons();
+                                break;
+                        case CardData.FieldPlacement.Mine:
+                                NullZoomButtons();
+                                break;
+                        case CardData.FieldPlacement.Opp:
+                                gCardSelect.SetActive(true);
+                                gCardOption.SetActive(false);
+                                gCardPlay.SetActive(false);
+                                break;
+                    }
+                    }
                     break;
                 case GamePhase.Feat:
                     gCardSelect.SetActive(true);
@@ -454,14 +499,10 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
             switch (myPhase)
             {
                 case GamePhase.AbilityDraft:
-                    gCardSelect.SetActive(false);
-                    gCardOption.SetActive(false);
-                    gCardPlay.SetActive(false);
+                    NullZoomButtons();
                     break;
                 case GamePhase.HeroDraft:
-                    gCardSelect.SetActive(false);
-                    gCardOption.SetActive(false);
-                    gCardPlay.SetActive(false);
+                    NullZoomButtons();
                     break;
                 case GamePhase.TurnResponse:
                     gCardSelect.SetActive(false);
@@ -469,13 +510,18 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
                     gCardPlay.SetActive(true);
                     break;
                 case GamePhase.Wait:
-                    gCardSelect.SetActive(true);
-                    gCardOption.SetActive(false);
-                    gCardPlay.SetActive(false);
+                    NullZoomButtons();
                     break;
                 
             }
         }
+    }
+
+    private void NullZoomButtons()
+    {
+        gCardSelect.SetActive(false);
+        gCardOption.SetActive(false);
+        gCardPlay.SetActive(false);
     }
 
     private void HandleCardCollected(Card card)
@@ -557,27 +603,26 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
                 }
                 iTurnCounter = 3;
                 TurnActionIndicator.text = $"Actions Remaining: {iTurnCounter}";
-                StartCoroutine(PhaseDeclaration("Play Cards"));
                 break;
             case GamePhase.Recruit:
+                //pick up to 2 Heros either from Reserve or HQ
                 PhaseIndicator.text = "Recruit";
                 gHEROSelect.SetActive(false);
                 iTurnCounter = 2;
                 TurnActionIndicator.text = $"Actions Remaining: {iTurnCounter}";
-                //pick up to 2 Heros either from Reserve or HQ
                 break;
             case GamePhase.Overcome:
+                //Declare attacking hero(s) as a single attack, directed towards a single target
+                //Calculate all attack power from total heros and abilities
+                //Calculate all defensive power from total hero & abilities
+                //Resolve, if defeated, place in discard, all attacking are exhausted
+                //Able to repeate
                 PhaseIndicator.text = "Overcome";
                 gHEROSelect.SetActive(false);
                 gOvercome.SetActive(true);
                 TurnActionIndicator.text = $"Actions Remaining: ~";
                 AttDef = true;
                 OnOvercomeTime?.Invoke(true);
-                //Declare attacking hero(s) as a single attack, directed towards a single target
-                //Calculate all attack power from total heros and abilities
-                //Calculate all defensive power from total hero & abilities
-                //Resolve, if defeated, place in discard, all attacking are exhausted
-                //Able to repeate
                 break;
             case GamePhase.Feat:
                 PhaseIndicator.text = "Feat";

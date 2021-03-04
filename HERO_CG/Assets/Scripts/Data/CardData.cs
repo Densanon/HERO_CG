@@ -7,7 +7,7 @@ using System.Collections.Generic;
 public class CardData : MonoBehaviour
 {
     public enum FieldPlacement { Mine, Opp, Draft, HQ, Zoom, Hand}
-    FieldPlacement myPlacement;
+    public FieldPlacement myPlacement;
 
     [SerializeField] TMP_Text Title;
     [SerializeField] TMP_Text tFlavor;
@@ -66,6 +66,15 @@ public class CardData : MonoBehaviour
         PhotonGameManager.OnOvercomeSwitch += HandleSwitchOvercome;
 
         UISetup();
+    }
+
+    private void Start()
+    {
+        if(OvercomeTargetButton != null)
+        {
+            Debug.Log("Turning off overcome target");
+            OvercomeTargetButton.enabled = false;
+        }
     }
 
     private void OnDestroy()
@@ -264,15 +273,18 @@ public class CardData : MonoBehaviour
             switch (myPlacement)
             {
                 case FieldPlacement.Mine:
-                    if (!Exhausted)
+                    if (!Exhausted && OvercomeTargetButton!=null)
                     {
-                        OvercomeTargetButton.gameObject.SetActive(true);
-                        OvercomeTargetButton.interactable = true;
+                        Debug.Log("OvercomeTargetButton activate");
+                        OvercomeTargetButton.enabled = true;
                     }
                     break;
                 case FieldPlacement.Opp:
-                    OvercomeTargetButton.gameObject.SetActive(true);
-                    OvercomeTargetButton.interactable = false;
+                    if(OvercomeTargetButton != null)
+                    {
+                        Debug.Log("OvercomeTargetButton deactivate");
+                        OvercomeTargetButton.enabled = false;
+                    }
                     break;
             }
         }
@@ -281,14 +293,14 @@ public class CardData : MonoBehaviour
             switch (myPlacement)
             {
                 case FieldPlacement.Mine:
-                    OvercomeTargetButton.gameObject.SetActive(false);
+                    OvercomeTargetButton.enabled = false;
                     break;
                 case FieldPlacement.Opp:
-                    OvercomeTargetButton.gameObject.SetActive(false);
+                    OvercomeTargetButton.enabled = false;
                     break;
             }
         }
-        
+        Highlight.color = Color.clear;
     }
 
     private void HandleSwitchOvercome()
