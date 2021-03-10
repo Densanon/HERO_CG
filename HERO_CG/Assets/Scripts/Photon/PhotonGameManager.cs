@@ -58,15 +58,15 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
     public static bool AttDef = true;
 
     public static Action<Card, GamePhase> OnCardCollected = delegate { };
-    public static Action<bool> OnOvercomeTime = delegate { };
-    public static Action OnOvercomeSwitch = delegate { };
+    /*public static Action<bool> OnOvercomeTime = delegate { };
+    public static Action OnOvercomeSwitch = delegate { };*/
 
     #region Unity Methods
     private void Awake()
     {
         PlayerBase.OnBaseDestroyed += OnBaseDestroyed;
         CardFunction.OnCardSelected += HandleCardSelecion;
-        CardFunction.OnHeroSelected += HandleHeroSelected;
+        //CardFunction.OnHeroSelected += HandleHeroSelected;
         CardFunction.OnCardDeselected += HandleDeselection;
         CardFunction.OnCardCollected += HandleCardCollected;
         CardFunction.OnCardPlayed += HandlePlayCard;
@@ -78,7 +78,7 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
     {
         PlayerBase.OnBaseDestroyed -= OnBaseDestroyed;
         CardFunction.OnCardSelected -= HandleCardSelecion;
-        CardFunction.OnHeroSelected -= HandleHeroSelected;
+        //CardFunction.OnHeroSelected -= HandleHeroSelected;
         CardFunction.OnCardDeselected -= HandleDeselection;
         CardFunction.OnCardCollected -= HandleCardCollected;
         CardFunction.OnCardPlayed -= HandlePlayCard;
@@ -138,8 +138,8 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
         Debug.Log($"Phase is being changed to {phaseToChangeTo}");
         if(myPhase == GamePhase.Overcome)
         {
-            gOvercome.SetActive(false);
-            OnOvercomeTime?.Invoke(false);
+            //gOvercome.SetActive(false);
+            //OnOvercomeTime?.Invoke(false);
         }
         myPhase = phaseToChangeTo;
         HandlePhaseChange();
@@ -187,7 +187,7 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
     public void SwitchAttDef()
     {
         AttDef = !AttDef;
-        OnOvercomeSwitch?.Invoke();
+        //OnOvercomeSwitch?.Invoke();
         if (!AttDef)
         {
             //turn off switch interactible
@@ -622,7 +622,7 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
                 gOvercome.SetActive(true);
                 TurnActionIndicator.text = $"Actions Remaining: ~";
                 AttDef = true;
-                OnOvercomeTime?.Invoke(true);
+                //OnOvercomeTime?.Invoke(true);
                 break;
             case GamePhase.Feat:
                 PhaseIndicator.text = "Feat";
@@ -670,7 +670,7 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
                 break;
             case GamePhase.Overcome:
                 gOvercome.SetActive(false);
-                OnOvercomeTime?.Invoke(false);
+                //OnOvercomeTime?.Invoke(false);
                 PhaseChange(GamePhase.Wait);
                 break;
             case GamePhase.Recruit:

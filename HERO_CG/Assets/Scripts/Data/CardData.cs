@@ -9,16 +9,14 @@ public class CardData : MonoBehaviour
     public enum FieldPlacement { Mine, Opp, Draft, HQ, Zoom, Hand}
     public FieldPlacement myPlacement;
 
-    [SerializeField] TMP_Text Title;
-    [SerializeField] TMP_Text tFlavor;
     [SerializeField] Image Icon;
-    [SerializeField] Image Highlight;
     [SerializeField] TMP_Text tAttack;
     [SerializeField] TMP_Text tDefense;
-    [SerializeField] TMP_Text tAbility;
+    [SerializeField] TMP_Text tbAttack;
+    [SerializeField] TMP_Text tbDefense;
     [SerializeField] Image[] gAbilityCounters;
     [SerializeField] Button Target;
-    [SerializeField] Button OvercomeTargetButton;
+    //[SerializeField] Button OvercomeTargetButton;
     [SerializeField] List<Component> myAbilities = new List<Component>();
 
     public static Action<CardData> IsTarget = delegate { };
@@ -39,10 +37,6 @@ public class CardData : MonoBehaviour
 
     public int Defense { get; private set; }
 
-    public string Flavor { get; private set; }
-
-    public string Ability { get; private set; }
-
     public int AbilityCounter { get; private set; }
 
     public CardData(Card card, FieldPlacement placement)
@@ -53,8 +47,6 @@ public class CardData : MonoBehaviour
         Name = card.Name;
         Attack = card.Attack;
         Defense = card.Defense;
-        Flavor = card.Flavor;
-        Ability = card.Ability;
         CardImage = card.image;
     }
 
@@ -62,28 +54,18 @@ public class CardData : MonoBehaviour
     private void Awake()
     {
         CardDataBase.OnTargeting += HandleTargetting;
-        PhotonGameManager.OnOvercomeTime += HandleActivateOvercome;
-        PhotonGameManager.OnOvercomeSwitch += HandleSwitchOvercome;
+        /*PhotonGameManager.OnOvercomeTime += HandleActivateOvercome;
+        PhotonGameManager.OnOvercomeSwitch += HandleSwitchOvercome;*/
 
         UISetup();
-    }
-
-    private void Start()
-    {
-        if(OvercomeTargetButton != null)
-        {
-            Debug.Log("Turning off overcome target");
-            OvercomeTargetButton.enabled = false;
-        }
     }
 
     private void OnDestroy()
     {
         CardDataBase.OnTargeting -= HandleTargetting;
-        PhotonGameManager.OnOvercomeTime -= HandleActivateOvercome;
-        PhotonGameManager.OnOvercomeSwitch -= HandleSwitchOvercome;
+        /*PhotonGameManager.OnOvercomeTime -= HandleActivateOvercome;
+        PhotonGameManager.OnOvercomeSwitch -= HandleSwitchOvercome;*/
     }
-
     #endregion
 
     #region Public Methods
@@ -105,7 +87,6 @@ public class CardData : MonoBehaviour
             Debug.Log($"{Name} has blocked.");
             //Block
         }
-        Highlight.color = Color.clear;
     }
 
     public void Exhaust()
@@ -122,6 +103,7 @@ public class CardData : MonoBehaviour
     {
         Attack = amount;
         tAttack.text = Attack.ToString();
+        tbAttack.text = Attack.ToString();
     }
 
     public void AdjustAttack(int amount)
@@ -130,6 +112,7 @@ public class CardData : MonoBehaviour
         Debug.Log($"Adjusting Attack from {Attack} to {Attack + amount}");
         Attack += amount;
         tAttack.text = Attack.ToString();
+        tbAttack.text = Attack.ToString();
         if (sendit)
         {
             Debug.Log($"Sending the new Attack Value. {Attack}");
@@ -141,6 +124,7 @@ public class CardData : MonoBehaviour
     {
         Defense = amount;
         tDefense.text = Defense.ToString();
+        tbDefense.text = Defense.ToString();
     }
 
     public void AdjustDefense(int amount)
@@ -149,6 +133,7 @@ public class CardData : MonoBehaviour
         Debug.Log($"Amount to adjust defense {amount}");
         Defense += amount;
         tDefense.text = Defense.ToString();
+        tbDefense.text = Defense.ToString();
         if (sendit)
         {
             Debug.Log($"Sending the new Defense Value. {Defense}");
@@ -189,9 +174,14 @@ public class CardData : MonoBehaviour
         Name = card.Name;
         Attack = card.Attack;
         Defense = card.Defense;
-        Flavor = card.Flavor;
-        Ability = card.Ability;
-        CardImage = card.image;
+        if(myPlacement == FieldPlacement.Mine || myPlacement == FieldPlacement.Opp || myPlacement == FieldPlacement.HQ)
+        {
+            CardImage = card.alphaImage;
+        }
+        else
+        {
+            CardImage = card.image;
+        }
 
         UISetup();
     }
@@ -204,9 +194,14 @@ public class CardData : MonoBehaviour
         Name = card.Name;
         Attack = card.Attack;
         Defense = card.Defense;
-        Flavor = card.Flavor;
-        Ability = card.Ability;
-        CardImage = card.CardImage;
+        if (myPlacement == FieldPlacement.Mine || myPlacement == FieldPlacement.Opp || myPlacement == FieldPlacement.HQ)
+        {
+            CardImage = card.myCard.alphaImage;
+        }
+        else
+        {
+            CardImage = card.myCard.image;
+        }
 
         UISetup();
     }
@@ -222,16 +217,16 @@ public class CardData : MonoBehaviour
         {
             if (myPlacement == FieldPlacement.Mine)
             {
-                Highlight.color = Color.blue;
+                //Highlight.color = Color.blue;
             }
             else
             {
-                Highlight.color = Color.red;
+                //Highlight.color = Color.red;
             }
         }
         else
         {
-            Highlight.color = Color.clear;
+            //Highlight.color = Color.clear;
         }
     }
     #endregion
@@ -239,20 +234,23 @@ public class CardData : MonoBehaviour
     #region Private Methods
     private void UISetup()
     {
-        if (Title != null)
-        {
-            Title.text = Name;
-        }
-        if (tFlavor != null)
-        {
-            tFlavor.text = Flavor;
-        }
+
         Icon.sprite = CardImage;
-        tAttack.text = Attack.ToString();
-        tDefense.text = Defense.ToString();
-        if (tAbility != null)
+        if(tbAttack != null)
         {
-            tAbility.text = Ability;
+            tAttack.text = Attack.ToString();
+            tbAttack.text = Attack.ToString();
+            tDefense.text = Defense.ToString();
+            tbDefense.text = Defense.ToString();
+        }else if(myPlacement == FieldPlacement.HQ)
+        {
+            tAttack.text = Attack.ToString();
+            tDefense.text = Defense.ToString();
+        }
+        else
+        {
+            tAttack.text = "";
+            tDefense.text = "";
         }
     }
 
@@ -262,11 +260,11 @@ public class CardData : MonoBehaviour
         {
             bool targetting = CardDataBase.bTargeting;
             Target.gameObject.SetActive(targetting);
-            Highlight.color = targetting ? Color.green : Color.clear;
+            //Highlight.color = targetting ? Color.green : Color.clear;
         }
     }
 
-    private void HandleActivateOvercome(bool onOff)
+    /*private void HandleActivateOvercome(bool onOff)
     {
         if (onOff)
         {
@@ -333,6 +331,6 @@ public class CardData : MonoBehaviour
             }
         }
     }
-
+    */
     #endregion
 }

@@ -4,49 +4,63 @@ public class Card
 {
     public enum Type { Character, Ability, Enhancement, Feat}
     Type _myType;
-    bool _exhausted;
     string _name;
     int _attack;
     int _defense;
-    string _flavor;
     string _ability;
     int abilityCounter;
     public Sprite image;
+    public Sprite alphaImage;
 
-    public Card(Type CardType, string Name, int Attack, int Defense, string Flavor, string Ability, Sprite Image)
+    /// <summary>
+    /// For Creating Hero Cards
+    /// </summary>
+    /// <param name="CardType"></param>
+    /// <param name="Name"></param>
+    /// <param name="Attack"></param>
+    /// <param name="Defense"></param>
+    /// <param name="CardImage"></param>
+    /// <param name="AlphaImage"></param>
+    public Card(Type CardType, string Name, int Attack, int Defense, Sprite CardImage, Sprite AlphaImage)
     {
         _myType = CardType;
         _name = Name;
         _attack = Attack;
         _defense = Defense;
-        _flavor = Flavor;
-        _ability = Ability;
-        image = Image;
+        image = CardImage;
+        alphaImage = AlphaImage;
     }
 
-    public Card(Type CardType, string Name, string Ability, Sprite Image)
-    {
-        _myType = CardType;
-        _name = Name;
-        _flavor = Flavor;
-        _ability = Ability;
-        image = Image;
-    }
-
+    /// <summary>
+    /// For Creating Enhancement Cards
+    /// </summary>
+    /// <param name="CardType"></param>
+    /// <param name="Name"></param>
+    /// <param name="Attack"></param>
+    /// <param name="Defense"></param>
+    /// <param name="Image"></param>
     public Card(Type CardType, string Name, int Attack, int Defense, Sprite Image)
     {
         _myType = CardType;
         _name = Name;
         _attack = Attack;
         _defense = Defense;
-        _flavor = Flavor;
         image = Image;
     }
 
-    public bool Exhausted
+    /// <summary>
+    /// For Creating Ability and Feat Cards
+    /// </summary>
+    /// <param name="CardType"></param>
+    /// <param name="Name"></param>
+    /// <param name="Ability"></param>
+    /// <param name="Image"></param>
+    public Card(Type CardType, string Name, string Ability, Sprite Image)
     {
-        get { return _exhausted; }
-        private set { _exhausted = value; }
+        _myType = CardType;
+        _name = Name;
+        _ability = Ability;
+        image = Image;
     }
 
     public Type CardType
@@ -71,23 +85,5 @@ public class Card
     {
         get { return _defense; }
         private set { _defense = value; }
-    }
-
-    public string Flavor
-    {
-        get { return _flavor; }
-        private set { _flavor = value; }
-    }
-
-    public string Ability
-    {
-        get { return _ability; }
-        private set { _ability = value; }
-    }
-
-    public int AbilityCounter
-    {
-        get { return abilityCounter; }
-        private set { abilityCounter = value; }
     }
 }

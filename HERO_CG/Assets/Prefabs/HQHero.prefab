@@ -128,13 +128,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 77e0b76ece2c6244ca2c261bb75d6631, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Title: {fileID: 0}
-  tFlavor: {fileID: 0}
+  myPlacement: 3
   Icon: {fileID: 4170959338393253046}
-  Highlight: {fileID: 0}
   tAttack: {fileID: 4170959338188779989}
   tDefense: {fileID: 4170959338744812562}
-  tAbility: {fileID: 0}
+  tbAttack: {fileID: 0}
+  tbDefense: {fileID: 0}
   gAbilityCounters:
   - {fileID: 0}
   - {fileID: 0}
@@ -372,7 +371,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 0}
   m_RaycastTarget: 1
   m_Maskable: 1
   m_OnCullStateChanged:
@@ -453,7 +452,6 @@ GameObject:
   - component: {fileID: 4170959338393253040}
   - component: {fileID: 4170959338393253041}
   - component: {fileID: 4170959338393253046}
-  - component: {fileID: 4170959338393253047}
   m_Layer: 5
   m_Name: HeroImage
   m_TagString: Untagged
@@ -517,35 +515,6 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
---- !u!114 &4170959338393253047
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4170959338393253044}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 77e0b76ece2c6244ca2c261bb75d6631, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  Title: {fileID: 0}
-  tFlavor: {fileID: 0}
-  Icon: {fileID: 4170959338393253046}
-  Highlight: {fileID: 0}
-  tAttack: {fileID: 4170959338188779989}
-  tDefense: {fileID: 4170959338744812562}
-  tAbility: {fileID: 0}
-  gAbilityCounters:
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  Target: {fileID: 0}
-  myAbilities: []
 --- !u!1 &4170959338436458005
 GameObject:
   m_ObjectHideFlags: 0
