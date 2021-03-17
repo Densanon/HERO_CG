@@ -37,7 +37,7 @@ public class CardDataBase : MonoBehaviour
 
     public static Action<bool> OnTurnDelcarationReceived = delegate { };
     public static Action<Card> OnAiDraftCollected = delegate { };
-    public static Action<Card> OnTargeting = delegate { };
+    public static Action<Card, bool> OnTargeting = delegate { };
 
     #region Card Data Base
     [SerializeField] private Sprite[] AlphaHeros = new Sprite[20];
@@ -497,7 +497,7 @@ public class CardDataBase : MonoBehaviour
                 break;
         }
         RemoveCardFromHand(cardToUse);
-        bTargeting = false;
+        OnTargeting?.Invoke(cardToUse, false);
         GM.TurnCounterDecrement();
     }
 
@@ -1025,9 +1025,8 @@ public class CardDataBase : MonoBehaviour
         {
             case Card.Type.Ability:
                 //Target a Character
-                //Update character
-                //Count move down
-                OnTargeting?.Invoke(card);
+                //Update characters
+                OnTargeting?.Invoke(card, true);
                 bTargeting = true;
                 break;
             case Card.Type.Character:
@@ -1042,9 +1041,7 @@ public class CardDataBase : MonoBehaviour
             case Card.Type.Enhancement:
                 //Target a Character
                 //Update character
-                //Count move down
-                //If move amount is up, end turn
-                OnTargeting?.Invoke(card);
+                OnTargeting?.Invoke(card, true);
                 bTargeting = true;
                 break;
             case Card.Type.Feat:

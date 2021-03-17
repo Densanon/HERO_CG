@@ -27,25 +27,28 @@ public class UIConfirmation : MonoBehaviour
         CardData.IsTarget -= HandleTarget;
     }
 
-    private void HandleTargeting(Card cardToBePlayed)
+    private void HandleTargeting(Card cardToBePlayed, bool target)
     {
-        myCardToUse = cardToBePlayed;
-        Card.Type type = cardToBePlayed.CardType;
-        switch (type)
+        if (target)
         {
-            case Card.Type.Ability:
-                confirmationText.text = "Confirm Ability to target.";
-                typeOfConfirmation = Confirmation.Ability;
-                break;
-            case Card.Type.Enhancement:
-                confirmationText.text = "Confirm Enhancement to target.";
-                typeOfConfirmation = Confirmation.Enhancing;
-                break;
-            case Card.Type.Character:
-                //will need to do something for attacking here.
-                confirmationText.text = $"Target {cardToBePlayed.Name}?";
-                typeOfConfirmation = Confirmation.Overcome;
-                break;
+            myCardToUse = cardToBePlayed;
+            Card.Type type = cardToBePlayed.CardType;
+            switch (type)
+            {
+                case Card.Type.Ability:
+                    confirmationText.text = "Confirm Ability to target.";
+                    typeOfConfirmation = Confirmation.Ability;
+                    break;
+                case Card.Type.Enhancement:
+                    confirmationText.text = "Confirm Enhancement to target.";
+                    typeOfConfirmation = Confirmation.Enhancing;
+                    break;
+                case Card.Type.Character:
+                    //will need to do something for attacking here.
+                    confirmationText.text = $"Target {cardToBePlayed.Name}?";
+                    typeOfConfirmation = Confirmation.Overcome;
+                    break;
+            }
         }
     }
 

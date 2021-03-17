@@ -53,13 +53,13 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
     public GameObject gOvercome;
     public Button bSwitch;
     public Button bBattle;
-    private List<CardData> AttackingHeros;
+    private List<CardData> AttackingHeros = new List<CardData>();
     private CardData DefendingHero;
     public static bool AttDef = true;
 
     public static Action<Card, GamePhase> OnCardCollected = delegate { };
-    /*public static Action<bool> OnOvercomeTime = delegate { };
-    public static Action OnOvercomeSwitch = delegate { };*/
+    public static Action<bool> OnOvercomeTime = delegate { };
+    public static Action OnOvercomeSwitch = delegate { };
 
     #region Unity Methods
     private void Awake()
@@ -138,8 +138,8 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
         Debug.Log($"Phase is being changed to {phaseToChangeTo}");
         if(myPhase == GamePhase.Overcome)
         {
-            //gOvercome.SetActive(false);
-            //OnOvercomeTime?.Invoke(false);
+            gOvercome.SetActive(false);
+            OnOvercomeTime?.Invoke(false);
         }
         myPhase = phaseToChangeTo;
         HandlePhaseChange();
@@ -177,21 +177,21 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
             {
                 tDmg += data.Attack;
                 data.Exhaust();
-                data.OvercomeTarget(false);
             }
+            AttackingHeros.Clear();
 
             DefendingHero.DamageCheck(tDmg);
+            DefendingHero = null;
+
+            SwitchAttDef();
         }
     }
 
     public void SwitchAttDef()
     {
         AttDef = !AttDef;
-        //OnOvercomeSwitch?.Invoke();
-        if (!AttDef)
-        {
-            //turn off switch interactible
-        }
+        OnOvercomeSwitch?.Invoke();
+        Debug.Log($"Switching AttDef to: {AttDef}");
     }
     #endregion
 
@@ -264,15 +264,15 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
             {
                 if (AttackingHeros.Contains(card))
                 {
+                    Debug.Log($"Removing {card.Name} from Attacking.");
                     //Untarget Card
                     AttackingHeros.Remove(card);
-                    card.OvercomeTarget(false);
                 }
                 else
                 {
+                    Debug.Log($"Adding {card.Name} to Attacking.");
                     //Target Card
                     AttackingHeros.Add(card);
-                    card.OvercomeTarget(true);
                 }
             }
         }
@@ -282,15 +282,15 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
             {
                 if(DefendingHero == card)
                 {
+                    Debug.Log($"Removing {card.Name} from Defending.");
                     //Untarget Card
                     DefendingHero = null;
-                    card.OvercomeTarget(false);
                 }
                 else
                 {
+                    Debug.Log($"Adding {card.Name} to Defending.");
                     //Target Card
                     DefendingHero = card;
-                    card.OvercomeTarget(true);
                     //turn on interactible for calculate
                 }
             }
@@ -345,6 +345,7 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
                 }
                 break;
             case GamePhase.Overcome:
+                HandleHeroSelected(card);
                 break;
             case GamePhase.Feat:
                 if (!zoomed)
@@ -569,13 +570,11 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
                 gHEROSelect.SetActive(false);
                 TurnActionIndicator.text = $"Actions Remaining: ~";
                 StartCoroutine(PhaseDeclaration("Play Cards"));
-                Debug.Log("Ready to Select Cards to play.");
                 break;
             case GamePhase.Enhance:
                 //Ask quantity to draw
                 //Draw up to 3 cards from enhance deck
                 //Play up to 3 cards from your hand
-                Debug.Log("Handling the 'Enhance' Option");
                 PhaseIndicator.text = "Enhance";
                 gHEROSelect.SetActive(false);
                 gCardCountCollect.SetActive(true);
@@ -622,7 +621,7 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
                 gOvercome.SetActive(true);
                 TurnActionIndicator.text = $"Actions Remaining: ~";
                 AttDef = true;
-                //OnOvercomeTime?.Invoke(true);
+                OnOvercomeTime?.Invoke(true);
                 break;
             case GamePhase.Feat:
                 PhaseIndicator.text = "Feat";

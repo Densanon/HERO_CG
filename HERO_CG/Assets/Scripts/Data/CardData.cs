@@ -54,8 +54,8 @@ public class CardData : MonoBehaviour
     private void Awake()
     {
         CardDataBase.OnTargeting += HandleTargetting;
-        /*PhotonGameManager.OnOvercomeTime += HandleActivateOvercome;
-        PhotonGameManager.OnOvercomeSwitch += HandleSwitchOvercome;*/
+        PhotonGameManager.OnOvercomeTime += HandleActivateOvercome;
+        PhotonGameManager.OnOvercomeSwitch += HandleSwitchOvercome;
 
         UISetup();
     }
@@ -63,8 +63,8 @@ public class CardData : MonoBehaviour
     private void OnDestroy()
     {
         CardDataBase.OnTargeting -= HandleTargetting;
-        /*PhotonGameManager.OnOvercomeTime -= HandleActivateOvercome;
-        PhotonGameManager.OnOvercomeSwitch -= HandleSwitchOvercome;*/
+        PhotonGameManager.OnOvercomeTime -= HandleActivateOvercome;
+        PhotonGameManager.OnOvercomeSwitch -= HandleSwitchOvercome;
     }
     #endregion
 
@@ -92,18 +92,20 @@ public class CardData : MonoBehaviour
     public void Exhaust()
     {
         Exhausted = true;
+        Icon.color = Color.grey;
     }
 
     public void Heal()
     {
         Exhausted = false;
+        Icon.color = Color.white;
     }
 
     public void SetAttack(int amount)
     {
         Attack = amount;
         tAttack.text = Attack.ToString();
-        tbAttack.text = Attack.ToString();
+        //tbAttack.text = Attack.ToString();
     }
 
     public void AdjustAttack(int amount)
@@ -112,7 +114,7 @@ public class CardData : MonoBehaviour
         Debug.Log($"Adjusting Attack from {Attack} to {Attack + amount}");
         Attack += amount;
         tAttack.text = Attack.ToString();
-        tbAttack.text = Attack.ToString();
+        //tbAttack.text = Attack.ToString();
         if (sendit)
         {
             Debug.Log($"Sending the new Attack Value. {Attack}");
@@ -124,7 +126,7 @@ public class CardData : MonoBehaviour
     {
         Defense = amount;
         tDefense.text = Defense.ToString();
-        tbDefense.text = Defense.ToString();
+        //tbDefense.text = Defense.ToString();
     }
 
     public void AdjustDefense(int amount)
@@ -133,7 +135,7 @@ public class CardData : MonoBehaviour
         Debug.Log($"Amount to adjust defense {amount}");
         Defense += amount;
         tDefense.text = Defense.ToString();
-        tbDefense.text = Defense.ToString();
+        //tbDefense.text = Defense.ToString();
         if (sendit)
         {
             Debug.Log($"Sending the new Defense Value. {Defense}");
@@ -210,25 +212,6 @@ public class CardData : MonoBehaviour
     {
         IsTarget?.Invoke(this);
     }
-
-    public void OvercomeTarget(bool targeting)
-    {
-        if (targeting)
-        {
-            if (myPlacement == FieldPlacement.Mine)
-            {
-                //Highlight.color = Color.blue;
-            }
-            else
-            {
-                //Highlight.color = Color.red;
-            }
-        }
-        else
-        {
-            //Highlight.color = Color.clear;
-        }
-    }
     #endregion
 
     #region Private Methods
@@ -236,7 +219,7 @@ public class CardData : MonoBehaviour
     {
 
         Icon.sprite = CardImage;
-        if(tbAttack != null)
+        if(tbAttack != null && CardType == Card.Type.Character)
         {
             tAttack.text = Attack.ToString();
             tbAttack.text = Attack.ToString();
@@ -251,38 +234,40 @@ public class CardData : MonoBehaviour
         {
             tAttack.text = "";
             tDefense.text = "";
+            if (tbAttack != null)
+            {
+                tbAttack.text = "";
+                tbDefense.text = "";
+            }
         }
     }
 
-    private void HandleTargetting(Card card)
+    private void HandleTargetting(Card card, bool target)
     {
         if(Target != null)
         {
-            bool targetting = CardDataBase.bTargeting;
-            Target.gameObject.SetActive(targetting);
-            //Highlight.color = targetting ? Color.green : Color.clear;
+            Target.gameObject.SetActive(target);
+            Icon.color = target ? Color.green : Color.white;
         }
     }
 
-    /*private void HandleActivateOvercome(bool onOff)
+    private void HandleActivateOvercome(bool onOff)
     {
         if (onOff)
         {
             switch (myPlacement)
             {
                 case FieldPlacement.Mine:
-                    if (!Exhausted && OvercomeTargetButton!=null)
+                    if (!Exhausted)
                     {
-                        Debug.Log("OvercomeTargetButton activate");
-                        OvercomeTargetButton.enabled = true;
+                        //Target.gameObject.SetActive(true);
+                        Icon.color = Color.green;
                     }
                     break;
                 case FieldPlacement.Opp:
-                    if(OvercomeTargetButton != null)
-                    {
-                        Debug.Log("OvercomeTargetButton deactivate");
-                        OvercomeTargetButton.enabled = false;
-                    }
+                    //Target.gameObject.SetActive(false);
+                    if (!Exhausted)
+                        Icon.color = Color.white;
                     break;
             }
         }
@@ -291,14 +276,17 @@ public class CardData : MonoBehaviour
             switch (myPlacement)
             {
                 case FieldPlacement.Mine:
-                    OvercomeTargetButton.enabled = false;
+                    //Target.gameObject.SetActive(false);
+                    if (!Exhausted)
+                        Icon.color = Color.white;
                     break;
                 case FieldPlacement.Opp:
-                    OvercomeTargetButton.enabled = false;
+                    //Target.gameObject.SetActive(false);
+                    if (!Exhausted)
+                        Icon.color = Color.white;
                     break;
             }
         }
-        Highlight.color = Color.clear;
     }
 
     private void HandleSwitchOvercome()
@@ -310,11 +298,13 @@ public class CardData : MonoBehaviour
                 case FieldPlacement.Mine:
                     if (!Exhausted)
                     {
-                        OvercomeTargetButton.interactable = true;
+                        //Target.gameObject.SetActive(true);
+                        Icon.color = Color.green;
                     }
                     break;
                 case FieldPlacement.Opp:
-                    OvercomeTargetButton.interactable = false;
+                    //Target.gameObject.SetActive(false);
+                    Icon.color = Color.white;
                     break;
             }
         }
@@ -323,14 +313,16 @@ public class CardData : MonoBehaviour
             switch (myPlacement)
             {
                 case FieldPlacement.Mine:
-                    OvercomeTargetButton.interactable = false;
+                    //Target.gameObject.SetActive(false);
+                    if(!Exhausted)
+                    Icon.color = Color.white;
                     break;
                 case FieldPlacement.Opp:
-                    OvercomeTargetButton.interactable = true;
+                    //Target.gameObject.SetActive(true);
+                    Icon.color = Color.red;
                     break;
             }
         }
     }
-    */
     #endregion
 }
