@@ -176,7 +176,7 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
             foreach(CardData data in AttackingHeros)
             {
                 tDmg += data.Attack;
-                data.Exhaust();
+                data.Exhaust(false);
             }
             AttackingHeros.Clear();
 
@@ -190,6 +190,15 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
     public void SwitchAttDef()
     {
         AttDef = !AttDef;
+        if (!AttDef && !CB.CheckFieldForOpponents())
+        {
+            //Target base
+        }else if(AttDef && !CB.CheckMyFieldForUsableHeros())
+        {
+            //check if all characters are exhausted, if they are, end turn
+            SwitchTurn();
+            return;
+        }
         OnOvercomeSwitch?.Invoke();
         Debug.Log($"Switching AttDef to: {AttDef}");
     }
@@ -267,12 +276,14 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
                     Debug.Log($"Removing {card.Name} from Attacking.");
                     //Untarget Card
                     AttackingHeros.Remove(card);
+                    card.OvercomeTarget(false);
                 }
                 else
                 {
                     Debug.Log($"Adding {card.Name} to Attacking.");
                     //Target Card
                     AttackingHeros.Add(card);
+                    card.OvercomeTarget(true);
                 }
             }
         }
@@ -285,13 +296,19 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
                     Debug.Log($"Removing {card.Name} from Defending.");
                     //Untarget Card
                     DefendingHero = null;
+                    card.OvercomeTarget(false);
                 }
                 else
                 {
                     Debug.Log($"Adding {card.Name} to Defending.");
                     //Target Card
+                    if(DefendingHero != null)
+                    {
+                        DefendingHero.OvercomeTarget(false);
+                    }
                     DefendingHero = card;
                     //turn on interactible for calculate
+                    card.OvercomeTarget(true);
                 }
             }
         }
@@ -324,10 +341,9 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
             case GamePhase.HEROSelect:
                 break;
             case GamePhase.Heal:
-                if (!zoomed)
+                if (card.Exhausted)
                 {
-                    Debug.Log($"Zooming Card: {card.Name}");
-                    CardZoom(card);
+                    card.Heal();
                 }
                 break;
             case GamePhase.Enhance:
@@ -569,7 +585,7 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
                 PhaseIndicator.text = "Heal";
                 gHEROSelect.SetActive(false);
                 TurnActionIndicator.text = $"Actions Remaining: ~";
-                StartCoroutine(PhaseDeclaration("Play Cards"));
+                StartCoroutine(PhaseDeclaration("Heal Heros"));
                 break;
             case GamePhase.Enhance:
                 //Ask quantity to draw
@@ -669,7 +685,7 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
                 break;
             case GamePhase.Overcome:
                 gOvercome.SetActive(false);
-                //OnOvercomeTime?.Invoke(false);
+                OnOvercomeTime?.Invoke(false);
                 PhaseChange(GamePhase.Wait);
                 break;
             case GamePhase.Recruit:

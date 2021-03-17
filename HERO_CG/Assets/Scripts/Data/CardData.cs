@@ -18,9 +18,12 @@ public class CardData : MonoBehaviour
     [SerializeField] Button Target;
     //[SerializeField] Button OvercomeTargetButton;
     [SerializeField] List<Component> myAbilities = new List<Component>();
+    Color stateColor = Color.white;
+    Color prevStateColor = Color.white;
 
     public static Action<CardData> IsTarget = delegate { };
     public static Action<CardData, string, int> OnNumericAdjustment = delegate { };
+    public static Action<CardData, bool> OnExhausted = delegate { };
     public static Action<CardData> OnDestroyed = delegate { };
 
     public bool Exhausted { get; private set; }
@@ -78,8 +81,7 @@ public class CardData : MonoBehaviour
             OnDestroyed?.Invoke(this);
         }else if (dmg >= Defense/2)
         {
-            Exhaust();
-            Debug.Log($"{Name} has been exhausted.");
+            Exhaust(false);
             //Exhaust
         }
         else
@@ -89,16 +91,29 @@ public class CardData : MonoBehaviour
         }
     }
 
-    public void Exhaust()
+    public void Exhaust(bool told)
     {
         Exhausted = true;
-        Icon.color = Color.grey;
+        prevStateColor = stateColor;
+        stateColor = Icon.color = Color.grey;
+        if(!told)
+            OnExhausted?.Invoke(this, true);
+        Debug.Log($"{Name} has been exhausted.");
+    }
+
+    public void Heal(bool heal)
+    {
+        Exhausted = false;
+        prevStateColor = stateColor;
+        stateColor = Icon.color = Color.white;
     }
 
     public void Heal()
     {
         Exhausted = false;
-        Icon.color = Color.white;
+        prevStateColor = stateColor;
+        stateColor = Icon.color = Color.white;
+        OnExhausted?.Invoke(this, false);
     }
 
     public void SetAttack(int amount)
@@ -212,6 +227,19 @@ public class CardData : MonoBehaviour
     {
         IsTarget?.Invoke(this);
     }
+
+    public void OvercomeTarget(bool target)
+    {
+        if (target)
+        {
+            prevStateColor = stateColor;
+            stateColor = Icon.color = Color.blue;
+        }
+        else
+        {
+            stateColor = Icon.color = prevStateColor;
+        }
+    }
     #endregion
 
     #region Private Methods
@@ -247,7 +275,8 @@ public class CardData : MonoBehaviour
         if(Target != null)
         {
             Target.gameObject.SetActive(target);
-            Icon.color = target ? Color.green : Color.white;
+            prevStateColor = stateColor;
+            stateColor = Icon.color = target ? Color.green : prevStateColor;
         }
     }
 
@@ -261,13 +290,17 @@ public class CardData : MonoBehaviour
                     if (!Exhausted)
                     {
                         //Target.gameObject.SetActive(true);
-                        Icon.color = Color.green;
+                        prevStateColor = stateColor;
+                        stateColor = Icon.color = Color.green;
                     }
                     break;
                 case FieldPlacement.Opp:
                     //Target.gameObject.SetActive(false);
                     if (!Exhausted)
-                        Icon.color = Color.white;
+                    {
+                        prevStateColor = stateColor;
+                        stateColor = Icon.color = Color.white;
+                    }
                     break;
             }
         }
@@ -278,12 +311,22 @@ public class CardData : MonoBehaviour
                 case FieldPlacement.Mine:
                     //Target.gameObject.SetActive(false);
                     if (!Exhausted)
-                        Icon.color = Color.white;
+                    {
+                        prevStateColor = stateColor;
+                        stateColor = Icon.color = Color.white;
+                    }
                     break;
                 case FieldPlacement.Opp:
                     //Target.gameObject.SetActive(false);
                     if (!Exhausted)
-                        Icon.color = Color.white;
+                    {
+                        stateColor = Icon.color = prevStateColor;
+                    }
+                    else
+                    {
+                        prevStateColor = stateColor;
+                        stateColor = Icon.color = Color.grey;
+                    }
                     break;
             }
         }
@@ -299,12 +342,22 @@ public class CardData : MonoBehaviour
                     if (!Exhausted)
                     {
                         //Target.gameObject.SetActive(true);
-                        Icon.color = Color.green;
+                        prevStateColor = stateColor;
+                        stateColor = Icon.color = Color.green;
                     }
                     break;
                 case FieldPlacement.Opp:
                     //Target.gameObject.SetActive(false);
-                    Icon.color = Color.white;
+                    if (!Exhausted)
+                    {
+                        prevStateColor = stateColor;
+                        stateColor = Icon.color = Color.white;
+                    }
+                    else
+                    {
+                        prevStateColor = stateColor;
+                        stateColor = Icon.color = Color.grey;
+                    }
                     break;
             }
         }
@@ -314,12 +367,16 @@ public class CardData : MonoBehaviour
             {
                 case FieldPlacement.Mine:
                     //Target.gameObject.SetActive(false);
-                    if(!Exhausted)
-                    Icon.color = Color.white;
+                    if (!Exhausted)
+                    {
+                        prevStateColor = stateColor;
+                        stateColor = Icon.color = Color.white;
+                    }
                     break;
                 case FieldPlacement.Opp:
                     //Target.gameObject.SetActive(true);
-                    Icon.color = Color.red;
+                    prevStateColor = stateColor;
+                    stateColor = Icon.color = Color.red;
                     break;
             }
         }

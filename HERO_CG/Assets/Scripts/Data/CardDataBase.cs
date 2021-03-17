@@ -80,6 +80,8 @@ public class CardDataBase : MonoBehaviour
 
         UIConfirmation.OnTargetAccepted += HandleTargetAccepted;
         CardData.OnNumericAdjustment += HandleCardAdjustment;
+        CardData.OnExhausted += HandleCardExhaustState;
+        CardData.OnDestroyed += HandleCharacterDestroyed;
 
         Heros[0] = new Card(Card.Type.Character, "AKIO", 20, 70, HeroImages[0], AlphaHeros[0]);
         Heros[1] = new Card(Card.Type.Character, "AYUMI", 40, 50, HeroImages[1], AlphaHeros[1]);
@@ -207,6 +209,8 @@ public class CardDataBase : MonoBehaviour
     {
         UIConfirmation.OnTargetAccepted -= HandleTargetAccepted;
         CardData.OnNumericAdjustment -= HandleCardAdjustment;
+        CardData.OnExhausted -= HandleCardExhaustState;
+        CardData.OnDestroyed -= HandleCharacterDestroyed;
     }
     #endregion
 
@@ -501,68 +505,6 @@ public class CardDataBase : MonoBehaviour
         GM.TurnCounterDecrement();
     }
 
-    private void HandleCardAdjustment(CardData cardToAdjust, string category, int newValue)
-    {
-        //could also set it to specific player
-        Debug.Log("Sending A Card Adjustment Request.");
-        PV.RPC("CardAdjustment", RpcTarget.OthersBuffered, cardToAdjust.Name, category, newValue);
-    }
-
-    [PunRPC]
-    private void CardAdjustment(string name, string category, int newValue)
-    {
-        //P2Field could be set to a specified player
-        Debug.Log($"Looking for {name} to adjust {category} to {newValue}.");
-        bool found = false;
-        foreach(CardData data in P2Field)
-        {
-            Debug.Log($"Checking to see if {data.Name} matches {name}");
-            if(data.Name == name)
-            {
-                Debug.Log($"Found a match {data.Name}, in my opponents Field");
-                switch (category)
-                {
-                    case "Attack":
-                        Debug.Log("Adjusting the Attack.");
-                        data.SetAttack(newValue);
-                        break;
-                    case "Defense":
-                        Debug.Log("Adjusting the Defense.");
-                        data.SetDefense(newValue);
-                        break;
-                }
-                found = true;
-                break;
-            }
-        }
-        if (!found)
-        {
-            foreach(CardData data in P1Field)
-            {
-                if (data.Name == name)
-                {
-                    Debug.Log($"Found a match {data.Name}, in my Field");
-                    switch (category)
-                    {
-                        case "Attack":
-                            Debug.Log("Adjusting the Attack.");
-                            data.SetAttack(newValue);
-                            break;
-                        case "Defense":
-                            Debug.Log("Adjusting the Defense.");
-                            data.SetDefense(newValue);
-                            break;
-                    }
-                    break;
-                }
-            }
-        }
-        else
-        {
-            Debug.Log("I found the Hero Card and adjusted it's values.");
-        }
-    }
-
     #region HQ and Reserve
     public void FillHQ()
     {
@@ -818,6 +760,68 @@ public class CardDataBase : MonoBehaviour
         GetHandToShare();
     }
 
+    private void HandleCardAdjustment(CardData cardToAdjust, string category, int newValue)
+    {
+        //could also set it to specific player
+        Debug.Log("Sending A Card Adjustment Request.");
+        PV.RPC("CardAdjustment", RpcTarget.OthersBuffered, cardToAdjust.Name, category, newValue);
+    }
+
+    [PunRPC]
+    private void CardAdjustment(string name, string category, int newValue)
+    {
+        //P2Field could be set to a specified player
+        Debug.Log($"Looking for {name} to adjust {category} to {newValue}.");
+        bool found = false;
+        foreach(CardData data in P2Field)
+        {
+            Debug.Log($"Checking to see if {data.Name} matches {name}");
+            if(data.Name == name)
+            {
+                Debug.Log($"Found a match {data.Name}, in my opponents Field");
+                switch (category)
+                {
+                    case "Attack":
+                        Debug.Log("Adjusting the Attack.");
+                        data.SetAttack(newValue);
+                        break;
+                    case "Defense":
+                        Debug.Log("Adjusting the Defense.");
+                        data.SetDefense(newValue);
+                        break;
+                }
+                found = true;
+                break;
+            }
+        }
+        if (!found)
+        {
+            foreach(CardData data in P1Field)
+            {
+                if (data.Name == name)
+                {
+                    Debug.Log($"Found a match {data.Name}, in my Field");
+                    switch (category)
+                    {
+                        case "Attack":
+                            Debug.Log("Adjusting the Attack.");
+                            data.SetAttack(newValue);
+                            break;
+                        case "Defense":
+                            Debug.Log("Adjusting the Defense.");
+                            data.SetDefense(newValue);
+                            break;
+                    }
+                    break;
+                }
+            }
+        }
+        else
+        {
+            Debug.Log("I found the Hero Card and adjusted it's values.");
+        }
+    }
+
     private void CheckActiveCard()
     {
         int i = P1Hand.Count;
@@ -859,6 +863,99 @@ public class CardDataBase : MonoBehaviour
             names.Add(card.Name);
         }
         PV.RPC("ShareCardList", RpcTarget.Others, "P2Hand" ,names.ToArray());
+    }
+
+    private void HandleCharacterDestroyed(CardData card)
+    {
+        string loc = "";
+        if (P2Field.Contains(card))
+        {
+            P2Field.Remove(card);
+            Destroy(card.gameObject);
+            loc = "P2Field";
+        }else if (P1Field.Contains(card))
+        {
+            P1Field.Remove(card);
+            Destroy(card.gameObject);
+            loc = "P1Field";
+        }
+
+        PV.RPC("FieldCardDestroy", RpcTarget.Others, card.Name, loc);
+    }
+
+    [PunRPC]
+    private void FieldCardDestroy(string name, string location)
+    {
+        switch (location)
+        {
+            case "P1Field":
+                foreach(CardData card in P2Field)
+                {
+                    if(card.Name == name)
+                    {
+                        P2Field.Remove(card);
+                        Destroy(card.gameObject);
+                        break;
+                    }
+                }
+                break;
+            case "P2Field":
+                foreach (CardData card in P1Field)
+                {
+                    if (card.Name == name)
+                    {
+                        P1Field.Remove(card);
+                        Destroy(card.gameObject);
+                        break;
+                    }
+                }
+                break;
+        }
+    }
+
+    private void HandleCardExhaustState(CardData card, bool exhaust)
+    {
+        string loc = "";
+        if (P1Field.Contains(card))
+        {
+            loc = "P1Field";
+        }else if (P2Field.Contains(card))
+        {
+            loc = "P2Field";
+        }
+        PV.RPC("ExhaustStateAdjust", RpcTarget.Others, card.Name, loc, exhaust);
+    }
+
+    [PunRPC]
+    private void ExhaustStateAdjust(string name, string location, bool state)
+    {
+        switch (location)
+        {
+            case "P1Field":
+                foreach(CardData card in P2Field)
+                {
+                    if(card.Name == name)
+                    {
+                        if (state)
+                            card.Exhaust(true);
+                        else
+                            card.Heal(true);
+                    }
+                }
+                break;
+            case "P2Field":
+                foreach (CardData card in P1Field)
+                {
+                    if (card.Name == name)
+                    {
+                        if (state)
+                            card.Exhaust(true);
+                        else
+                            card.Heal(true);
+                    }
+                }
+                break;
+        }
     }
     #endregion
 
@@ -1001,6 +1098,33 @@ public class CardDataBase : MonoBehaviour
         bool isMyCard = P1Field.Contains(card);
 
         return isMyCard;
+    }
+
+    public bool CheckFieldForOpponents()
+    {
+        if(P2Field.Count > 0)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+    public bool CheckMyFieldForUsableHeros()
+    {
+        bool usable = false;
+        foreach (CardData card in P1Field)
+        {
+            if (!card.Exhausted)
+            {
+                usable = true;
+                break;
+            }
+        }
+
+            return usable;
     }
 
     public void HandCardOffset(System.Single offset)
