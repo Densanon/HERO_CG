@@ -63,13 +63,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   myPlacement: 1
-  Title: {fileID: 0}
-  tFlavor: {fileID: 0}
   Icon: {fileID: 5054869834860695208}
-  Highlight: {fileID: 5054869834384909739}
   tAttack: {fileID: 5054869833983036363}
   tDefense: {fileID: 5054869834568379916}
-  tAbility: {fileID: 0}
+  tbAttack: {fileID: 0}
+  tbDefense: {fileID: 0}
   gAbilityCounters:
   - {fileID: 5054869834158650022}
   - {fileID: 5054869834005548893}
@@ -79,7 +77,6 @@ MonoBehaviour:
   - {fileID: 5054869835198900876}
   - {fileID: 5054869835768103502}
   Target: {fileID: 5054869835418170716}
-  OvercomeTargetButton: {fileID: 0}
   myAbilities: []
 --- !u!114 &1573461883719618617
 MonoBehaviour:
@@ -1145,7 +1142,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &5054869835418170717
 RectTransform:
   m_ObjectHideFlags: 0

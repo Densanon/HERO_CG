@@ -242,7 +242,7 @@ public class CardData : MonoBehaviour
             tbAttack.text = Attack.ToString();
             tDefense.text = Defense.ToString();
             tbDefense.text = Defense.ToString();
-        }else if(myPlacement == FieldPlacement.HQ)
+        }else if(myPlacement == FieldPlacement.HQ || myPlacement == FieldPlacement.Mine || myPlacement == FieldPlacement.Opp)
         {
             tAttack.text = Attack.ToString();
             tDefense.text = Defense.ToString();

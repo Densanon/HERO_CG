@@ -166,7 +166,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &658108927146812688
 RectTransform:
   m_ObjectHideFlags: 0
@@ -563,13 +563,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   myPlacement: 0
-  Title: {fileID: 0}
-  tFlavor: {fileID: 0}
   Icon: {fileID: 658108928776937189}
-  Highlight: {fileID: 658108928448476646}
   tAttack: {fileID: 658108928043981702}
   tDefense: {fileID: 658108928533446209}
-  tAbility: {fileID: 0}
+  tbAttack: {fileID: 0}
+  tbDefense: {fileID: 0}
   gAbilityCounters:
   - {fileID: 658108928137863915}
   - {fileID: 658108928022519568}
@@ -579,7 +577,6 @@ MonoBehaviour:
   - {fileID: 658108927097486017}
   - {fileID: 658108927602135555}
   Target: {fileID: 658108927146812689}
-  OvercomeTargetButton: {fileID: 0}
   myAbilities: []
 --- !u!114 &7929014518351696287
 MonoBehaviour:
