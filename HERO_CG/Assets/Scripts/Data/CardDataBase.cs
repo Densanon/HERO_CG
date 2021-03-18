@@ -211,6 +211,7 @@ public class CardDataBase : MonoBehaviour
         CardData.OnNumericAdjustment -= HandleCardAdjustment;
         CardData.OnExhausted -= HandleCardExhaustState;
         CardData.OnDestroyed -= HandleCharacterDestroyed;
+        PlayerBase.OnBaseDestroyed -= HandleBaseDestroyed;
     }
     #endregion
 
@@ -1089,6 +1090,33 @@ public class CardDataBase : MonoBehaviour
             }
         }
     }
+
+    private void HandleBaseDestroyed(PlayerBase player)
+    {
+        if (player.type == PlayerBase.Type.Player)
+        {
+            PV.RPC("DestroyABase", RpcTarget.Others, "Opponent");
+            GM.OnBaseDestroyed(player.type);
+        }else if(player.type == PlayerBase.Type.Opponent)
+        {
+            PV.RPC("DestroyABase", RpcTarget.Others, "Player");
+            GM.OnBaseDestroyed(player.type);
+        }
+    }
+
+    [PunRPC]
+    private void DestroyABase(string player)
+    {
+        switch (player)
+        {
+            case "Player":
+                GM.OnBaseDestroyed(PlayerBase.Type.Player);
+                break;
+            case "Opponent":
+                GM.OnBaseDestroyed(PlayerBase.Type.Opponent);
+                break;
+        }
+    }
     #endregion
     #endregion
 
@@ -1125,6 +1153,36 @@ public class CardDataBase : MonoBehaviour
         }
 
             return usable;
+    }
+
+    public bool CheckForHealableHeros()
+    {
+        bool healable = false;
+
+        foreach(CardData card in P1Field)
+        {
+            if (card.Exhausted)
+            {
+                return true;
+            }
+        }
+
+        return healable;
+    }
+
+    public bool CheckIfFeatCards()
+    {
+        bool haveCard = false;
+
+        foreach(Card card in P1Hand)
+        {
+            if(card.CardType == Card.Type.Feat)
+            {
+                return true;
+            }
+        }
+
+        return haveCard;
     }
 
     public void HandCardOffset(System.Single offset)
@@ -1170,8 +1228,8 @@ public class CardDataBase : MonoBehaviour
                 break;
             case Card.Type.Feat:
                 //Resolve Feat ability
-                GM.ToldSwitchTurn(false);
-                HandleTurnDeclaration(true);
+                //GM.ToldSwitchTurn(false);
+                //HandleTurnDeclaration(true);
                 break;
         }
     }
@@ -1208,11 +1266,17 @@ public class CardDataBase : MonoBehaviour
             case CardDecks.P1Deck:
                 i = P1Deck.Count;
                 break;
+            case CardDecks.P1Hand:
+                i = P1Hand.Count;
+                break;
             case CardDecks.P1Discard:
                 i = P1Discard.Count;
                 break;
             case CardDecks.P2Hand:
                 i = P2Hand.Count;
+                break;
+            case CardDecks.Reserve:
+                i = HeroReserve.Count;
                 break;
         }
         return i;

@@ -23,7 +23,7 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
 
     public GameObject gCardZoom;
     public CardData gCard;
-    public GameObject gCardOption;
+    public GameObject gCardCollect;
     public GameObject gCardSelect;
     public GameObject gCardPlay;
 
@@ -33,6 +33,11 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
     public TMP_Text tOpponentHandCount;
 
     public GameObject gHEROSelect;
+    public Button bHEROSelectHeal;
+    public Button bHEROSelectEnhance;
+    public Button bHEROSelectRectruit;
+    public Button bHEROSelectOvercome;
+    public Button bHEROSelectFeat;
     public GameObject gCardCountCollect;
     public Button bCardCount1;
     public Button bCardCount2;
@@ -56,6 +61,7 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
     private List<CardData> AttackingHeros = new List<CardData>();
     private CardData DefendingHero;
     public static bool AttDef = true;
+    public PlayerBase PB;
 
     public static Action<Card, GamePhase> OnCardCollected = delegate { };
     public static Action<bool> OnOvercomeTime = delegate { };
@@ -64,9 +70,7 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
     #region Unity Methods
     private void Awake()
     {
-        PlayerBase.OnBaseDestroyed += OnBaseDestroyed;
         CardFunction.OnCardSelected += HandleCardSelecion;
-        //CardFunction.OnHeroSelected += HandleHeroSelected;
         CardFunction.OnCardDeselected += HandleDeselection;
         CardFunction.OnCardCollected += HandleCardCollected;
         CardFunction.OnCardPlayed += HandlePlayCard;
@@ -76,9 +80,7 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
 
     private void OnDestroy()
     {
-        PlayerBase.OnBaseDestroyed -= OnBaseDestroyed;
         CardFunction.OnCardSelected -= HandleCardSelecion;
-        //CardFunction.OnHeroSelected -= HandleHeroSelected;
         CardFunction.OnCardDeselected -= HandleDeselection;
         CardFunction.OnCardCollected -= HandleCardCollected;
         CardFunction.OnCardPlayed -= HandlePlayCard;
@@ -119,9 +121,9 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
     #endregion
 
     #region Public Methods
-    public void OnBaseDestroyed(PlayerBase pBase)
+    public void OnBaseDestroyed(PlayerBase.Type pBase)
     {
-        if(pBase.type == PlayerBase.Type.Player)
+        if(pBase == PlayerBase.Type.Player)
         {
             EndUI.SetActive(true);
             EndText.text = "You were Overcome!";
@@ -190,10 +192,22 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
     public void SwitchAttDef()
     {
         AttDef = !AttDef;
-        if (!AttDef && !CB.CheckFieldForOpponents())
+        if (!AttDef && !CB.CheckFieldForOpponents() && AttackingHeros.Count > 0)
         {
             //Target base
-        }else if(AttDef && !CB.CheckMyFieldForUsableHeros())
+            int tDmg = 0;
+            foreach (CardData data in AttackingHeros)
+            {
+                tDmg += data.Attack;
+                data.Exhaust(false);
+            }
+            AttackingHeros.Clear();
+
+            PB.Damage(tDmg);
+
+            SwitchAttDef();
+        }
+        else if(AttDef && !CB.CheckMyFieldForUsableHeros())
         {
             //check if all characters are exhausted, if they are, end turn
             SwitchTurn();
@@ -229,11 +243,16 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
         gCardZoom.SetActive(true);
         gCard.CardOverride(CB.CurrentActiveCard, CardData.FieldPlacement.Zoom);
         HandleCardButtons(CardData.FieldPlacement.Hand);
+        if(CB.CurrentActiveCard.CardType == Card.Type.Feat && myPhase != GamePhase.Feat)
+        {
+            NullZoomButtons();
+        }
     }
 
     public void CheckHandZoomInEffect()
     {
        gCard.CardOverride(CB.CurrentActiveCard, CardData.FieldPlacement.Hand);
+        HandleCardButtons(CardData.FieldPlacement.Hand);
     }
 
     #region Move Counter Methods
@@ -343,7 +362,7 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
             case GamePhase.Heal:
                 if (card.Exhausted)
                 {
-                    card.Heal();
+                    card.Heal(false);
                 }
                 break;
             case GamePhase.Enhance:
@@ -411,17 +430,17 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
                     break;
                 case GamePhase.AbilityDraft:
                     gCardSelect.SetActive(false);
-                    gCardOption.SetActive(true);
+                    gCardCollect.SetActive(true);
                     gCardPlay.SetActive(false);
                     break;
                 case GamePhase.HeroDraft:
                     gCardSelect.SetActive(false);
-                    gCardOption.SetActive(true);
+                    gCardCollect.SetActive(true);
                     gCardPlay.SetActive(false);
                     break;
                 case GamePhase.Heal:
                     gCardSelect.SetActive(true);
-                    gCardOption.SetActive(false);
+                    gCardCollect.SetActive(false);
                     gCardPlay.SetActive(false);
                     break;
                 case GamePhase.Enhance:
@@ -429,7 +448,7 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
                     {
                         case CardData.FieldPlacement.Hand:
                             gCardSelect.SetActive(false);
-                            gCardOption.SetActive(false);
+                            gCardCollect.SetActive(false);
                             gCardPlay.SetActive(true);
                             break;
                         case CardData.FieldPlacement.HQ:
@@ -451,7 +470,7 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
                             break;
                         case CardData.FieldPlacement.HQ:
                             gCardSelect.SetActive(false);
-                            gCardOption.SetActive(true);
+                            gCardCollect.SetActive(true);
                             gCardPlay.SetActive(false);
                             break;
                         case CardData.FieldPlacement.Mine:
@@ -475,7 +494,7 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
                                 break;
                             case CardData.FieldPlacement.Mine:
                                 gCardSelect.SetActive(true);
-                                gCardOption.SetActive(false);
+                                gCardCollect.SetActive(false);
                                 gCardPlay.SetActive(false);
                                 break;
                             case CardData.FieldPlacement.Opp:
@@ -498,16 +517,23 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
                                 break;
                         case CardData.FieldPlacement.Opp:
                                 gCardSelect.SetActive(true);
-                                gCardOption.SetActive(false);
+                                gCardCollect.SetActive(false);
                                 gCardPlay.SetActive(false);
                                 break;
                     }
                     }
                     break;
                 case GamePhase.Feat:
-                    gCardSelect.SetActive(true);
-                    gCardOption.SetActive(false);
-                    gCardPlay.SetActive(false);
+                    if (CB.CurrentActiveCard.CardType != Card.Type.Feat)
+                    {
+                        NullZoomButtons();
+                    }
+                    else
+                    {
+                        gCardSelect.SetActive(false);
+                        gCardCollect.SetActive(false);
+                        gCardPlay.SetActive(true);
+                    }
                     break;
             }
         }
@@ -523,7 +549,7 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
                     break;
                 case GamePhase.TurnResponse:
                     gCardSelect.SetActive(false);
-                    gCardOption.SetActive(false);
+                    gCardCollect.SetActive(false);
                     gCardPlay.SetActive(true);
                     break;
                 case GamePhase.Wait:
@@ -537,7 +563,7 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
     private void NullZoomButtons()
     {
         gCardSelect.SetActive(false);
-        gCardOption.SetActive(false);
+        gCardCollect.SetActive(false);
         gCardPlay.SetActive(false);
     }
 
@@ -642,22 +668,33 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
             case GamePhase.Feat:
                 PhaseIndicator.text = "Feat";
                 TurnActionIndicator.text = $"Actions Remaining: 0";
+                StartCoroutine(PhaseDeclaration("Pick Your Feat"));
                 gHEROSelect.SetActive(false);
                 //Resolve card
                 break;
             case GamePhase.TurnResponse:
                 PhaseIndicator.text = "Turn Response";
-                gCardOption.SetActive(true);
+                gCardCollect.SetActive(true);
                 TurnActionIndicator.text = $"Actions Remaining: 0";
                 break;
             case GamePhase.Wait:
                 PhaseIndicator.text = "Wait";
-                gCardOption.SetActive(false);
+                gCardCollect.SetActive(false);
                 TurnActionIndicator.text = $"Actions Remaining: ~";
                 break;
             case GamePhase.HEROSelect:
                 PhaseIndicator.text = "Hero Selection";
                 HEROSelectionBegin();
+                //check for heros that can be healed
+                bHEROSelectHeal.interactable = CB.CheckForHealableHeros();
+                //check for cards in enhancement deck or hand
+                bHEROSelectEnhance.interactable = (CB.CardsRemaining(CardDataBase.CardDecks.P1Deck) + CB.CardsRemaining(CardDataBase.CardDecks.P1Hand) > 0);
+                //check for heros that are recruitable
+                bHEROSelectRectruit.interactable = (CB.CardsRemaining(CardDataBase.CardDecks.HQ) + CB.CardsRemaining(CardDataBase.CardDecks.Reserve) > 0);
+                //Check for usable hero cards
+                bHEROSelectOvercome.interactable = CB.CheckMyFieldForUsableHeros();
+                //Check for feat cards
+                bHEROSelectFeat.interactable = CB.CheckIfFeatCards();
                 break;
             case GamePhase.AbilityDraft:
                 PhaseIndicator.text = "Ability Draft";

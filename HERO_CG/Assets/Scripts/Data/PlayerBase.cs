@@ -1,10 +1,12 @@
 ﻿using UnityEngine;
 using System;
+using UnityEngine.UI;
 
 public class PlayerBase : MonoBehaviour
 {
     [SerializeField] private int _health;
     [SerializeField] private bool _exhausted;
+    [SerializeField] private Image Icon;
     public enum Type { Player, Opponent}
     public Type type;
 
@@ -41,6 +43,8 @@ public class PlayerBase : MonoBehaviour
     {
         Exhausted = true;
         Health = _health / 2;
+        if (Icon != null)
+        Icon.color = Color.grey;
     }
 
     public void Destroy()

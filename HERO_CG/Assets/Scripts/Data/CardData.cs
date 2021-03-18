@@ -96,24 +96,24 @@ public class CardData : MonoBehaviour
         Exhausted = true;
         prevStateColor = stateColor;
         stateColor = Icon.color = Color.grey;
+        Defense = Defense / 2;
+        tDefense.color = Color.red;
+
         if(!told)
             OnExhausted?.Invoke(this, true);
         Debug.Log($"{Name} has been exhausted.");
     }
 
-    public void Heal(bool heal)
+    public void Heal(bool told)
     {
         Exhausted = false;
         prevStateColor = stateColor;
         stateColor = Icon.color = Color.white;
-    }
+        Defense = Defense * 2;
+        tDefense.color = Color.white;
 
-    public void Heal()
-    {
-        Exhausted = false;
-        prevStateColor = stateColor;
-        stateColor = Icon.color = Color.white;
-        OnExhausted?.Invoke(this, false);
+        if (!told)
+            OnExhausted?.Invoke(this, false);
     }
 
     public void SetAttack(int amount)
@@ -266,6 +266,30 @@ public class CardData : MonoBehaviour
             {
                 tbAttack.text = "";
                 tbDefense.text = "";
+            }
+        }
+
+        //Feat not Feat card coloring for use
+        if(PhotonGameManager.myPhase == PhotonGameManager.GamePhase.Feat && myPlacement == FieldPlacement.Hand)
+        {
+           if(CardType == Card.Type.Feat)
+            {
+                Icon.color = Color.white;
+            }
+            else
+            {
+                Icon.color = Color.grey;
+            }
+        }
+        else if (myPlacement == FieldPlacement.Hand)
+        {
+            if (CardType == Card.Type.Feat)
+            {
+                Icon.color = Color.grey;
+            }
+            else
+            {
+                Icon.color = Color.white;
             }
         }
     }

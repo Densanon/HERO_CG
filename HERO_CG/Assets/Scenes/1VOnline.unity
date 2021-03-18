@@ -7236,6 +7236,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _health: 100
   _exhausted: 0
+  Icon: {fileID: 1148206797}
   type: 1
 --- !u!114 &1148206800
 MonoBehaviour:
@@ -7325,7 +7326,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 378.54163, y: -177.67276}
+  m_AnchoredPosition: {x: 378.54163, y: -177.27206}
   m_SizeDelta: {x: 460.85913, y: 254.73831}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1181721850
@@ -9115,7 +9116,7 @@ PrefabInstance:
     - target: {fileID: 3241064735018372064, guid: c19d3c541377a954fa13147a011577e7,
         type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -699.446
+      value: -697.4425
       objectReference: {fileID: 0}
     - target: {fileID: 3241064735018372064, guid: c19d3c541377a954fa13147a011577e7,
         type: 3}
@@ -15438,6 +15439,41 @@ PrefabInstance:
       propertyPath: bBattle
       value: 
       objectReference: {fileID: 263037140}
+    - target: {fileID: 1429444459656308942, guid: c37408237509d3247850a853e4df00a5,
+        type: 3}
+      propertyPath: bHEROSelectHeal
+      value: 
+      objectReference: {fileID: 2117038659}
+    - target: {fileID: 1429444459656308942, guid: c37408237509d3247850a853e4df00a5,
+        type: 3}
+      propertyPath: bHEROSelectEnhance
+      value: 
+      objectReference: {fileID: 1642983032}
+    - target: {fileID: 1429444459656308942, guid: c37408237509d3247850a853e4df00a5,
+        type: 3}
+      propertyPath: bHEROSelectRectruit
+      value: 
+      objectReference: {fileID: 441079914}
+    - target: {fileID: 1429444459656308942, guid: c37408237509d3247850a853e4df00a5,
+        type: 3}
+      propertyPath: bHEROSelectOvercome
+      value: 
+      objectReference: {fileID: 667537844}
+    - target: {fileID: 1429444459656308942, guid: c37408237509d3247850a853e4df00a5,
+        type: 3}
+      propertyPath: bHEROSelectFeat
+      value: 
+      objectReference: {fileID: 374166952}
+    - target: {fileID: 1429444459656308942, guid: c37408237509d3247850a853e4df00a5,
+        type: 3}
+      propertyPath: gCardCollect
+      value: 
+      objectReference: {fileID: 1917078784950444050}
+    - target: {fileID: 1429444459656308942, guid: c37408237509d3247850a853e4df00a5,
+        type: 3}
+      propertyPath: PB
+      value: 
+      objectReference: {fileID: 1148206799}
     - target: {fileID: 3568359947860690515, guid: c37408237509d3247850a853e4df00a5,
         type: 3}
       propertyPath: m_LocalPosition.x
@@ -15603,7 +15639,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 378.54163, y: -470.0457}
+  m_AnchoredPosition: {x: 378.54163, y: -468.8436}
   m_SizeDelta: {x: 420.83368, y: 128.79314}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &9175484302207531335
@@ -15652,6 +15688,17 @@ MonoBehaviour:
       - m_Target: {fileID: 7098869184987679687}
         m_MethodName: EndTurn
         m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+      - m_Target: {fileID: 725104410}
+        m_MethodName: SetActive
+        m_Mode: 6
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
           m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
