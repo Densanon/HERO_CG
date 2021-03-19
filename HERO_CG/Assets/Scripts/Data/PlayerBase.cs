@@ -11,6 +11,7 @@ public class PlayerBase : MonoBehaviour
     public Type type;
 
     public static Action<PlayerBase> OnBaseDestroyed = delegate { };
+    public static Action<PlayerBase> OnExhaust = delegate { };
 
     public int Health
     {
@@ -31,7 +32,7 @@ public class PlayerBase : MonoBehaviour
             Destroy();
         }else if(amount >= (_health / 2))
         {
-            Exhaust();
+            Exhaust(false);
         }
         else
         {
@@ -39,12 +40,14 @@ public class PlayerBase : MonoBehaviour
         }
     }
 
-    public void Exhaust()
+    public void Exhaust(bool told)
     {
         Exhausted = true;
-        Health = _health / 2;
+        _health = _health / 2;
         if (Icon != null)
         Icon.color = Color.grey;
+        if(!told)
+        OnExhaust?.Invoke(this);
     }
 
     public void Destroy()

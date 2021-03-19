@@ -16,7 +16,6 @@ public class CardData : MonoBehaviour
     [SerializeField] TMP_Text tbDefense;
     [SerializeField] Image[] gAbilityCounters;
     [SerializeField] Button Target;
-    //[SerializeField] Button OvercomeTargetButton;
     [SerializeField] List<Component> myAbilities = new List<Component>();
     Color stateColor = Color.white;
     Color prevStateColor = Color.white;
@@ -81,13 +80,13 @@ public class CardData : MonoBehaviour
             OnDestroyed?.Invoke(this);
         }else if (dmg >= Defense/2)
         {
-            Exhaust(false);
             //Exhaust
+            Exhaust(false);
         }
         else
         {
-            Debug.Log($"{Name} has blocked.");
             //Block
+            Debug.Log($"{Name} has blocked.");
         }
     }
 
@@ -96,7 +95,7 @@ public class CardData : MonoBehaviour
         Exhausted = true;
         prevStateColor = stateColor;
         stateColor = Icon.color = Color.grey;
-        Defense = Defense / 2;
+        SetDefense(Defense / 2);
         tDefense.color = Color.red;
 
         if(!told)
@@ -109,7 +108,7 @@ public class CardData : MonoBehaviour
         Exhausted = false;
         prevStateColor = stateColor;
         stateColor = Icon.color = Color.white;
-        Defense = Defense * 2;
+        SetDefense(Defense * 2);
         tDefense.color = Color.white;
 
         if (!told)
@@ -120,19 +119,15 @@ public class CardData : MonoBehaviour
     {
         Attack = amount;
         tAttack.text = Attack.ToString();
-        //tbAttack.text = Attack.ToString();
     }
 
     public void AdjustAttack(int amount)
     {
         bool sendit = (Attack != (Attack + amount));
-        Debug.Log($"Adjusting Attack from {Attack} to {Attack + amount}");
         Attack += amount;
         tAttack.text = Attack.ToString();
-        //tbAttack.text = Attack.ToString();
         if (sendit)
         {
-            Debug.Log($"Sending the new Attack Value. {Attack}");
             OnNumericAdjustment?.Invoke(this, "Attack", Attack);
         }
     }
@@ -141,19 +136,15 @@ public class CardData : MonoBehaviour
     {
         Defense = amount;
         tDefense.text = Defense.ToString();
-        //tbDefense.text = Defense.ToString();
     }
 
     public void AdjustDefense(int amount)
     {
         bool sendit = (Defense != (Defense + amount));
-        Debug.Log($"Amount to adjust defense {amount}");
         Defense += amount;
         tDefense.text = Defense.ToString();
-        //tbDefense.text = Defense.ToString();
         if (sendit)
         {
-            Debug.Log($"Sending the new Defense Value. {Defense}");
             OnNumericAdjustment?.Invoke(this, "Defense", Defense);
         }
     }
@@ -313,13 +304,11 @@ public class CardData : MonoBehaviour
                 case FieldPlacement.Mine:
                     if (!Exhausted)
                     {
-                        //Target.gameObject.SetActive(true);
                         prevStateColor = stateColor;
                         stateColor = Icon.color = Color.green;
                     }
                     break;
                 case FieldPlacement.Opp:
-                    //Target.gameObject.SetActive(false);
                     if (!Exhausted)
                     {
                         prevStateColor = stateColor;
@@ -333,7 +322,6 @@ public class CardData : MonoBehaviour
             switch (myPlacement)
             {
                 case FieldPlacement.Mine:
-                    //Target.gameObject.SetActive(false);
                     if (!Exhausted)
                     {
                         prevStateColor = stateColor;
@@ -341,7 +329,6 @@ public class CardData : MonoBehaviour
                     }
                     break;
                 case FieldPlacement.Opp:
-                    //Target.gameObject.SetActive(false);
                     if (!Exhausted)
                     {
                         stateColor = Icon.color = prevStateColor;
@@ -365,13 +352,11 @@ public class CardData : MonoBehaviour
                 case FieldPlacement.Mine:
                     if (!Exhausted)
                     {
-                        //Target.gameObject.SetActive(true);
                         prevStateColor = stateColor;
                         stateColor = Icon.color = Color.green;
                     }
                     break;
                 case FieldPlacement.Opp:
-                    //Target.gameObject.SetActive(false);
                     if (!Exhausted)
                     {
                         prevStateColor = stateColor;
@@ -390,7 +375,6 @@ public class CardData : MonoBehaviour
             switch (myPlacement)
             {
                 case FieldPlacement.Mine:
-                    //Target.gameObject.SetActive(false);
                     if (!Exhausted)
                     {
                         prevStateColor = stateColor;
@@ -398,7 +382,6 @@ public class CardData : MonoBehaviour
                     }
                     break;
                 case FieldPlacement.Opp:
-                    //Target.gameObject.SetActive(true);
                     prevStateColor = stateColor;
                     stateColor = Icon.color = Color.red;
                     break;

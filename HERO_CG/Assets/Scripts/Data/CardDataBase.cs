@@ -82,6 +82,8 @@ public class CardDataBase : MonoBehaviour
         CardData.OnNumericAdjustment += HandleCardAdjustment;
         CardData.OnExhausted += HandleCardExhaustState;
         CardData.OnDestroyed += HandleCharacterDestroyed;
+        PlayerBase.OnBaseDestroyed += HandleBaseDestroyed;
+        PlayerBase.OnExhaust += HandleBaseExhaust;
 
         Heros[0] = new Card(Card.Type.Character, "AKIO", 20, 70, HeroImages[0], AlphaHeros[0]);
         Heros[1] = new Card(Card.Type.Character, "AYUMI", 40, 50, HeroImages[1], AlphaHeros[1]);
@@ -212,22 +214,20 @@ public class CardDataBase : MonoBehaviour
         CardData.OnExhausted -= HandleCardExhaustState;
         CardData.OnDestroyed -= HandleCharacterDestroyed;
         PlayerBase.OnBaseDestroyed -= HandleBaseDestroyed;
+        PlayerBase.OnExhaust -= HandleBaseExhaust;
     }
     #endregion
 
     #region Draft Methods
     public void HandleBuildHeroDraft()
     {
-        Debug.Log("I am supposed to handle the Hero Draft.");
         List<Card> tempHero = Heros.ToList();
         List<string> shareList = new List<string>();
         for (int i = 0; i < 14; i++)
         {
             var picker = UnityEngine.Random.Range(0, tempHero.Count);
-            Debug.Log($"Building Hero list: tempHero Count {tempHero.Count}");
             HeroReserve.Add(tempHero[picker]);
             shareList.Add(tempHero[picker].Name);
-            Debug.Log($"In Reserve Build: {tempHero[picker].Name}");
             tempHero.Remove(tempHero[picker]);
         }
 
@@ -269,7 +269,6 @@ public class CardDataBase : MonoBehaviour
             DisplayDraft(AbilityDraft);
         }else if(AutoDraft && PhotonGameManager.player == PhotonGameManager.PlayerNum.P1)
         {
-            Debug.Log("I am setting up abilities as player1");
             foreach(Card card in P1AutoAbilities)
             {
                 P1Deck.Add(card);
@@ -283,7 +282,6 @@ public class CardDataBase : MonoBehaviour
         }
         else if(AutoDraft && PhotonGameManager.player == PhotonGameManager.PlayerNum.P2)
         {
-            Debug.Log("I am setting up abilities as player2");
             foreach (Card card in P2AutoAbilities)
             {
                 P1Deck.Add(card);
@@ -304,10 +302,8 @@ public class CardDataBase : MonoBehaviour
         {
             if(item.Name == card)
             {
-                Debug.Log($"Removing {item.Name} from the draft.");
                 Draft.Remove(item);
                 Destroy(item.gameObject);
-                Debug.Log($"Cards Remaining: {Draft.Count}");
                 if (PhotonGameManager.myTurn)
                 {
                     CheckDraft();
@@ -333,7 +329,6 @@ public class CardDataBase : MonoBehaviour
             case PhotonGameManager.GamePhase.AbilityDraft:
                 if(Draft.Count == 0 && PhotonGameManager.myTurn)
                 {
-                    Debug.Log("The Ability draft is over!");
                     PV.RPC("EndAbilityDraft", RpcTarget.Others, false);
                     EndAbilityDraft(true);
                 }
@@ -344,7 +339,6 @@ public class CardDataBase : MonoBehaviour
     [PunRPC]
     private void ShareCardList(string list, string[] listToShare)
     {
-        Debug.Log($"{list}: Sent over.");
         switch (list)
         {
             case "HeroReserve":
@@ -355,7 +349,6 @@ public class CardDataBase : MonoBehaviour
                     {
                         if (name == card.Name)
                         {
-                            Debug.Log($"In building Reserve from server: {name}");
                             HeroReserve.Add(card);
                         }
                     }
@@ -399,11 +392,9 @@ public class CardDataBase : MonoBehaviour
     {
         if (PhotonGameManager.player == PhotonGameManager.PlayerNum.P1)
         {
-            Debug.Log("Setting one player to HEROSelect");
             GM.SetTurnGauge(9);
             GM.PhaseChange(PhotonGameManager.GamePhase.HEROSelect);
             FillHQ();
-            Debug.Log("FilledHQ");
         }
         else
         {
@@ -447,7 +438,6 @@ public class CardDataBase : MonoBehaviour
     [PunRPC]
     private void DeclaredTurn(bool myTurn)
     {
-        Debug.Log("I have received a HandleTurnDeclaration RPC.");
         GM.ToldSwitchTurn(myTurn);
     }
     #endregion
@@ -468,11 +458,9 @@ public class CardDataBase : MonoBehaviour
         switch (draftDeck)
         {
             case "HeroReserve":
-                Debug.Log("Picking random card for Auto hero draw.");
                 OnAiDraftCollected?.Invoke(HeroReserve[UnityEngine.Random.Range(0, HeroReserve.Count)]);
                 break;
             case "AbilityDraft":
-                Debug.Log("Picking random card for Auto ability draw.");
                 OnAiDraftCollected?.Invoke(AbilityDraft[UnityEngine.Random.Range(0, AbilityDraft.Count)]);
                 break;
         }
@@ -509,10 +497,6 @@ public class CardDataBase : MonoBehaviour
     #region HQ and Reserve
     public void FillHQ()
     {
-        Debug.Log("FillHQ was called.");
-        Debug.Log($"MY HQHeros Count: {HQHeros.Count}");
-        Debug.Log($"My HQ Count: {HQ.Count}");
-        Debug.Log($"My Reserve Count: {HeroReserve.Count}");
         if(HeroReserve.Count == 0)
         {
             ReserveButton.interactable = false;
@@ -520,7 +504,6 @@ public class CardDataBase : MonoBehaviour
 
         if (HeroReserve.Count > 0 && HQ.Count < 3)
         {
-            Debug.Log($"HQ Count: {HQ.Count}");
             while(HQ.Count < 3)
             {
                 if(HeroReserve.Count == 0)
@@ -537,7 +520,6 @@ public class CardDataBase : MonoBehaviour
                 HeroReserve.Remove(HeroReserve[picker]);
             }
 
-            Debug.Log($"HQ Count after fill: {HQ.Count}");
             PopulateHQ();
         }
         else
@@ -584,8 +566,6 @@ public class CardDataBase : MonoBehaviour
         {
             temp.Add("Null");
         }
-        Debug.Log($"HQHeros Count: {HQHeros.Count}");
-
 
         PV.RPC("PopulatedHQ", RpcTarget.Others, temp.ToArray());
     }
@@ -620,7 +600,6 @@ public class CardDataBase : MonoBehaviour
                     }
                     foreach (Card card in Heros)
                     {
-                        //Debug.Log($"Naming hero in HeroReserve {card.Name}");
                         if (name == card.Name)
                         {
                             cardsToAdd.Add(card);
@@ -632,7 +611,6 @@ public class CardDataBase : MonoBehaviour
 
             foreach (Card addCard in cardsToAdd)
             {
-                Debug.Log($"Adding {addCard.Name} to HQ");
                 HeroReserve.Remove(addCard);
                 HQ.Add(addCard);
                 GameObject obj = Instantiate(CardHeroHQPrefab, HQArea);
@@ -764,7 +742,6 @@ public class CardDataBase : MonoBehaviour
     private void HandleCardAdjustment(CardData cardToAdjust, string category, int newValue)
     {
         //could also set it to specific player
-        Debug.Log("Sending A Card Adjustment Request.");
         PV.RPC("CardAdjustment", RpcTarget.OthersBuffered, cardToAdjust.Name, category, newValue);
     }
 
@@ -772,22 +749,17 @@ public class CardDataBase : MonoBehaviour
     private void CardAdjustment(string name, string category, int newValue)
     {
         //P2Field could be set to a specified player
-        Debug.Log($"Looking for {name} to adjust {category} to {newValue}.");
         bool found = false;
         foreach(CardData data in P2Field)
         {
-            Debug.Log($"Checking to see if {data.Name} matches {name}");
             if(data.Name == name)
             {
-                Debug.Log($"Found a match {data.Name}, in my opponents Field");
                 switch (category)
                 {
                     case "Attack":
-                        Debug.Log("Adjusting the Attack.");
                         data.SetAttack(newValue);
                         break;
                     case "Defense":
-                        Debug.Log("Adjusting the Defense.");
                         data.SetDefense(newValue);
                         break;
                 }
@@ -801,15 +773,12 @@ public class CardDataBase : MonoBehaviour
             {
                 if (data.Name == name)
                 {
-                    Debug.Log($"Found a match {data.Name}, in my Field");
                     switch (category)
                     {
                         case "Attack":
-                            Debug.Log("Adjusting the Attack.");
                             data.SetAttack(newValue);
                             break;
                         case "Defense":
-                            Debug.Log("Adjusting the Defense.");
                             data.SetDefense(newValue);
                             break;
                     }
@@ -826,7 +795,6 @@ public class CardDataBase : MonoBehaviour
     private void CheckActiveCard()
     {
         int i = P1Hand.Count;
-        Debug.Log($"Hand Count to be checked: {i}");
         switch (i)
         {
             case 0:
@@ -851,8 +819,8 @@ public class CardDataBase : MonoBehaviour
                 CurrentActiveCard = lHandData[5];
                 break;
         }
+        if(i != 0)
         GM.CheckHandZoomInEffect();
-        Debug.Log($"ActiveCardCheck: {CurrentActiveCard.Name}");
     }
 
     private void GetHandToShare()
@@ -860,7 +828,6 @@ public class CardDataBase : MonoBehaviour
         List<string> names = new List<string>();
         foreach(Card card in P1Hand)
         {
-            Debug.Log($"Handing over: {card.Name}");
             names.Add(card.Name);
         }
         PV.RPC("ShareCardList", RpcTarget.Others, "P2Hand" ,names.ToArray());
@@ -1090,6 +1057,34 @@ public class CardDataBase : MonoBehaviour
             }
         }
     }
+    #endregion
+
+    #region Base Controls
+    private void HandleBaseExhaust(PlayerBase player)
+    {
+        if (player.type == PlayerBase.Type.Player)
+        {
+            PV.RPC("ExhaustABase", RpcTarget.Others, "Opponent");
+        }
+        else if (player.type == PlayerBase.Type.Opponent)
+        {
+            PV.RPC("ExhaustABase", RpcTarget.Others, "Player");
+        }
+    }
+
+    [PunRPC]
+    private void ExhaustABase(string player)
+    {
+        switch (player)
+        {
+            case "Player":
+                GM.OnBaseExhausted(PlayerBase.Type.Player);
+                break;
+            case "Opponent":
+                GM.OnBaseExhausted(PlayerBase.Type.Opponent);
+                break;
+        }
+    }
 
     private void HandleBaseDestroyed(PlayerBase player)
     {
@@ -1214,7 +1209,6 @@ public class CardDataBase : MonoBehaviour
             case Card.Type.Character:
                 //Place Character on the field
                 //Spawn a Character on the field
-                Debug.Log($"Setting a Character card on the field: {card.Name}.");
                 SpawnCharacterToMyField(card);
                 PV.RPC("SpawnCharacterToOpponentField", RpcTarget.OthersBuffered, card.Name);
                 RemoveCardFromHand(card);
@@ -1239,7 +1233,6 @@ public class CardDataBase : MonoBehaviour
         switch (Deck)
         {
             case CardDecks.P1Deck:
-                Debug.Log("Drawing a card from P1Deck.");
                 DrawRandomCard(P1Deck);
                 break;
         }
@@ -1249,7 +1242,6 @@ public class CardDataBase : MonoBehaviour
     {
         if(PhotonGameManager.myTurn && PhotonGameManager.myPhase == PhotonGameManager.GamePhase.Recruit)
         {
-            Debug.Log("Drawing a card from the Reserve.");
             DrawRandomCard(HeroReserve);
             GM.TurnCounterDecrement();
         }
@@ -1287,23 +1279,18 @@ public class CardDataBase : MonoBehaviour
         switch (phase)
         {
             case PhotonGameManager.GamePhase.HeroDraft:
-                Debug.Log($"Removing {card.Name} from the Draft and adding it to my hand.");
                 P1Hand.Add(card);
                 AddCardToHand(card);
                 HeroReserve.Remove(card);
                 PV.RPC("RemoveDraftOption", RpcTarget.All, card.Name);
-                Debug.Log($"{P1Hand.Count} cards in my hand.");
                 break;
             case PhotonGameManager.GamePhase.AbilityDraft:
-                Debug.Log($"Removing {card.Name} from the Draft and adding it to my Enhancement deck.");
                 P1Deck.Add(card);
                 UpdateHandSlider();
                 AbilityDraft.Remove(card);
                 PV.RPC("RemoveDraftOption", RpcTarget.All, card.Name);
-                Debug.Log($"{P1Deck.Count} cards in my deck.");
                 break;
             case PhotonGameManager.GamePhase.Recruit:
-                Debug.Log($"Removing {card.Name} from the HQ.");
                 P1Hand.Add(card);
                 AddCardToHand(card);
                 RemoveHQCard(card);

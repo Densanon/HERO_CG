@@ -43,11 +43,6 @@ public class UIConfirmation : MonoBehaviour
                     confirmationText.text = "Confirm Enhancement to target.";
                     typeOfConfirmation = Confirmation.Enhancing;
                     break;
-                case Card.Type.Character:
-                    //will need to do something for attacking here.
-                    confirmationText.text = $"Target {cardToBePlayed.Name}?";
-                    typeOfConfirmation = Confirmation.Overcome;
-                    break;
             }
         }
     }

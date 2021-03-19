@@ -62,6 +62,7 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
     private CardData DefendingHero;
     public static bool AttDef = true;
     public PlayerBase PB;
+    public PlayerBase MyPB;
 
     public static Action<Card, GamePhase> OnCardCollected = delegate { };
     public static Action<bool> OnOvercomeTime = delegate { };
@@ -90,7 +91,6 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
 
     private void Start()
     {
-        //CB.AiDraft = true;
         PhaseIndicator.text = "Hero Draft";
         tOpponentHandCount.text = "0";
         TurnActionIndicator.text = "1";
@@ -99,7 +99,6 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
             var turnStart = UnityEngine.Random.Range(0, 2);
             if(turnStart == 1)
             {
-                Debug.Log("I go first.");
                 myTurn = false;
                 player = PlayerNum.P1;
                 CB.HandlePlayerDeclaration(0);
@@ -108,7 +107,6 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
             }
             else
             {
-                Debug.Log("I go last.");
                 myTurn = true;
                 player = PlayerNum.P2;
                 CB.HandlePlayerDeclaration(1);
@@ -135,9 +133,20 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
         }
     }
 
+    public void OnBaseExhausted(PlayerBase.Type pBase)
+    {
+        if (pBase == PlayerBase.Type.Player)
+        {
+            PB.Exhaust(true);
+        }
+        else
+        {
+            MyPB.Exhaust(true);
+        }
+    }
+
     public void PhaseChange(GamePhase phaseToChangeTo)
     {
-        Debug.Log($"Phase is being changed to {phaseToChangeTo}");
         if(myPhase == GamePhase.Overcome)
         {
             gOvercome.SetActive(false);
@@ -159,7 +168,6 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
 
     public void SetOpponentHandCount(int number)
     {
-        Debug.Log($"Setting the hand text to {number}.");
         tOpponentHandCount.text = $"{number}";
     }
 
@@ -214,7 +222,6 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
             return;
         }
         OnOvercomeSwitch?.Invoke();
-        Debug.Log($"Switching AttDef to: {AttDef}");
     }
     #endregion
 
@@ -227,10 +234,8 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
 
     public void SetCardCollectAmount(int amount)
     {
-        Debug.Log($"Setting card Collection to {amount}.");
         for(int i = amount; i>0; i--)
         {
-            Debug.Log($"Amount to draw left: {i}");
             CB.DrawCard(CardDataBase.CardDecks.P1Deck);
         }
         StartCoroutine(PhaseDeclaration("Play Cards"));
@@ -346,14 +351,12 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
             case GamePhase.HeroDraft:
                 if (!zoomed)
                 {
-                    Debug.Log($"Zooming Card: {card.Name}");
                     CardZoom(card);
                 }
                 break;
             case GamePhase.AbilityDraft:
                 if (!zoomed)
                 {
-                    Debug.Log($"Zooming Card: {card.Name}");
                     CardZoom(card);
                 }
                 break;
@@ -368,14 +371,12 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
             case GamePhase.Enhance:
                 if (!zoomed)
                 {
-                    Debug.Log($"Zooming Card: {card.Name}");
                     CardZoom(card);
                 }
                 break;
             case GamePhase.Recruit:
                 if (!zoomed)
                 {
-                    Debug.Log($"Zooming Card: {card.Name}");
                     CardZoom(card);
                 }
                 break;
@@ -385,21 +386,18 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
             case GamePhase.Feat:
                 if (!zoomed)
                 {
-                    Debug.Log($"Zooming Card: {card.Name}");
                     CardZoom(card);
                 }
                 break;
             case GamePhase.TurnResponse:
                 if (!zoomed)
                 {
-                    Debug.Log($"Zooming Card: {card.Name}");
                     CardZoom(card);
                 }
                 break;
             case GamePhase.Wait:
                 if (!zoomed)
                 {
-                    Debug.Log($"Zooming Card: {card.Name}");
                     CardZoom(card);
                 }
                 break;
@@ -570,7 +568,6 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
     private void HandleCardCollected(Card card)
     {
         zoomed = false;
-        Debug.Log($"Sending Card Collected: {card.Name}.");
         CB.HandleCardCollected(card, myPhase);
         if(myPhase != GamePhase.Recruit)
         {
@@ -767,7 +764,6 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
                     StartCoroutine(PhaseDeclaration("Hero Drafting"));
                     if (CB.AiDraft)
                     {
-                        Debug.Log("Taking auto turn in Hero Draft");
                         CB.DrawDraftCard("HeroReserve");
                     }
                     break;
@@ -779,7 +775,6 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
                     }
                     if (CB.AiDraft)
                     {
-                        Debug.Log("Taking auto turn in Ability Draft");
                         CB.DrawDraftCard("AbilityDraft");
                     }
                     if (CB.AutoDraft)
