@@ -680,11 +680,11 @@ public class CardDataBase : MonoBehaviour
         if(P1Hand.Count != 0)
         {
             sHandSlider.maxValue = P1Hand.Count-1;
+            return;
         }
-        else
-        {
-            sHandSlider.maxValue = 0;
-        }
+
+        sHandSlider.maxValue = 0;
+        
     }
 
     private void DrawRandomCard(List<Card> whatDeck)
@@ -721,7 +721,7 @@ public class CardDataBase : MonoBehaviour
 
     private void RemoveCardFromHand(Card cardToRemove)
     {
-        if(P1Hand.Count < 7)
+        if(P1Hand.Count <= 7)
         {
             foreach(CardData data in lHandData)
             {

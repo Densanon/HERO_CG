@@ -64,6 +64,8 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
     public PlayerBase PB;
     public PlayerBase MyPB;
 
+    private Ability activeAbility;
+
     public static Action<Card, GamePhase> OnCardCollected = delegate { };
     public static Action<bool> OnOvercomeTime = delegate { };
     public static Action OnOvercomeSwitch = delegate { };
@@ -225,6 +227,11 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
     }
     #endregion
 
+    public void SetActiveAbility(Ability ability)
+    {
+        activeAbility = ability;
+    }
+
     public void ToldSwitchTurn(bool turn)
     {
         myTurn = turn;
@@ -257,7 +264,11 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
     public void CheckHandZoomInEffect()
     {
        gCard.CardOverride(CB.CurrentActiveCard, CardData.FieldPlacement.Hand);
-        HandleCardButtons(CardData.FieldPlacement.Hand);
+       HandleCardButtons(CardData.FieldPlacement.Hand);
+        if (CB.CurrentActiveCard.CardType == Card.Type.Feat && myPhase != GamePhase.Feat)
+        {
+            NullZoomButtons();
+        }
     }
 
     #region Move Counter Methods

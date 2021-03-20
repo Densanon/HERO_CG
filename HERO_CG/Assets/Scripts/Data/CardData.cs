@@ -9,6 +9,10 @@ public class CardData : MonoBehaviour
     public enum FieldPlacement { Mine, Opp, Draft, HQ, Zoom, Hand}
     public FieldPlacement myPlacement;
 
+    public enum CardState { Normal, Exhausted, PotentialNeutralTarget, PotentialDefenderTarget, Attacking, Defending}
+    public CardState myState = CardState.Normal;
+    public CardState prevState = CardState.Normal;
+
     [SerializeField] Image Icon;
     [SerializeField] TMP_Text tAttack;
     [SerializeField] TMP_Text tDefense;
@@ -17,8 +21,6 @@ public class CardData : MonoBehaviour
     [SerializeField] Image[] gAbilityCounters;
     [SerializeField] Button Target;
     [SerializeField] List<Component> myAbilities = new List<Component>();
-    Color stateColor = Color.white;
-    Color prevStateColor = Color.white;
 
     public static Action<CardData> IsTarget = delegate { };
     public static Action<CardData, string, int> OnNumericAdjustment = delegate { };
@@ -93,8 +95,7 @@ public class CardData : MonoBehaviour
     public void Exhaust(bool told)
     {
         Exhausted = true;
-        prevStateColor = stateColor;
-        stateColor = Icon.color = Color.grey;
+        StateChange(CardState.Exhausted);
         SetDefense(Defense / 2);
         tDefense.color = Color.red;
 
@@ -106,8 +107,7 @@ public class CardData : MonoBehaviour
     public void Heal(bool told)
     {
         Exhausted = false;
-        prevStateColor = stateColor;
-        stateColor = Icon.color = Color.white;
+        StateChange(CardState.Normal);
         SetDefense(Defense * 2);
         tDefense.color = Color.white;
 
@@ -174,6 +174,21 @@ public class CardData : MonoBehaviour
 
     }
 
+    public List<Component> GetCharacterAbilities()
+    {
+        return myAbilities;
+
+    }
+
+    public void StripAbilities()
+    {
+        foreach(Image im in gAbilityCounters)
+        {
+            im.color = Color.clear;
+        }
+        myAbilities.Clear();
+    }
+
     public void CardOverride(Card card, FieldPlacement placement)
     {
         myPlacement = placement;
@@ -223,13 +238,12 @@ public class CardData : MonoBehaviour
     {
         if (target)
         {
-            prevStateColor = stateColor;
-            stateColor = Icon.color = Color.blue;
+            StateChange(CardState.Attacking);
+            return;
         }
-        else
-        {
-            stateColor = Icon.color = prevStateColor;
-        }
+
+        StateChange(prevState);
+        
     }
     #endregion
 
@@ -265,23 +279,51 @@ public class CardData : MonoBehaviour
         {
            if(CardType == Card.Type.Feat)
             {
-                Icon.color = Color.white;
+                StateChange(CardState.Normal);
             }
             else
             {
-                Icon.color = Color.grey;
+                StateChange(CardState.Exhausted);
             }
         }
         else if (myPlacement == FieldPlacement.Hand)
         {
             if (CardType == Card.Type.Feat)
             {
-                Icon.color = Color.grey;
+                StateChange(CardState.Exhausted);
             }
             else
             {
-                Icon.color = Color.white;
+                StateChange(CardState.Normal);
             }
+        }
+    }
+
+    private void StateChange(CardState StateToTransitionTo)
+    {
+        prevState = myState;
+        myState = StateToTransitionTo;
+
+        switch (StateToTransitionTo)
+        {
+            case CardState.Attacking:
+                Icon.color = Color.blue;
+                break;
+            case CardState.Defending:
+                Icon.color = Color.cyan;
+                break;
+            case CardState.Exhausted:
+                Icon.color = Color.grey;
+                break;
+            case CardState.Normal:
+                Icon.color = Color.white;
+                break;
+            case CardState.PotentialDefenderTarget:
+                Icon.color = Color.red;
+                break;
+            case CardState.PotentialNeutralTarget:
+                Icon.color = Color.green;
+                break;
         }
     }
 
@@ -290,8 +332,13 @@ public class CardData : MonoBehaviour
         if(Target != null)
         {
             Target.gameObject.SetActive(target);
-            prevStateColor = stateColor;
-            stateColor = Icon.color = target ? Color.green : prevStateColor;
+            if (target)
+            {
+                StateChange(CardState.PotentialNeutralTarget);
+                return;
+            }
+
+            StateChange(prevState);
         }
     }
 
@@ -304,15 +351,13 @@ public class CardData : MonoBehaviour
                 case FieldPlacement.Mine:
                     if (!Exhausted)
                     {
-                        prevStateColor = stateColor;
-                        stateColor = Icon.color = Color.green;
+                        StateChange(CardState.PotentialNeutralTarget);
                     }
                     break;
                 case FieldPlacement.Opp:
                     if (!Exhausted)
                     {
-                        prevStateColor = stateColor;
-                        stateColor = Icon.color = Color.white;
+                        StateChange(CardState.Normal);
                     }
                     break;
             }
@@ -324,19 +369,13 @@ public class CardData : MonoBehaviour
                 case FieldPlacement.Mine:
                     if (!Exhausted)
                     {
-                        prevStateColor = stateColor;
-                        stateColor = Icon.color = Color.white;
+                        StateChange(CardState.Normal);
                     }
                     break;
                 case FieldPlacement.Opp:
                     if (!Exhausted)
                     {
-                        stateColor = Icon.color = prevStateColor;
-                    }
-                    else
-                    {
-                        prevStateColor = stateColor;
-                        stateColor = Icon.color = Color.grey;
+                        StateChange(CardState.Normal);
                     }
                     break;
             }
@@ -352,20 +391,13 @@ public class CardData : MonoBehaviour
                 case FieldPlacement.Mine:
                     if (!Exhausted)
                     {
-                        prevStateColor = stateColor;
-                        stateColor = Icon.color = Color.green;
+                        StateChange(CardState.PotentialNeutralTarget);
                     }
                     break;
                 case FieldPlacement.Opp:
                     if (!Exhausted)
                     {
-                        prevStateColor = stateColor;
-                        stateColor = Icon.color = Color.white;
-                    }
-                    else
-                    {
-                        prevStateColor = stateColor;
-                        stateColor = Icon.color = Color.grey;
+                        StateChange(CardState.Normal);
                     }
                     break;
             }
@@ -377,13 +409,11 @@ public class CardData : MonoBehaviour
                 case FieldPlacement.Mine:
                     if (!Exhausted)
                     {
-                        prevStateColor = stateColor;
-                        stateColor = Icon.color = Color.white;
+                        StateChange(CardState.Normal);
                     }
                     break;
                 case FieldPlacement.Opp:
-                    prevStateColor = stateColor;
-                    stateColor = Icon.color = Color.red;
+                    StateChange(CardState.PotentialDefenderTarget);
                     break;
             }
         }

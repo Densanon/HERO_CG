@@ -2,22 +2,18 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class aDrain : MonoBehaviour,IAbility
+public class aDrain : Ability
 {
-    public Ability.Type myType = Ability.Type.Feat;
+    //"DRAIN", "(H) Discard all of one opponenet's Enhancement Cards from the field."
 
-    #region IAbility
-    void IAbility.Activate()
+    #region Unity Methods
+    private void Awake()
     {
+        myType = Ability.Type.Feat;
 
     }
 
-    void IAbility.Remove()
-    {
-
-    }
-
-    void IAbility.Target()
+    private void OnDestroy()
     {
 
     }

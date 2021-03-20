@@ -1,25 +1,28 @@
-﻿using System.Collections;
+﻿using UnityEngine;
 using System.Collections.Generic;
-using UnityEngine;
 
-public class aAbsorb : MonoBehaviour, IAbility
+public class aAbsorb : Ability
 {
-    public Ability.Type myType = Ability.Type.Feat;
+    //"ABSORB", "(H) Discard the Enhancements, if any, from any one hero. Then, replace with those from another hero."
 
-    #region IAbility
-    void IAbility.Activate()
+    CardData Target1;
+    CardData Target2;
+
+    #region Unity Methods
+    private void Awake()
     {
+        myType = Ability.Type.Feat;
         
     }
 
-    void IAbility.Remove()
-    {
-        
-    }
-
-    void IAbility.Target()
+    private void OnDestroy()
     {
         
     }
     #endregion
+
+    public override void Target()
+    {
+        
+    }
 }

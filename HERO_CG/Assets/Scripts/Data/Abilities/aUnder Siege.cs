@@ -2,22 +2,18 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class aUnderSiege : MonoBehaviour,IAbility
+public class aUnderSiege : Ability
 {
-    public Ability.Type myType = Ability.Type.Feat;
+    //"UNDER SEIGE", "(H) Target opponent reveals their hand, then discards all non-hero cards."
 
-    #region IAbility
-    void IAbility.Activate()
+    #region Unity Methods
+    private void Awake()
     {
+        myType = Ability.Type.Feat;
 
     }
 
-    void IAbility.Remove()
-    {
-
-    }
-
-    void IAbility.Target()
+    private void OnDestroy()
     {
 
     }
