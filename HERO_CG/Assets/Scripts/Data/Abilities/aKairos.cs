@@ -2,24 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class aKairos : MonoBehaviour,IAbility
+public class aKairos : Ability
 {
     public Ability.Type myType = Ability.Type.Activate;
-
-    #region IAbility
-    void IAbility.Activate()
-    {
-
-    }
-
-    void IAbility.Remove()
-    {
-
-    }
-
-    void IAbility.Target()
-    {
-
-    }
-    #endregion
 }

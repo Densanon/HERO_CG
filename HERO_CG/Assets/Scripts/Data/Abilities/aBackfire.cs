@@ -2,24 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class aBackfire : MonoBehaviour, IAbility
+public class aBackfire : Ability
 {
     public Ability.Type myType = Ability.Type.Activate;
-
-    #region IAbility
-    void IAbility.Activate()
-    {
-
-    }
-
-    void IAbility.Remove()
-    {
-
-    }
-
-    void IAbility.Target()
-    {
-
-    }
-    #endregion
 }

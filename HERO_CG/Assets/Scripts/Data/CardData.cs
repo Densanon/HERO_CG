@@ -20,12 +20,17 @@ public class CardData : MonoBehaviour
     [SerializeField] TMP_Text tbDefense;
     [SerializeField] Image[] gAbilityCounters;
     [SerializeField] Button Target;
-    [SerializeField] List<Component> myAbilities = new List<Component>();
+    [SerializeField] List<Ability> myAbilities = new List<Ability>();
+    [SerializeField] List<Enhancement> myEnhancements = new List<Enhancement>();
 
     public static Action<CardData> IsTarget = delegate { };
     public static Action<CardData, string, int> OnNumericAdjustment = delegate { };
     public static Action<CardData, bool> OnExhausted = delegate { };
     public static Action<CardData> OnDestroyed = delegate { };
+    public static Action<CardData> OnAbilitiesStripped = delegate { };
+    public static Action<CardData> OnEnhancementsStripped = delegate { };
+    public static Action<List<Ability>, CardData> OnGivenAbilities = delegate { };
+    public static Action<List<Enhancement>, CardData> OnGivenEnhancements = delegate { };
 
     public bool Exhausted { get; private set; }
 
@@ -130,6 +135,7 @@ public class CardData : MonoBehaviour
         {
             OnNumericAdjustment?.Invoke(this, "Attack", Attack);
         }
+        HandleEnhancementAddition(amount, 'a');
     }
 
     public void SetDefense(int amount)
@@ -147,9 +153,10 @@ public class CardData : MonoBehaviour
         {
             OnNumericAdjustment?.Invoke(this, "Defense", Defense);
         }
+        HandleEnhancementAddition(amount, 'd');
     }
 
-    public void AdjustCounter(int amount, Component ability)
+    public void AdjustCounter(int amount, Ability ability)
     {
         AbilityCounter += amount;
             for(int i = 0; i < gAbilityCounters.Length-1; i++)
@@ -174,19 +181,54 @@ public class CardData : MonoBehaviour
 
     }
 
-    public List<Component> GetCharacterAbilities()
+    public List<Ability> GetCharacterAbilities()
     {
         return myAbilities;
 
     }
 
-    public void StripAbilities()
+    public List<Enhancement> GetCharacterEnhancements()
+    {
+        return myEnhancements;
+    }
+
+    public void StripAbilities(bool told)
     {
         foreach(Image im in gAbilityCounters)
         {
             im.color = Color.clear;
         }
         myAbilities.Clear();
+        if (!told)
+        {
+            OnAbilitiesStripped?.Invoke(this);
+        }
+    }
+
+    public void StripEnhancements(bool told)
+    {
+        myEnhancements.Clear();
+        CardOverride(myCard, myPlacement);
+        if (!told)
+        {
+            OnEnhancementsStripped?.Invoke(this);
+        }
+    }
+
+    public void GainAbilities(List<Ability> abilities, bool told)
+    {
+        //need to add all the abilities to the card and update its info
+
+        if(!told)
+        OnGivenAbilities?.Invoke(abilities, this);
+    }
+
+    public void GainEnhancements(List<Enhancement> enhancements, bool told)
+    {
+        //need to add all the enhancements to the card and update its info
+
+        if(!told)
+        OnGivenEnhancements?.Invoke(enhancements, this);
     }
 
     public void CardOverride(Card card, FieldPlacement placement)
@@ -418,5 +460,24 @@ public class CardData : MonoBehaviour
             }
         }
     }
+
+    private void HandleEnhancementAddition(int amount, char type) {
+
+        Enhancement e = new Enhancement();
+        if(type == 'a')
+        {
+            e.attack = amount;
+        }
+        else
+        { 
+            e.defense = amount;
+        }
+        myEnhancements.Add(e);
+    }
     #endregion
 }
+
+public class Enhancement{
+    public int attack;
+    public int defense;
+    }

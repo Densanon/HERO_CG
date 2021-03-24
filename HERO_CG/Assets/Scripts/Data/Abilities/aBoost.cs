@@ -2,24 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class aBoost : MonoBehaviour, IAbility
+public class aBoost : Ability
 {
     public Ability.Type myType = Ability.Type.Activate;
-
-    #region IAbility
-    void IAbility.Activate()
-    {
-
-    }
-
-    void IAbility.Remove()
-    {
-
-    }
-
-    void IAbility.Target()
-    {
-
-    }
-    #endregion
 }

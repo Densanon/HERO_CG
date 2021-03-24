@@ -23,6 +23,9 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
 
     public GameObject gCardZoom;
     public CardData gCard;
+    public GameObject pAbilityPrefab;
+    public Transform tAbilityContainer;
+    List<GameObject> gAbilities;
     public GameObject gCardCollect;
     public GameObject gCardSelect;
     public GameObject gCardPlay;
@@ -79,6 +82,7 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
         CardFunction.OnCardPlayed += HandlePlayCard;
         UIConfirmation.OnHEROSelection += PhaseChange;
         CardDataBase.OnAiDraftCollected += HandleCardCollected;
+        Ability.OnAbilityUsed += HandleAbilityEnd;
     }
 
     private void OnDestroy()
@@ -89,6 +93,7 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
         CardFunction.OnCardPlayed -= HandlePlayCard;
         UIConfirmation.OnHEROSelection -= PhaseChange;
         CardDataBase.OnAiDraftCollected -= HandleCardCollected;
+        Ability.OnAbilityUsed -= HandleAbilityEnd;
     }
 
     private void Start()
@@ -230,6 +235,7 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
     public void SetActiveAbility(Ability ability)
     {
         activeAbility = ability;
+        ability.AbilityAwake();
     }
 
     public void ToldSwitchTurn(bool turn)
@@ -269,6 +275,7 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
         {
             NullZoomButtons();
         }
+        //need to send the abilities to get added to the ability window
     }
 
     #region Move Counter Methods
@@ -300,61 +307,6 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
     #endregion
 
     #region Private Methods
-    private void HandleHeroSelected(CardData card)
-    {
-        if (CB.CheckIfMyCard(card))
-        {
-            if (!card.Exhausted)
-            {
-                if (AttackingHeros.Contains(card))
-                {
-                    Debug.Log($"Removing {card.Name} from Attacking.");
-                    //Untarget Card
-                    AttackingHeros.Remove(card);
-                    card.OvercomeTarget(false);
-                }
-                else
-                {
-                    Debug.Log($"Adding {card.Name} to Attacking.");
-                    //Target Card
-                    AttackingHeros.Add(card);
-                    card.OvercomeTarget(true);
-                }
-            }
-        }
-        else
-        {
-            if (!AttDef)
-            {
-                if(DefendingHero == card)
-                {
-                    Debug.Log($"Removing {card.Name} from Defending.");
-                    //Untarget Card
-                    DefendingHero = null;
-                    card.OvercomeTarget(false);
-                }
-                else
-                {
-                    Debug.Log($"Adding {card.Name} to Defending.");
-                    //Target Card
-                    if(DefendingHero != null)
-                    {
-                        DefendingHero.OvercomeTarget(false);
-                    }
-                    DefendingHero = card;
-                    //turn on interactible for calculate
-                    card.OvercomeTarget(true);
-                }
-            }
-        }
-    }
-
-    private void HandleDeselection()
-    {
-        zoomed = false;
-        handZoomed = false;
-    }
-
     private void HandleCardSelecion(CardData card)
     {
         switch (myPhase)
@@ -395,10 +347,7 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
                 HandleHeroSelected(card);
                 break;
             case GamePhase.Feat:
-                if (!zoomed)
-                {
-                    CardZoom(card);
-                }
+                HandleFeatSelection(card);
                 break;
             case GamePhase.TurnResponse:
                 if (!zoomed)
@@ -413,6 +362,78 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
                 }
                 break;
         }
+    }
+
+    private void HandleHeroSelected(CardData card)
+    {
+        if (CB.CheckIfMyCard(card))
+        {
+            if (!card.Exhausted)
+            {
+                if (AttackingHeros.Contains(card))
+                {
+                    Debug.Log($"Removing {card.Name} from Attacking.");
+                    //Untarget Card
+                    AttackingHeros.Remove(card);
+                    card.OvercomeTarget(false);
+                }
+                else
+                {
+                    Debug.Log($"Adding {card.Name} to Attacking.");
+                    //Target Card
+                    AttackingHeros.Add(card);
+                    card.OvercomeTarget(true);
+                }
+            }
+        }
+        else
+        {
+            if (!AttDef)
+            {
+                if (DefendingHero == card)
+                {
+                    Debug.Log($"Removing {card.Name} from Defending.");
+                    //Untarget Card
+                    DefendingHero = null;
+                    card.OvercomeTarget(false);
+                }
+                else
+                {
+                    Debug.Log($"Adding {card.Name} to Defending.");
+                    //Target Card
+                    if (DefendingHero != null)
+                    {
+                        DefendingHero.OvercomeTarget(false);
+                    }
+                    DefendingHero = card;
+                    //turn on interactible for calculate
+                    card.OvercomeTarget(true);
+                }
+            }
+        }
+    }
+
+    private void HandleDeselection()
+    {
+        zoomed = false;
+        handZoomed = false;
+    }
+
+    private void HandleFeatSelection(CardData card)
+    {
+        if(activeAbility != null && card.CardType == Card.Type.Character)
+        {
+            activeAbility.Target(card);
+        }
+    }
+
+    private void HandleAbilityEnd()
+    {
+        if(activeAbility.myType == Ability.Type.Feat)
+        {
+            SwitchTurn();
+        }
+        activeAbility = null;
     }
 
     private void HandlePlayCard(Card card)

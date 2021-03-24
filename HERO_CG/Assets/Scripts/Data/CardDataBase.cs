@@ -82,6 +82,10 @@ public class CardDataBase : MonoBehaviour
         CardData.OnNumericAdjustment += HandleCardAdjustment;
         CardData.OnExhausted += HandleCardExhaustState;
         CardData.OnDestroyed += HandleCharacterDestroyed;
+        CardData.OnAbilitiesStripped += HandleAbilityStripped;
+        CardData.OnEnhancementsStripped += HandleEnhancementsStripped;
+        CardData.OnGivenAbilities += HandleAbilitiesGiven;
+        CardData.OnGivenEnhancements += HandleEnhancementsGiven;
         PlayerBase.OnBaseDestroyed += HandleBaseDestroyed;
         PlayerBase.OnExhaust += HandleBaseExhaust;
 
@@ -214,6 +218,10 @@ public class CardDataBase : MonoBehaviour
         CardData.OnExhausted -= HandleCardExhaustState;
         CardData.OnDestroyed -= HandleCharacterDestroyed;
         PlayerBase.OnBaseDestroyed -= HandleBaseDestroyed;
+        CardData.OnAbilitiesStripped -= HandleAbilityStripped;
+        CardData.OnEnhancementsStripped -= HandleEnhancementsStripped;
+        CardData.OnGivenAbilities -= HandleAbilitiesGiven;
+        CardData.OnGivenEnhancements -= HandleEnhancementsGiven;
         PlayerBase.OnExhaust -= HandleBaseExhaust;
     }
     #endregion
@@ -927,7 +935,7 @@ public class CardDataBase : MonoBehaviour
     }
     #endregion
 
-    #region Spawn Character and Ability
+    #region Spawn Character and Ability Functions
     [PunRPC]
     private void SpawnCharacterToOpponentField(string heroToSpawn)
     {
@@ -955,7 +963,7 @@ public class CardDataBase : MonoBehaviour
     private void SpawnAbility(string AbilityName, CardData cardToAttachTo, bool told)
     {
         Debug.Log($"Spawning {AbilityName} on {cardToAttachTo}.");
-        Component comp = new Component();
+        Ability comp = new Ability();
         switch (AbilityName)
         {
             case "ACCELERATE":
@@ -1057,6 +1065,28 @@ public class CardDataBase : MonoBehaviour
             }
         }
     }
+
+    private void HandleEnhancementsStripped(CardData card)
+    {
+        //need to strip the enhancements from the card that will be sent over cloud
+    }
+
+    private void HandleAbilityStripped(CardData card)
+    {
+        //need to strip the abilities from the card that will be sent over cloud
+
+    }
+
+    private void HandleEnhancementsGiven(List<Enhancement> enhancements, CardData card)
+    {
+        //need to give enhancements to a card over cloud
+    }
+
+    private void HandleAbilitiesGiven(List<Ability> abilities, CardData card)
+    {
+        //need to give abilities to a card over cloud
+
+    }
     #endregion
 
     #region Base Controls
@@ -1113,6 +1143,30 @@ public class CardDataBase : MonoBehaviour
         }
     }
     #endregion
+
+    private void SetFeatToActiveAbility(Card card)
+    {
+        string name = card.Name;
+        switch (name)
+        {
+            case "ABSORB":
+                aAbsorb a = new aAbsorb();
+                GM.SetActiveAbility(a);
+                break;
+            case "DRAIN":
+                aDrain b = new aDrain();
+                GM.SetActiveAbility(b);
+                break;
+            case "PAY THE COST":
+                aPaytheCost c = new aPaytheCost();
+                GM.SetActiveAbility(c);
+                break;
+            case "UNDER SEIGE":
+                aUnderSiege d = new aUnderSiege();
+                GM.SetActiveAbility(d);
+                break;
+        }
+    }
     #endregion
 
     #region Public Methods
@@ -1211,7 +1265,6 @@ public class CardDataBase : MonoBehaviour
                 //Spawn a Character on the field
                 SpawnCharacterToMyField(card);
                 PV.RPC("SpawnCharacterToOpponentField", RpcTarget.OthersBuffered, card.Name);
-                RemoveCardFromHand(card);
                 GM.TurnCounterDecrement();
                 break;
             case Card.Type.Enhancement:
@@ -1221,11 +1274,12 @@ public class CardDataBase : MonoBehaviour
                 bTargeting = true;
                 break;
             case Card.Type.Feat:
-                //Resolve Feat ability
+                SetFeatToActiveAbility(card);
                 //GM.ToldSwitchTurn(false);
                 //HandleTurnDeclaration(true);
                 break;
         }
+        RemoveCardFromHand(card);
     }
 
     public void DrawCard(CardDecks Deck)

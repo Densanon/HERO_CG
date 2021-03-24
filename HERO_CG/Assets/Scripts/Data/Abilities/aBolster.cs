@@ -2,24 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class aBolster : MonoBehaviour, IAbility
+public class aBolster : Ability
 {
     public Ability.Type myType = Ability.Type.Passive;
-
-    #region IAbility
-    void IAbility.Activate()
-    {
-
-    }
-
-    void IAbility.Remove()
-    {
-
-    }
-
-    void IAbility.Target()
-    {
-
-    }
-    #endregion
 }

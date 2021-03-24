@@ -15302,6 +15302,12 @@ GameObject:
     type: 3}
   m_PrefabInstance: {fileID: 1917078784950444046}
   m_PrefabAsset: {fileID: 0}
+--- !u!224 &1917078784950444052 stripped
+RectTransform:
+  m_CorrespondingSourceObject: {fileID: 7073538353493671015, guid: c2635df660bb08f46ac474a6b76ada3f,
+    type: 3}
+  m_PrefabInstance: {fileID: 1917078784950444046}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &7098869184987679685
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -15474,6 +15480,17 @@ PrefabInstance:
       propertyPath: PB
       value: 
       objectReference: {fileID: 1148206799}
+    - target: {fileID: 1429444459656308942, guid: c37408237509d3247850a853e4df00a5,
+        type: 3}
+      propertyPath: tAbilityContainer
+      value: 
+      objectReference: {fileID: 1917078784950444052}
+    - target: {fileID: 1429444459656308942, guid: c37408237509d3247850a853e4df00a5,
+        type: 3}
+      propertyPath: pAbilityPrefab
+      value: 
+      objectReference: {fileID: 7982822236385133847, guid: 824aecb26b9c6c744a7607af32b1a1da,
+        type: 3}
     - target: {fileID: 3568359947860690515, guid: c37408237509d3247850a853e4df00a5,
         type: 3}
       propertyPath: m_LocalPosition.x

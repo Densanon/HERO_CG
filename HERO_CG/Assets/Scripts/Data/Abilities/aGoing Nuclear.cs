@@ -2,24 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class aGoingNuclear : MonoBehaviour,IAbility
+public class aGoingNuclear : Ability
 {
     public Ability.Type myType = Ability.Type.Passive;
-
-    #region IAbility
-    void IAbility.Activate()
-    {
-
-    }
-
-    void IAbility.Remove()
-    {
-
-    }
-
-    void IAbility.Target()
-    {
-
-    }
-    #endregion
 }

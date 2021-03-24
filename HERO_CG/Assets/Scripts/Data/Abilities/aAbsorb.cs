@@ -8,21 +8,47 @@ public class aAbsorb : Ability
     CardData Target1;
     CardData Target2;
 
+    List<Ability> abilities = new List<Ability>();
+    List<Enhancement> enhancements = new List<Enhancement>();
+
     #region Unity Methods
     private void Awake()
     {
         myType = Ability.Type.Feat;
-        
-    }
-
-    private void OnDestroy()
-    {
-        
+        Name = "ABSORB";
+        Description = "Discard the Enhancements, if any, from any one hero. Then, replace with those from another hero.";
     }
     #endregion
 
-    public override void Target()
+    #region Ability Methods
+    public override void Target(CardData card)
     {
-        
+        if (Target1 == null)
+        {
+            Target1 = card;
+            RemoveEnhancements(Target1);
+            return;
+        }
+        else if (Target2 == null)
+        {
+            Target2 = card;
+            abilities = Target2.GetCharacterAbilities();
+            enhancements = Target2.GetCharacterEnhancements();
+            RemoveEnhancements(Target2);
+
+            if(abilities != null)
+                Target1.GainAbilities(abilities, false);
+            if(enhancements != null)
+                Target1.GainEnhancements(enhancements, false);
+
+            OnAbilityUsed?.Invoke();
+        }
+    }
+    #endregion
+
+    private void RemoveEnhancements(CardData card)
+    {
+        card.StripAbilities(false);
+        card.StripEnhancements(false);
     }
 }

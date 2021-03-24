@@ -2,24 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class aCollateralDamage : MonoBehaviour, IAbility
+public class aCollateralDamage : Ability
 {
     public Ability.Type myType = Ability.Type.Passive;
-
-    #region IAbility
-    void IAbility.Activate()
-    {
-
-    }
-
-    void IAbility.Remove()
-    {
-
-    }
-
-    void IAbility.Target()
-    {
-
-    }
-    #endregion
 }
