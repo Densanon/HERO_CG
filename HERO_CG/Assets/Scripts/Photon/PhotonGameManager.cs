@@ -25,7 +25,7 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
     public CardData gCard;
     public GameObject pAbilityPrefab;
     public Transform tAbilityContainer;
-    List<GameObject> gAbilities;
+    List<GameObject> gAbilities = new List<GameObject>();
     public GameObject gCardCollect;
     public GameObject gCardSelect;
     public GameObject gCardPlay;
@@ -265,6 +265,7 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
         {
             NullZoomButtons();
         }
+        ClearAbilityPanel();
     }
 
     public void CheckHandZoomInEffect()
@@ -275,7 +276,7 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
         {
             NullZoomButtons();
         }
-        //need to send the abilities to get added to the ability window
+        ClearAbilityPanel();
     }
 
     #region Move Counter Methods
@@ -447,6 +448,45 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
         gCardZoom.SetActive(true);
         gCard.CardOverride(card, CardData.FieldPlacement.Zoom);
         HandleCardButtons(card.myPlacement);
+        ClearAbilityPanel();
+        GetNewAbilities(card);
+    }
+
+    private void GetNewAbilities(CardData card)
+    {
+        if(card.charAbility != null)
+        {
+            GameObject obj = Instantiate(pAbilityPrefab, tAbilityContainer);
+            UICharacterAbility ca = obj.GetComponent<UICharacterAbility>();
+            ca.AbilityAwake(card.charAbility);
+
+            gAbilities.Add(obj);
+        }
+
+        if (card.myAbilities != null)
+        {
+            foreach (Ability a in card.myAbilities)
+            {
+                GameObject o = Instantiate(pAbilityPrefab, tAbilityContainer);
+                UICharacterAbility uica = o.GetComponent<UICharacterAbility>();
+                uica.AbilityAwake(a);
+
+                gAbilities.Add(o);
+            }
+        }
+    }
+
+    private void ClearAbilityPanel()
+    {
+        if (gAbilities != null)
+        {
+            for(int i = gAbilities.Count-1; i > -1; i--)
+            {
+                GameObject obj = gAbilities[i]; 
+                gAbilities.Remove(obj);
+                Destroy(obj);
+            }
+        }
     }
 
     private void HandleCardButtons(CardData.FieldPlacement placement)

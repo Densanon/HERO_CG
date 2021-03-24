@@ -11,8 +11,9 @@ public class UICharacterAbility : MonoBehaviour
 
     public static Action<Ability> OnAbilityDescriptionPressed = delegate { };
 
-    private void Awake()
+    public void AbilityAwake(Ability ability)
     {
+        myAbility = ability;
         nameText.text = myAbility.Name;
         AssignAbilityIcon();
     }

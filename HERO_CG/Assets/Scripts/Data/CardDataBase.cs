@@ -935,7 +935,7 @@ public class CardDataBase : MonoBehaviour
     }
     #endregion
 
-    #region Spawn Character and Ability Functions
+    #region Spawn Character, Ability, Enhancement Functions
     [PunRPC]
     private void SpawnCharacterToOpponentField(string heroToSpawn)
     {
@@ -963,74 +963,92 @@ public class CardDataBase : MonoBehaviour
     private void SpawnAbility(string AbilityName, CardData cardToAttachTo, bool told)
     {
         Debug.Log($"Spawning {AbilityName} on {cardToAttachTo}.");
-        Ability comp = new Ability();
         switch (AbilityName)
         {
             case "ACCELERATE":
-                comp = cardToAttachTo.gameObject.AddComponent<aAccelerate>();
+                Ability a = cardToAttachTo.gameObject.AddComponent<aAccelerate>();
+                cardToAttachTo.AdjustCounter(1, a);
                 break;
             case "BACKFIRE":
-                comp = cardToAttachTo.gameObject.AddComponent<aBackfire>();
+                Ability b = cardToAttachTo.gameObject.AddComponent<aBackfire>();
+                cardToAttachTo.AdjustCounter(1, b);
                 break;
             case "BOLSTER":
-                comp = cardToAttachTo.gameObject.AddComponent<aBolster>();
+                Ability c = cardToAttachTo.gameObject.AddComponent<aBolster>();
+                cardToAttachTo.AdjustCounter(1, c);
                 break;
             case "BOOST":
-                comp = cardToAttachTo.gameObject.AddComponent<aBoost>();
+                Ability d = cardToAttachTo.gameObject.AddComponent<aBoost>();
+                cardToAttachTo.AdjustCounter(1, d);
                 break;
             case "COLLATERAL DAMAGE":
-                comp = cardToAttachTo.gameObject.AddComponent<aCollateralDamage>();
+                Ability e = cardToAttachTo.gameObject.AddComponent<aCollateralDamage>();
+                cardToAttachTo.AdjustCounter(1, e);
                 break;
             case "CONVERT":
-                comp = cardToAttachTo.gameObject.AddComponent<aConvert>();
+                Ability f = cardToAttachTo.gameObject.AddComponent<aConvert>();
+                cardToAttachTo.AdjustCounter(1, f);
                 break;
             case "COUNTER-MEASURES":
-                comp = cardToAttachTo.gameObject.AddComponent<aCounterMeasures>();
+                Ability g = cardToAttachTo.gameObject.AddComponent<aCounterMeasures>();
+                cardToAttachTo.AdjustCounter(1, g);
                 break;
             case "DROUGHT":
-                comp = cardToAttachTo.gameObject.AddComponent<aDrought>();
+                Ability h = cardToAttachTo.gameObject.AddComponent<aDrought>();
+                cardToAttachTo.AdjustCounter(1, h);
                 break;
             case "FORTIFICATION":
-                comp = cardToAttachTo.gameObject.AddComponent<aFortification>();
+                Ability i = cardToAttachTo.gameObject.AddComponent<aFortification>();
+                cardToAttachTo.AdjustCounter(1, i);
                 break;
             case "GOING NUCLEAR":
-                comp = cardToAttachTo.gameObject.AddComponent<aGoingNuclear>();
+                Ability j = cardToAttachTo.gameObject.AddComponent<aGoingNuclear>();
+                cardToAttachTo.AdjustCounter(1, j);
                 break;
             case "HARDENED":
-                comp = cardToAttachTo.gameObject.AddComponent<aHardened>();
+                Ability k = cardToAttachTo.gameObject.AddComponent<aHardened>();
+                cardToAttachTo.AdjustCounter(1, k);
                 break;
             case "IMPEDE":
-                comp = cardToAttachTo.gameObject.AddComponent<aImpede>();
+                Ability l = cardToAttachTo.gameObject.AddComponent<aImpede>();
+                cardToAttachTo.AdjustCounter(1, l);
                 break;
             case "KAIROS":
-                comp = cardToAttachTo.gameObject.AddComponent<aKairos>();
+                Ability m = cardToAttachTo.gameObject.AddComponent<aKairos>();
+                cardToAttachTo.AdjustCounter(1, m);
                 break;
             case "PREVENTION":
-                comp = cardToAttachTo.gameObject.AddComponent<aPrevention>();
+                Ability n = cardToAttachTo.gameObject.AddComponent<aPrevention>();
+                cardToAttachTo.AdjustCounter(1, n);
                 break;
             case "PROTECT":
-                comp = cardToAttachTo.gameObject.AddComponent<aProtect>();
+                Ability o = cardToAttachTo.gameObject.AddComponent<aProtect>();
+                cardToAttachTo.AdjustCounter(1, o);
                 break;
             case "REDUCTION":
-                comp = cardToAttachTo.gameObject.AddComponent<aReduction>();
+                Ability p = cardToAttachTo.gameObject.AddComponent<aAccelerate>();
+                cardToAttachTo.AdjustCounter(1, p);
                 break;
             case "REINFORCEMENT":
-                comp = cardToAttachTo.gameObject.AddComponent<aReinforcement>();
+                Ability q = cardToAttachTo.gameObject.AddComponent<aReinforcement>();
+                cardToAttachTo.AdjustCounter(1, q);
                 break;
             case "RESURRECT":
-                comp = cardToAttachTo.gameObject.AddComponent<aResurrect>();
+                Ability r = cardToAttachTo.gameObject.AddComponent<aResurrect>();
+                cardToAttachTo.AdjustCounter(1, r);
                 break;
             case "REVELATION":
-                comp = cardToAttachTo.gameObject.AddComponent<aRevelation>();
+                Ability s = cardToAttachTo.gameObject.AddComponent<aRevelation>();
+                cardToAttachTo.AdjustCounter(1, s);
                 break;
             case "SHEILDING":
-                comp = cardToAttachTo.gameObject.AddComponent<aShielding>();
+                Ability t = cardToAttachTo.gameObject.AddComponent<aShielding>();
+                cardToAttachTo.AdjustCounter(1, t);
                 break;
             default:
                 Debug.Log($"An ability was requested that doesn't exist. {AbilityName}");
                 break;
         }
-        cardToAttachTo.AdjustCounter(1, comp);
         if (!told)
         {
             PV.RPC("AttachAbility", RpcTarget.OthersBuffered, AbilityName, cardToAttachTo.Name);
@@ -1041,51 +1059,116 @@ public class CardDataBase : MonoBehaviour
     private void AttachAbility(string abilityName, string cardName)
     {
         Debug.Log($"I was told to attach {abilityName} to {cardName}");
-        bool found = false;
-        foreach(CardData data in P2Field)
-        {
-            if(data.Name == cardName)
-            {
-                SpawnAbility(abilityName, data, true);
-                found = true;
-                break;
-            }
-        }
-        if (!found)
-        {
-            Debug.Log($"Searching my field for {cardName}");
-            foreach(CardData data in P1Field)
-            {
-                Debug.Log($"Found {data.Name}");
-                if(data.Name == cardName)
-                {
-                    SpawnAbility(abilityName, data, true);
-                    break;
-                }
-            }
-        }
+
+        CardData card = FindCardOnField(cardName);
+        SpawnAbility(abilityName, card, true);
     }
 
     private void HandleEnhancementsStripped(CardData card)
     {
-        //need to strip the enhancements from the card that will be sent over cloud
+        PV.RPC("StripEnhancements", RpcTarget.Others, card.Name);
+    }
+
+    [PunRPC]
+    private void StripEnhancements(string name)
+    {
+        FindCardOnField(name).StripEnhancements(true);
     }
 
     private void HandleAbilityStripped(CardData card)
     {
-        //need to strip the abilities from the card that will be sent over cloud
+        PV.RPC("StripAbilities", RpcTarget.Others, card.Name);
+    }
 
+    [PunRPC]
+    private void StripAbilities(string name)
+    {
+        FindCardOnField(name).StripAbilities(true);
     }
 
     private void HandleEnhancementsGiven(List<Enhancement> enhancements, CardData card)
     {
         //need to give enhancements to a card over cloud
+        List<int[]> enhancementNums = new List<int[]>();
+
+        foreach(Enhancement e in enhancements)
+        {
+            int[] i = new int[2];
+            i[0] = e.attack;
+            i[1] = e.defense;
+
+            enhancementNums.Add(i);
+        }
+
+        if(enhancementNums.Count > 1)
+        {
+            PV.RPC("GiveEnhancements", RpcTarget.Others, enhancementNums, card.Name);
+        }else if(enhancementNums.Count == 1)
+        {
+            if(enhancementNums[0][0] > 0)
+            {
+                PV.RPC("CardAdjustment", RpcTarget.Others, card.Name, "Attack", enhancementNums[0][0]);
+                return;
+            }
+
+            PV.RPC("CardAdjustment", RpcTarget.Others, card.Name, "Defense", enhancementNums[0][1]);
+        }
+    }
+
+    [PunRPC]
+    private void GiveEnhancements(List<int[]> enhancements, string name)
+    {
+        CardData card = FindCardOnField(name);
+        List<Enhancement> en = new List<Enhancement>();
+        
+        foreach(int[] array in enhancements)
+        {
+            en.Add(ConvertEnhancementIntArrayToEnhancement(array));
+        }
+
+        card.GainEnhancements(en, true);
     }
 
     private void HandleAbilitiesGiven(List<Ability> abilities, CardData card)
     {
-        //need to give abilities to a card over cloud
+        List<string> abilityNames = new List<string>();
 
+        foreach(Ability a in abilities)
+        {
+            PV.RPC("AttachAbility", RpcTarget.Others, a.Name, card.Name);
+        }
+    }
+
+    private CardData FindCardOnField(string name)
+    {
+
+        foreach(CardData cd in P1Field)
+        {
+            if(cd.Name == name)
+            {
+                return cd;
+            }
+        }
+
+        foreach(CardData cd in P2Field)
+        {
+            if(cd.Name == name)
+            {
+                return cd;
+            }
+        }
+
+        Debug.Log($"Didn't find {name}");
+        return P1Field[0];
+    }
+
+    private Enhancement ConvertEnhancementIntArrayToEnhancement(int[] array)
+    {
+        Enhancement enhancement = new Enhancement();
+        enhancement.attack = array[0];
+        enhancement.defense = array[1];
+
+        return enhancement;
     }
     #endregion
 

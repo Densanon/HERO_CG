@@ -20,8 +20,9 @@ public class CardData : MonoBehaviour
     [SerializeField] TMP_Text tbDefense;
     [SerializeField] Image[] gAbilityCounters;
     [SerializeField] Button Target;
-    [SerializeField] List<Ability> myAbilities = new List<Ability>();
-    [SerializeField] List<Enhancement> myEnhancements = new List<Enhancement>();
+    public List<Ability> myAbilities = new List<Ability>();
+    public List<Enhancement> myEnhancements = new List<Enhancement>();
+    public Ability charAbility;
 
     public static Action<CardData> IsTarget = delegate { };
     public static Action<CardData, string, int> OnNumericAdjustment = delegate { };
@@ -184,7 +185,6 @@ public class CardData : MonoBehaviour
     public List<Ability> GetCharacterAbilities()
     {
         return myAbilities;
-
     }
 
     public List<Enhancement> GetCharacterEnhancements()
@@ -203,6 +203,7 @@ public class CardData : MonoBehaviour
         {
             OnAbilitiesStripped?.Invoke(this);
         }
+        GetCharacterAbilities();
     }
 
     public void StripEnhancements(bool told)
@@ -248,6 +249,11 @@ public class CardData : MonoBehaviour
             CardImage = card.image;
         }
 
+        if(CardType == Card.Type.Character)
+        {
+            SetCharacterAbility();
+        }
+
         UISetup();
     }
 
@@ -266,6 +272,12 @@ public class CardData : MonoBehaviour
         else
         {
             CardImage = card.myCard.image;
+        }
+
+
+        if (CardType == Card.Type.Character)
+        {
+            SetCharacterAbility();
         }
 
         UISetup();
@@ -473,6 +485,93 @@ public class CardData : MonoBehaviour
             e.defense = amount;
         }
         myEnhancements.Add(e);
+    }
+
+    private void SetCharacterAbility()
+    {
+        switch (Name)
+        {
+            case "AKIO":
+                Ability a = this.gameObject.AddComponent<aAkio>();
+                charAbility = a;
+                break;
+            case "AYUMI":
+                Ability b = this.gameObject.AddComponent<aAyumi>();
+                charAbility = b;
+                break;
+            case "BOULOS":
+                Ability c = this.gameObject.AddComponent<aBoulos>();
+                charAbility = c;
+                break;
+            case "CHRISTOPH":
+                Ability d = this.gameObject.AddComponent<aChristoph>();
+                charAbility = d;
+                break;
+            case "ENG":
+                Ability e = this.gameObject.AddComponent<aEng>();
+                charAbility = e;
+                break;
+            case "GAMBITO":
+                Ability f = this.gameObject.AddComponent<aGambito>();
+                charAbility = f;
+                break;
+            case "GRIT":
+                Ability g = this.gameObject.AddComponent<aGrit>();
+                charAbility = g;
+                break;
+            case "HINDRA":
+                Ability h = this.gameObject.AddComponent<aHindra>();
+                charAbility = h;
+                break;
+            case "IGNACIA":
+                Ability i = this.gameObject.AddComponent<aIgnacia>();
+                charAbility = i;
+                break;
+            case "ISAAC":
+                Ability j = this.gameObject.AddComponent<aIsaac>();
+                charAbility = j;
+                break;
+            case "IZUMI":
+                Ability k = this.gameObject.AddComponent<aIzumi>();
+                charAbility = k;
+                break;
+            case "KAY":
+                Ability l = this.gameObject.AddComponent<aKay>();
+                charAbility = l;
+                break;
+            case "KYAUTA":
+                Ability m = this.gameObject.AddComponent<aKyauta>();
+                charAbility = m;
+                break;
+            case "MACE":
+                Ability n = this.gameObject.AddComponent<aMace>();
+                charAbility = n;
+                break;
+            case "MICHAEL":
+                Ability o = this.gameObject.AddComponent<aMichael>();
+                charAbility = o;
+                break;
+            case "ORIGIN":
+                Ability p = this.gameObject.AddComponent<aOrigin>();
+                charAbility = p;
+                break;
+            case "ROHAN":
+                Ability q = this.gameObject.AddComponent<aRohan>();
+                charAbility = q;
+                break;
+            case "YASMINE":
+                Ability r = this.gameObject.AddComponent<aYasmine>();
+                charAbility = r;
+                break;
+            case "ZHAO":
+                Ability s = this.gameObject.AddComponent<aZhao>();
+                charAbility = s;
+                break;
+            case "ZOE":
+                Ability t = this.gameObject.AddComponent<aZoe>();
+                charAbility = t;
+                break;
+        }
     }
     #endregion
 }
