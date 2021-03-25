@@ -18,6 +18,7 @@ public class UIAbilityDescriptor : MonoBehaviour
 
     private void HandleDescriptionInquery(Ability ability)
     {
+        this.gameObject.SetActive(true);
         title.text = ability.Name;
         description.text = ability.Description;
     }

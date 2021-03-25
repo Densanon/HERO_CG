@@ -37,6 +37,9 @@ public class UICharacterAbility : MonoBehaviour
             case Ability.Type.Passive:
                 abilityIcon.color = Color.blue;
                 break;
+            case Ability.Type.Character:
+                abilityIcon.color = Color.black;
+                break;
         }
     }
 }

@@ -1,21 +1,21 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using System;
 
 public class aDrain : Ability
 {
     //"DRAIN", "(H) Discard all of one opponenet's Enhancement Cards from the field."
+    public static Action<string> OnStripAllEnhancementsFromSideOfField = delegate { };
 
     #region Unity Methods
     private void Awake()
     {
         myType = Ability.Type.Feat;
-
-    }
-
-    private void OnDestroy()
-    {
-
+        Name = "DRAIN";
+        Description = "(H) Discard all of one opponenet's Enhancement Cards from the field.";
     }
     #endregion
+
+    public override void AbilityAwake()
+    {
+        OnStripAllEnhancementsFromSideOfField?.Invoke("P2Field");
+    }
 }

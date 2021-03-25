@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Photon.Pun;
 using System;
+using System.Collections;
 
 public class CardDataBase : MonoBehaviour
 {
@@ -71,6 +72,9 @@ public class CardDataBase : MonoBehaviour
     List<CardData> P2Field = new List<CardData>();
     List<Card> P2Deck = new List<Card>();
     List<Card> P2Discard = new List<Card>();
+
+    List<Card> cardListToDisplay = new List<Card>();
+    Component activeFeat;
     #endregion
 
     #region Unity Methods
@@ -88,6 +92,8 @@ public class CardDataBase : MonoBehaviour
         CardData.OnGivenEnhancements += HandleEnhancementsGiven;
         PlayerBase.OnBaseDestroyed += HandleBaseDestroyed;
         PlayerBase.OnExhaust += HandleBaseExhaust;
+        aDrain.OnStripAllEnhancementsFromSideOfField += StripAllEnhancementsOnSideOfField;
+        aUnderSiege.OnHandToBeRevealed -= HandleRevealTargetHandAndRemoveNonHeros;
 
         Heros[0] = new Card(Card.Type.Character, "AKIO", 20, 70, HeroImages[0], AlphaHeros[0]);
         Heros[1] = new Card(Card.Type.Character, "AYUMI", 40, 50, HeroImages[1], AlphaHeros[1]);
@@ -217,12 +223,14 @@ public class CardDataBase : MonoBehaviour
         CardData.OnNumericAdjustment -= HandleCardAdjustment;
         CardData.OnExhausted -= HandleCardExhaustState;
         CardData.OnDestroyed -= HandleCharacterDestroyed;
-        PlayerBase.OnBaseDestroyed -= HandleBaseDestroyed;
         CardData.OnAbilitiesStripped -= HandleAbilityStripped;
         CardData.OnEnhancementsStripped -= HandleEnhancementsStripped;
         CardData.OnGivenAbilities -= HandleAbilitiesGiven;
         CardData.OnGivenEnhancements -= HandleEnhancementsGiven;
+        PlayerBase.OnBaseDestroyed -= HandleBaseDestroyed;
         PlayerBase.OnExhaust -= HandleBaseExhaust;
+        aDrain.OnStripAllEnhancementsFromSideOfField -= StripAllEnhancementsOnSideOfField;
+        aUnderSiege.OnHandToBeRevealed -= HandleRevealTargetHandAndRemoveNonHeros;
     }
     #endregion
 
@@ -265,12 +273,7 @@ public class CardDataBase : MonoBehaviour
     {
         if(!AutoDraft)
         {
-            for (int i = Draft.Count - 1; i > -1; i--)
-            {
-                var item = Draft[i];
-                Draft.Remove(item);
-                Destroy(item.gameObject);
-            }
+            ClearDraft();
 
             GM.PhaseChange(PhotonGameManager.GamePhase.AbilityDraft);
 
@@ -300,6 +303,16 @@ public class CardDataBase : MonoBehaviour
                 EndAbilityDraft(true);
             }
             DraftArea.gameObject.SetActive(false);
+        }
+    }
+
+    private void ClearDraft()
+    {
+        for (int i = Draft.Count - 1; i > -1; i--)
+        {
+            var item = Draft[i];
+            Draft.Remove(item);
+            Destroy(item.gameObject);
         }
     }
 
@@ -933,6 +946,33 @@ public class CardDataBase : MonoBehaviour
                 break;
         }
     }
+
+    private void HandleRevealTargetHandAndRemoveNonHeros()
+    {
+        ClearDraft();
+        cardListToDisplay = P2Hand;
+        StartCoroutine(DisplayExtraDraft());
+        PV.RPC("RemoveAllNonHerosFromHand", RpcTarget.Others, "P1Hand");
+    }
+
+    [PunRPC]
+    private void RemoveAllNonHerosFromHand(string hand)
+    {
+        List<Card> removeList = new List<Card>();
+
+        foreach(Card card in P1Hand)
+        {
+            if(card.CardType != Card.Type.Character)
+            {
+                removeList.Add(card);
+            }
+        }
+
+        foreach(Card card in removeList)
+        {
+            RemoveCardFromHand(card);
+        }
+    }
     #endregion
 
     #region Spawn Character, Ability, Enhancement Functions
@@ -1062,6 +1102,25 @@ public class CardDataBase : MonoBehaviour
 
         CardData card = FindCardOnField(cardName);
         SpawnAbility(abilityName, card, true);
+    }
+
+    private void StripAllEnhancementsOnSideOfField(string side)
+    {
+        if(side == "P2Field")
+        {
+            foreach(CardData card in P2Field)
+            {
+                card.StripAbilities(false);
+                card.StripEnhancements(false);
+            }
+            return;
+        }
+
+        foreach(CardData card in P1Field)
+        {
+            card.StripAbilities(false);
+            card.StripEnhancements(false);
+        }
     }
 
     private void HandleEnhancementsStripped(CardData card)
@@ -1233,20 +1292,20 @@ public class CardDataBase : MonoBehaviour
         switch (name)
         {
             case "ABSORB":
-                aAbsorb a = new aAbsorb();
-                GM.SetActiveAbility(a);
+                activeFeat = GM.gameObject.AddComponent<aAbsorb>();
+                GM.SetActiveAbility((Ability)activeFeat);
                 break;
             case "DRAIN":
-                aDrain b = new aDrain();
-                GM.SetActiveAbility(b);
+                activeFeat = GM.gameObject.AddComponent<aDrain>();
+                GM.SetActiveAbility((Ability)activeFeat);
                 break;
             case "PAY THE COST":
-                aPaytheCost c = new aPaytheCost();
-                GM.SetActiveAbility(c);
+                activeFeat = GM.gameObject.AddComponent<aPaytheCost>();
+                GM.SetActiveAbility((Ability)activeFeat);
                 break;
             case "UNDER SEIGE":
-                aUnderSiege d = new aUnderSiege();
-                GM.SetActiveAbility(d);
+                activeFeat = GM.gameObject.AddComponent<aUnderSiege>();
+                GM.SetActiveAbility((Ability)activeFeat);
                 break;
         }
     }
@@ -1433,6 +1492,15 @@ public class CardDataBase : MonoBehaviour
                 RemoveHQCard(card);
                 break;
         }
+    }
+    #endregion
+
+    #region IEnumerators
+    private IEnumerator DisplayExtraDraft()
+    {
+        DisplayDraft(cardListToDisplay);
+        yield return new WaitForSeconds(3f);
+        DraftArea.gameObject.SetActive(false);
     }
     #endregion
 }
