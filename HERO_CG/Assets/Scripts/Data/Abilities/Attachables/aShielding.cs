@@ -4,5 +4,10 @@ using UnityEngine;
 
 public class aShielding : Ability
 {
-    public Ability.Type myType = Ability.Type.Passive;
+    private void Awake()
+    {
+        myType = Type.Passive;
+        Name = "SHEILDING";
+        Description = "(P) If fatigued, this hero may gain +20 defense for every strengthened hero. This bonus is added after the Total Defense is halved.";
+    }
 }

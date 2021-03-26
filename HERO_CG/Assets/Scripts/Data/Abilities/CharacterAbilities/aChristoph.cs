@@ -4,15 +4,11 @@ using UnityEngine;
 
 public class aChristoph : Ability
 {
-    // Start is called before the first frame update
-    void Start()
+    private void Awake()
     {
-        
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
+        myType = Type.Character;
+        secondaryType = Type.Passive;
+        Name = "CHRISTOPH";
+        Description = "(P) When an attack against Christoph is resolved, you may choose one of the attacking heroes to be defeated. This occurs even if Christoph is defeated.";
     }
 }

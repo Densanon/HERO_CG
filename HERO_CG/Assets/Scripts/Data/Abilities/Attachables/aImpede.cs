@@ -4,5 +4,10 @@ using UnityEngine;
 
 public class aImpede : Ability
 {
-    public Ability.Type myType = Ability.Type.Passive;
+    private void Awake()
+    {
+        myType = Type.Passive;
+        Name = "IMPEDE";
+        Description = "(P) You may prevent the effects of one Active Ability per opponent turn.";
+    }
 }

@@ -21,6 +21,7 @@ public class aPaytheCost : Ability
     {
         if (Target1 == null && !card.Exhausted)
         {
+            Debug.Log("Exhausting a hero.");
             Target1 = card;
             //this is immediate exhaust, may look into allowing the player to back out
             card.Exhaust(false);
@@ -29,5 +30,6 @@ public class aPaytheCost : Ability
 
         //may be prevented from a damage blocker?
         card.DamageCheck(1000);
+        Debug.Log("Destroying hero");
     }
 }

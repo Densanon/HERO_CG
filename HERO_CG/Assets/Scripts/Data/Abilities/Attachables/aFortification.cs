@@ -4,5 +4,10 @@ using UnityEngine;
 
 public class aFortification : Ability
 {
-    public Ability.Type myType = Ability.Type.Passive;
+    private void Awake()
+    {
+        myType = Type.Passive;
+        Name = "FORTIFICATION";
+        Description = "(P) For every hero on the field, this hero may gain +10 defense.";
+    }
 }

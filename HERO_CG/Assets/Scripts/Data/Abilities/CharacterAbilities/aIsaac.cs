@@ -4,15 +4,11 @@ using UnityEngine;
 
 public class aIsaac : Ability
 {
-    // Start is called before the first frame update
-    void Start()
+    private void Awake()
     {
-        
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
+        myType = Type.Character;
+        secondaryType = Type.Passive;
+        Name = "ISAAC";
+        Description = "(P) When another hero is defeated, you may draw a card from your Discard Pile that was there before the hero was defeated.";
     }
 }

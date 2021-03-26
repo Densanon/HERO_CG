@@ -4,15 +4,11 @@ using UnityEngine;
 
 public class aZoe : Ability
 {
-    // Start is called before the first frame update
-    void Start()
+    private void Awake()
     {
-        
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
+        myType = Type.Character;
+        secondaryType = Type.Activate;
+        Name = "ZOE";
+        Description = "(A) Before performing an Action, heal any hero(es) of your choice.";
     }
 }

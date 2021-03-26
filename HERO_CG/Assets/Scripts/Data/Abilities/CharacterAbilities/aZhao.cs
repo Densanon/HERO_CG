@@ -4,15 +4,11 @@ using UnityEngine;
 
 public class aZhao : Ability
 {
-    // Start is called before the first frame update
-    void Start()
+    private void Awake()
     {
-        
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
+        myType = Type.Character;
+        secondaryType = Type.Passive;
+        Name = "ZHAO";
+        Description = "(P) Allied heroes may gain +10 attack while Zhao is in play. When Zhao is defeated/removed play a card to the field.";
     }
 }

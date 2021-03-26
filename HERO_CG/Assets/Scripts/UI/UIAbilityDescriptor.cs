@@ -5,6 +5,7 @@ public class UIAbilityDescriptor : MonoBehaviour
 {
     public TMP_Text title;
     public TMP_Text description;
+    public GameObject descriptor;
 
     private void Awake()
     {
@@ -18,7 +19,7 @@ public class UIAbilityDescriptor : MonoBehaviour
 
     private void HandleDescriptionInquery(Ability ability)
     {
-        this.gameObject.SetActive(true);
+        descriptor.SetActive(true);
         title.text = ability.Name;
         description.text = ability.Description;
     }

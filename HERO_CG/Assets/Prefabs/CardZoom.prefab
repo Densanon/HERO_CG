@@ -704,6 +704,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4247530071543125527}
+  - component: {fileID: 5791795578675655739}
   m_Layer: 5
   m_Name: CardZoom
   m_TagString: Untagged
@@ -740,6 +741,21 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &5791795578675655739
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 952748985258859110}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 67ce1d4700b800344bb52cc7fcf8aa07, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  title: {fileID: 4655163836375035374}
+  description: {fileID: 4850585279706679076}
+  descriptor: {fileID: 4466889859799288764}
 --- !u!1 &1584254390352321154
 GameObject:
   m_ObjectHideFlags: 0
@@ -2169,7 +2185,6 @@ GameObject:
   - component: {fileID: 1669621427140836600}
   - component: {fileID: 6563338738071872891}
   - component: {fileID: 3299726003493599724}
-  - component: {fileID: 3453466358465144035}
   m_Layer: 5
   m_Name: AbilityDescriptionPanel
   m_TagString: Untagged
@@ -2236,20 +2251,6 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
---- !u!114 &3453466358465144035
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4466889859799288764}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 67ce1d4700b800344bb52cc7fcf8aa07, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  title: {fileID: 4655163836375035374}
-  description: {fileID: 4850585279706679076}
 --- !u!1 &4962662094861455997
 GameObject:
   m_ObjectHideFlags: 0
@@ -3036,6 +3037,7 @@ MonoBehaviour:
   gAbilityCounters: []
   Target: {fileID: 0}
   myAbilities: []
+  charAbility: {fileID: 0}
 --- !u!114 &7573130869518943083
 MonoBehaviour:
   m_ObjectHideFlags: 0

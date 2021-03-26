@@ -198,7 +198,10 @@ public class CardData : MonoBehaviour
         {
             im.color = Color.clear;
         }
-        myAbilities.Clear();
+
+        if(myAbilities != null)
+            myAbilities.Clear();
+
         if (!told)
         {
             OnAbilitiesStripped?.Invoke(this);
@@ -208,7 +211,9 @@ public class CardData : MonoBehaviour
 
     public void StripEnhancements(bool told)
     {
-        myEnhancements.Clear();
+        if(myEnhancements != null)
+            myEnhancements.Clear();
+        
         CardOverride(myCard, myPlacement);
         if (!told)
         {

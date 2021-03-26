@@ -4,5 +4,10 @@ using UnityEngine;
 
 public class aReinforcement : Ability
 {
-    public Ability.Type myType = Ability.Type.Passive;
+    private void Awake()
+    {
+        myType = Type.Passive;
+        Name = "REINFORCEMENT";
+        Description = "(P) For every card in your hand, this hero may gain +10 attack.";
+    }
 }

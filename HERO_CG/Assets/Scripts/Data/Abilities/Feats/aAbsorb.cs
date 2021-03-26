@@ -25,12 +25,15 @@ public class aAbsorb : Ability
     {
         if (Target1 == null)
         {
+            Debug.Log("Getting first target for Absorb");
             Target1 = card;
             RemoveEnhancements(Target1);
             return;
         }
         else if (Target2 == null)
         {
+            Debug.Log("Getting second target for Absorb");
+
             Target2 = card;
             abilities = Target2.GetCharacterAbilities();
             enhancements = Target2.GetCharacterEnhancements();
@@ -50,5 +53,6 @@ public class aAbsorb : Ability
     {
         card.StripAbilities(false);
         card.StripEnhancements(false);
+        Debug.Log($"Stripped abilities and enhancements from {card.Name}");
     }
 }

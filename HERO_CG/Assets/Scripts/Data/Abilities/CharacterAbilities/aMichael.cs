@@ -4,15 +4,11 @@ using UnityEngine;
 
 public class aMichael : Ability
 {
-    // Start is called before the first frame update
-    void Start()
+    private void Awake()
     {
-        
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
+        myType = Type.Character;
+        secondaryType = Type.Activate;
+        Name = "MICHAEL";
+        Description = "(A) Draw a card from your Enhancement Deck to your hand.";
     }
 }

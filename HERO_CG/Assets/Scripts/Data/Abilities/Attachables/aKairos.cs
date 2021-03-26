@@ -4,5 +4,10 @@ using UnityEngine;
 
 public class aKairos : Ability
 {
-    public Ability.Type myType = Ability.Type.Activate;
+    private void Awake()
+    {
+        myType = Type.Activate;
+        Name = "KAIROS";
+        Description = "(A) Discard this hero to recruit up to 2 heroes from the top of the Reserves straight to your play area.";
+    }
 }

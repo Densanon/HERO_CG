@@ -4,5 +4,10 @@ using UnityEngine;
 
 public class aCollateralDamage : Ability
 {
-    public Ability.Type myType = Ability.Type.Passive;
+    private void Awake()
+    {
+        myType = Type.Passive;
+        Name = "COLLATERAL DAMAGE";
+        Description = "(P) If this hero is used to defeat a hero, you may determine one other strengthened hero to be fatigued.";
+    }
 }

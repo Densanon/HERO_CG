@@ -4,5 +4,10 @@ using UnityEngine;
 
 public class aBoost : Ability
 {
-    public Ability.Type myType = Ability.Type.Activate;
+    private void Awake()
+    {
+        myType = Type.Activate;
+        Name = "BOOST";
+        Description = "(A) Discard 2 cards from your hand to choose any one player who must draw one card for every hero (regardless of who the heroes belong to) on the field.";
+    }
 }

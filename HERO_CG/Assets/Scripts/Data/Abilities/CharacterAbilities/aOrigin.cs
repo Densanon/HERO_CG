@@ -4,15 +4,11 @@ using UnityEngine;
 
 public class aOrigin : Ability
 {
-    // Start is called before the first frame update
-    void Start()
+    private void Awake()
     {
-        
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
+        myType = Type.Character;
+        secondaryType = Type.Passive;
+        Name = "ORIGIN";
+        Description = "(P) During each opponent’s turn, you may block one attack against Origin.";
     }
 }

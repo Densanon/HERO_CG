@@ -5,6 +5,7 @@ public class Ability : MonoBehaviour
 {
     public enum Type { Feat, Activate, Passive, Character}
     public Type myType;
+    public Type secondaryType;
     public string Name;
     public string Description;
 

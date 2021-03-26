@@ -4,15 +4,11 @@ using UnityEngine;
 
 public class aKay : Ability
 {
-    // Start is called before the first frame update
-    void Start()
+    private void Awake()
     {
-        
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
+        myType = Type.Character;
+        secondaryType = Type.Activate;
+        Name = "KAY";
+        Description = "(A) Play a card to the field from your hand.";
     }
 }

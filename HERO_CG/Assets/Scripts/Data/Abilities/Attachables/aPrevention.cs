@@ -4,5 +4,10 @@ using UnityEngine;
 
 public class aPrevention : Ability
 {
-    public Ability.Type myType = Ability.Type.Passive;
+    private void Awake()
+    {
+        myType = Type.Passive;
+        Name = "PREVENTION";
+        Description = "(P) If this hero is attacked, you may discard this Ability to block the attack and all other attacks against your heroes until the start of your next turn.";
+    }
 }

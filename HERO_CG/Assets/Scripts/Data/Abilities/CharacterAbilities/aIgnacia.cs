@@ -4,15 +4,11 @@ using UnityEngine;
 
 public class aIgnacia : Ability
 {
-    // Start is called before the first frame update
-    void Start()
+    private void Awake()
     {
-        
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
+        myType = Type.Character;
+        secondaryType = Type.Activate;
+        Name = "IGNACIA";
+        Description = "(A) Ignacia may attack once per turn while fatigued (this cannot be combined with any other attack).";
     }
 }

@@ -4,15 +4,11 @@ using UnityEngine;
 
 public class aYasmine : Ability
 {
-    // Start is called before the first frame update
-    void Start()
+    private void Awake()
     {
-        
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
+        myType = Type.Character;
+        secondaryType = Type.Passive;
+        Name = "YASMINE";
+        Description = "(P) When an attack against Yasmine is resolved, you may play a card to the field.";
     }
 }

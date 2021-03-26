@@ -4,15 +4,11 @@ using UnityEngine;
 
 public class aKyauta : Ability
 {
-    // Start is called before the first frame update
-    void Start()
+    private void Awake()
     {
-        
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
+        myType = Type.Character;
+        secondaryType = Type.Activate;
+        Name = "KYAUTA";
+        Description = "(A) After an Action, fatigue one of your heros to recruit one hero to your play area from the Reserves.";
     }
 }

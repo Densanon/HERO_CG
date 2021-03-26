@@ -4,15 +4,11 @@ using UnityEngine;
 
 public class aHindra : Ability
 {
-    // Start is called before the first frame update
-    void Start()
+    private void Awake()
     {
-        
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
+        myType = Type.Character;
+        secondaryType = Type.Activate;
+        Name = "HINDRA";
+        Description = "(A) Choose one opponent to prevent from playing Ability Cards to the field on their next turn.";
     }
 }

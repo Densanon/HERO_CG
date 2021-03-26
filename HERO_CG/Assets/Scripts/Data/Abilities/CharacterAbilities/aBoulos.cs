@@ -4,15 +4,11 @@ using UnityEngine;
 
 public class aBoulos : Ability
 {
-    // Start is called before the first frame update
-    void Start()
+    private void Awake()
     {
-        
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
+        myType = Type.Character;
+        secondaryType = Type.Passive;
+        Name = "BOULOS";
+        Description = "(P) For each card in your hand, Boulos gains +10 defense.";
     }
 }

@@ -4,15 +4,11 @@ using UnityEngine;
 
 public class aGrit : Ability
 {
-    // Start is called before the first frame update
-    void Start()
+    private void Awake()
     {
-        
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
+        myType = Type.Character;
+        secondaryType = Type.Passive;
+        Name = "GRIT";
+        Description = " (P) Grit may gain +20 attack for every fatigued hero.";
     }
 }

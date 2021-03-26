@@ -4,15 +4,11 @@ using UnityEngine;
 
 public class aRohan : Ability
 {
-    // Start is called before the first frame update
-    void Start()
+    private void Awake()
     {
-        
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
+        myType = Type.Character;
+        secondaryType = Type.Activate;
+        Name = "ROHAN";
+        Description = "(A) For every 2 fatigued heroes, recruit one hero from Hero HQ or Reserves to your hand.";
     }
 }

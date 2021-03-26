@@ -742,9 +742,13 @@ public class CardDataBase : MonoBehaviour
 
     private void RemoveCardFromHand(Card cardToRemove)
     {
+        Debug.Log($"Hand Count: {P1Hand.Count}");
         if(P1Hand.Count <= 7)
         {
-            foreach(CardData data in lHandData)
+            GameObject obj = lHandData[P1Hand.Count-1].gameObject;
+            lHandData.Remove(lHandData[P1Hand.Count-1]);
+            Destroy(obj);
+            /*foreach(CardData data in lHandData)
             {
                 if(data.myCard == cardToRemove)
                 {
@@ -752,7 +756,7 @@ public class CardDataBase : MonoBehaviour
                     Destroy(data.gameObject);
                     break;
                 }
-            }
+            }*/
         }
         P1Hand.Remove(cardToRemove);
         UpdateHandSlider();
@@ -1499,6 +1503,7 @@ public class CardDataBase : MonoBehaviour
     private IEnumerator DisplayExtraDraft()
     {
         DisplayDraft(cardListToDisplay);
+        Debug.Log("New Card list displayed.");
         yield return new WaitForSeconds(3f);
         DraftArea.gameObject.SetActive(false);
     }

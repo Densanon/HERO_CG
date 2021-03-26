@@ -4,15 +4,11 @@ using UnityEngine;
 
 public class aGambito : Ability
 {
-    // Start is called before the first frame update
-    void Start()
+    private void Awake()
     {
-        
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
+        myType = Type.Character;
+        secondaryType = Type.Passive;
+        Name = "GAMBITO";
+        Description = "(P) When any hero is fatigued, all players must discard a random card from their hand.";
     }
 }
