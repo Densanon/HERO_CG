@@ -36,16 +36,26 @@ public class aAbsorb : Ability
             Debug.Log("Getting second target for Absorb");
 
             Target2 = card;
+
             abilities = Target2.GetCharacterAbilities();
+            Target1.GainAbilities(abilities, false);
+
             enhancements = Target2.GetCharacterEnhancements();
-            RemoveEnhancements(Target2);
+            Debug.Log($"enhancement grab count: {enhancements.Count}");
 
-            if(abilities != null)
-                Target1.GainAbilities(abilities, false);
+            foreach (Enhancement e in enhancements)
+            {
+                Debug.Log($"Grabbed {e.attack}:{e.defense} to add.");
+            }
+
             if(enhancements != null)
+            {
                 Target1.GainEnhancements(enhancements, false);
+                Debug.Log("Gaining Enhancements.");
+            }
 
-            OnAbilityUsed?.Invoke();
+            RemoveEnhancements(Target2);
+            OnFeatComplete?.Invoke();
         }
     }
     #endregion

@@ -10,6 +10,7 @@ public class Ability : MonoBehaviour
     public string Description;
 
     public static Action OnAbilityUsed = delegate { };
+    public static Action OnFeatComplete = delegate { };
 
     public virtual void AbilityAwake()
     {

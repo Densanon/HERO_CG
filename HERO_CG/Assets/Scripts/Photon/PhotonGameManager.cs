@@ -83,6 +83,7 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
         UIConfirmation.OnHEROSelection += PhaseChange;
         CardDataBase.OnAiDraftCollected += HandleCardCollected;
         Ability.OnAbilityUsed += HandleAbilityEnd;
+        Ability.OnFeatComplete += HandleFeatComplete;
     }
 
     private void OnDestroy()
@@ -94,6 +95,7 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
         UIConfirmation.OnHEROSelection -= PhaseChange;
         CardDataBase.OnAiDraftCollected -= HandleCardCollected;
         Ability.OnAbilityUsed -= HandleAbilityEnd;
+        Ability.OnFeatComplete -= HandleFeatComplete;
     }
 
     private void Start()
@@ -311,7 +313,9 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
     #region Private Methods
     private void HandleCardSelecion(CardData card)
     {
-        switch (myPhase)
+        if (!CB.SpecificDraw)
+        {
+            switch (myPhase)
         {
             case GamePhase.HeroDraft:
                 if (!zoomed)
@@ -363,6 +367,12 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
                     CardZoom(card);
                 }
                 break;
+        }
+        }
+        else
+        {
+            CB.DrawSpecificCard(card.myCard);
+            CB.SpecificDraw = false;
         }
     }
 
@@ -436,6 +446,11 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
             SwitchTurn();
         }
         activeAbility = null;
+    }
+
+    private void HandleFeatComplete()
+    {
+        SwitchTurn();
     }
 
     private void HandlePlayCard(Card card)

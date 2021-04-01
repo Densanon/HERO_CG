@@ -34,6 +34,7 @@ public class CardDataBase : MonoBehaviour
     #region Debuging
     public bool AiDraft = false;
     public bool AutoDraft = false;
+    public bool SpecificDraw = false;
     #endregion
 
     public static Action<bool> OnTurnDelcarationReceived = delegate { };
@@ -485,6 +486,20 @@ public class CardDataBase : MonoBehaviour
                 OnAiDraftCollected?.Invoke(AbilityDraft[UnityEngine.Random.Range(0, AbilityDraft.Count)]);
                 break;
         }
+    }
+
+    public void StartDrawSpecificCard()
+    {
+        DisplayDraft(P1Deck);
+        SpecificDraw = true;
+    }
+
+    public void DrawSpecificCard(Card card)
+    {
+        DraftArea.gameObject.SetActive(false);
+        P1Hand.Add(card);
+        AddCardToHand(card);
+        P1Deck.Remove(card);
     }
     #endregion
 
@@ -1232,6 +1247,7 @@ public class CardDataBase : MonoBehaviour
 
     private Enhancement ConvertEnhancementIntArrayToEnhancement(int[] array)
     {
+        Debug.Log("Converting Int Array into Enhancement");
         Enhancement enhancement = new Enhancement();
         enhancement.attack = array[0];
         enhancement.defense = array[1];
@@ -1509,8 +1525,10 @@ public class CardDataBase : MonoBehaviour
     {
         DisplayDraft(cardListToDisplay);
         Debug.Log("New Card list displayed.");
-        yield return new WaitForSeconds(3f);
+        yield return new WaitForSeconds(5f);
         DraftArea.gameObject.SetActive(false);
+        GM.ToldSwitchTurn(false);
+        HandleTurnDeclaration(true);
     }
     #endregion
 }

@@ -20,5 +20,6 @@ public class aDrain : Ability
         base.AbilityAwake();
         OnStripAllEnhancementsFromSideOfField?.Invoke("P2Field");
         Debug.Log("Stripped all enhancements and abilities from the opponent.");
+        OnFeatComplete?.Invoke();
     }
 }

@@ -32,5 +32,7 @@ public class aPaytheCost : Ability
         //may be prevented from a damage blocker?
         card.DamageCheck(1000);
         Debug.Log("Destroying hero");
+
+        OnFeatComplete?.Invoke();
     }
 }

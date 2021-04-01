@@ -189,6 +189,7 @@ public class CardData : MonoBehaviour
 
     public List<Enhancement> GetCharacterEnhancements()
     {
+        Debug.Log($"Giving {myEnhancements.Count} enhancements");
         return myEnhancements;
     }
 
@@ -224,17 +225,46 @@ public class CardData : MonoBehaviour
     public void GainAbilities(List<Ability> abilities, bool told)
     {
         //need to add all the abilities to the card and update its info
+        Debug.Log($"GainingAbilities: {abilities.Count}");
+        foreach(Ability a in abilities)
+        {
+            Debug.Log($"Ability to be gained: {a.Name}");
+            AdjustCounter(1, a);
+        }
 
         if(!told)
         OnGivenAbilities?.Invoke(abilities, this);
+        Debug.Log("GainAbilities complete.");
     }
 
     public void GainEnhancements(List<Enhancement> enhancements, bool told)
     {
         //need to add all the enhancements to the card and update its info
+        Debug.Log("GainingEnhancements");
+        foreach (Enhancement e in enhancements)
+        {
+            Debug.Log($"Adding {e.attack}:{e.attack}");
+            if (myEnhancements == null)
+            {
+                Debug.Log("myEnhancements were null");
+                myEnhancements = new List<Enhancement>();
+            }
 
-        if(!told)
-        OnGivenEnhancements?.Invoke(enhancements, this);
+
+            if (e.attack > 0)
+            {
+                Debug.Log("Attack addition.");
+                AdjustAttack(e.attack);
+                continue;
+            }
+
+            Debug.Log("Defense Addition.");
+            AdjustDefense(e.defense);
+        }
+
+        if (!told)
+            OnGivenEnhancements?.Invoke(enhancements, this);
+        Debug.Log("Enhancement Gain complete.");
     }
 
     public void CardOverride(Card card, FieldPlacement placement)
