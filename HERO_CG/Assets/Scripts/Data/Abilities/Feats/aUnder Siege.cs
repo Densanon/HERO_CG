@@ -18,6 +18,7 @@ public class aUnderSiege : Ability
 
     public override void AbilityAwake()
     {
+        base.AbilityAwake();
         OnHandToBeRevealed?.Invoke();
         Debug.Log("Revealed hand and removed cards.");
     }

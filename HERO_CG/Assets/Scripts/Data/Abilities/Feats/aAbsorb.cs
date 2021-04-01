@@ -23,6 +23,7 @@ public class aAbsorb : Ability
     #region Ability Methods
     public override void Target(CardData card)
     {
+        base.Target(card);
         if (Target1 == null)
         {
             Debug.Log("Getting first target for Absorb");

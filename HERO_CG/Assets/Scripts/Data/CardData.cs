@@ -486,10 +486,15 @@ public class CardData : MonoBehaviour
             e.attack = amount;
         }
         else
-        { 
+        {
             e.defense = amount;
         }
+        if(myEnhancements == null)
+        {
+            myEnhancements = new List<Enhancement>();
+        }
         myEnhancements.Add(e);
+
     }
 
     private void SetCharacterAbility()

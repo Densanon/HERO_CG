@@ -93,7 +93,7 @@ public class CardDataBase : MonoBehaviour
         PlayerBase.OnBaseDestroyed += HandleBaseDestroyed;
         PlayerBase.OnExhaust += HandleBaseExhaust;
         aDrain.OnStripAllEnhancementsFromSideOfField += StripAllEnhancementsOnSideOfField;
-        aUnderSiege.OnHandToBeRevealed -= HandleRevealTargetHandAndRemoveNonHeros;
+        aUnderSiege.OnHandToBeRevealed += HandleRevealTargetHandAndRemoveNonHeros;
 
         Heros[0] = new Card(Card.Type.Character, "AKIO", 20, 70, HeroImages[0], AlphaHeros[0]);
         Heros[1] = new Card(Card.Type.Character, "AYUMI", 40, 50, HeroImages[1], AlphaHeros[1]);
@@ -510,7 +510,7 @@ public class CardDataBase : MonoBehaviour
             case Card.Type.Character:
                 break;
         }
-        RemoveCardFromHand(cardToUse);
+        //RemoveCardFromHand(cardToUse);
         OnTargeting?.Invoke(cardToUse, false);
         GM.TurnCounterDecrement();
     }
@@ -730,10 +730,12 @@ public class CardDataBase : MonoBehaviour
     {
         if(P1Hand.Count < 7)
         {
+            Debug.Log($"Adding a card to hand(hand): {P1Hand.Count}");
             GameObject obj = Instantiate(CardHandPrefab, Hand[P1Hand.Count - 1].transform);
             CardData data = obj.GetComponent<CardData>();
             data.CardOverride(cardToAdd, CardData.FieldPlacement.Hand);
             lHandData.Add(data);
+            Debug.Log($"Adding a card to hand(visual hand): {lHandData.Count}");
             CheckActiveCard();
         }
         UpdateHandSlider();
@@ -742,23 +744,26 @@ public class CardDataBase : MonoBehaviour
 
     private void RemoveCardFromHand(Card cardToRemove)
     {
-        Debug.Log($"Hand Count: {P1Hand.Count}");
+        Debug.Log($"Removing a card from hand(hand) before removed: {P1Hand.Count}");
         if(P1Hand.Count <= 7)
         {
-            GameObject obj = lHandData[P1Hand.Count-1].gameObject;
-            lHandData.Remove(lHandData[P1Hand.Count-1]);
-            Destroy(obj);
-            /*foreach(CardData data in lHandData)
+            Debug.Log($"Hand visual: {lHandData.Count}");
+            if(lHandData.Count == P1Hand.Count)
             {
-                if(data.myCard == cardToRemove)
-                {
-                    lHandData.Remove(data);
-                    Destroy(data.gameObject);
-                    break;
-                }
-            }*/
+                GameObject obj = lHandData[P1Hand.Count-1].gameObject;
+                lHandData.Remove(lHandData[P1Hand.Count-1]);
+                Destroy(obj);
+            }
+            else
+            {
+                Debug.Log("lHandData doesn't match hand count.");
+            }
+            Debug.Log($"Removing a card from hand(visual hand): {lHandData.Count}");
+
         }
+        Debug.Log($"Removing {cardToRemove.Name}");
         P1Hand.Remove(cardToRemove);
+        Debug.Log($"Removing a card from hand(hand) after removed: {P1Hand.Count}");
         UpdateHandSlider();
         HandCardOffset(0);
         GetHandToShare();

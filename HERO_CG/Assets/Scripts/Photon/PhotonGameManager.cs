@@ -234,6 +234,7 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
 
     public void SetActiveAbility(Ability ability)
     {
+        Debug.Log($"Active ability to be set: {ability.Name}");
         activeAbility = ability;
         ability.AbilityAwake();
     }

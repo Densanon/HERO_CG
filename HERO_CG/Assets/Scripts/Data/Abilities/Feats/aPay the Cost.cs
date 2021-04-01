@@ -19,6 +19,7 @@ public class aPaytheCost : Ability
 
     public override void Target(CardData card)
     {
+        base.Target(card);
         if (Target1 == null && !card.Exhausted)
         {
             Debug.Log("Exhausting a hero.");

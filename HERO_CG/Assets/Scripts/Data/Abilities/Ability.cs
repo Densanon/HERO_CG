@@ -13,11 +13,11 @@ public class Ability : MonoBehaviour
 
     public virtual void AbilityAwake()
     {
-
+        Debug.Log("AbilityAwake Activated");
     }
 
     public virtual void Target(CardData card)
     {
-
+        Debug.Log("AbilityTarget Activated");
     }
 }

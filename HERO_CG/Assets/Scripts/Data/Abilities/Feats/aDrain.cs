@@ -17,6 +17,7 @@ public class aDrain : Ability
 
     public override void AbilityAwake()
     {
+        base.AbilityAwake();
         OnStripAllEnhancementsFromSideOfField?.Invoke("P2Field");
         Debug.Log("Stripped all enhancements and abilities from the opponent.");
     }
