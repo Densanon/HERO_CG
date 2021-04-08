@@ -61,17 +61,20 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
     public GameObject gOvercome;
     public Button bSwitch;
     public Button bBattle;
-    private List<CardData> AttackingHeros = new List<CardData>();
-    private CardData DefendingHero;
+    public static List<CardData> AttackingHeros = new List<CardData>();
+    public static CardData DefendingHero;
     public static bool AttDef = true;
     public PlayerBase PB;
     public PlayerBase MyPB;
+    public static bool OpponentDestroyed = false;
+    public static bool OpponentExhausted = false;
 
     private Ability activeAbility;
 
     public static Action<Card, GamePhase> OnCardCollected = delegate { };
     public static Action<bool> OnOvercomeTime = delegate { };
     public static Action OnOvercomeSwitch = delegate { };
+    public static Action<Ability.PassiveType> OnPassiveActivate = delegate { };
 
     #region Unity Methods
     private void Awake()
@@ -84,6 +87,7 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
         CardDataBase.OnAiDraftCollected += HandleCardCollected;
         Ability.OnAbilityUsed += HandleAbilityEnd;
         Ability.OnFeatComplete += HandleFeatComplete;
+        Ability.OnNeedCardDraw += DrawCardOption;
     }
 
     private void OnDestroy()
@@ -96,6 +100,8 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
         CardDataBase.OnAiDraftCollected -= HandleCardCollected;
         Ability.OnAbilityUsed -= HandleAbilityEnd;
         Ability.OnFeatComplete -= HandleFeatComplete;
+        Ability.OnNeedCardDraw -= DrawCardOption;
+
     }
 
     private void Start()
@@ -154,6 +160,11 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
         }
     }
 
+    public void PassiveActivate(Ability.PassiveType passiveType)
+    {
+        OnPassiveActivate?.Invoke(passiveType);
+    }
+
     public void PhaseChange(GamePhase phaseToChangeTo)
     {
         if(myPhase == GamePhase.Overcome)
@@ -192,16 +203,21 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
         if (AttackingHeros.Count > 0 && DefendingHero != null)
         {
             int tDmg = 0;
-            foreach(CardData data in AttackingHeros)
+            foreach (CardData data in AttackingHeros)
             {
                 tDmg += data.Attack;
                 data.Exhaust(false);
             }
-            AttackingHeros.Clear();
 
             DefendingHero.DamageCheck(tDmg);
-            DefendingHero = null;
+            if (DefendingHero != null)
+            {
+                OpponentExhausted = DefendingHero.Exhausted;
+            }
 
+            OnPassiveActivate?.Invoke(Ability.PassiveType.BattleComplete);
+            AttackingHeros.Clear();
+            DefendingHero = null;
             SwitchAttDef();
         }
     }
@@ -209,6 +225,10 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
     public void SwitchAttDef()
     {
         AttDef = !AttDef;
+        if (AttDef)
+        {
+            OnPassiveActivate?.Invoke(Ability.PassiveType.BattleStart);
+        }
         if (!AttDef && !CB.CheckFieldForOpponents() && AttackingHeros.Count > 0)
         {
             //Target base
@@ -233,6 +253,39 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
         OnOvercomeSwitch?.Invoke();
     }
     #endregion
+
+    public void DrawCardOption(int amount)
+    {
+        gCardCountCollect.SetActive(true);
+
+        int i = CB.CardsRemaining(CardDataBase.CardDecks.P1Deck);
+        if (i < amount)
+        {
+            amount = i;
+        }
+
+        switch (amount)
+        {
+            case 0:
+                gCardCountCollect.SetActive(false);
+                break;
+            case 1:
+                bCardCount1.interactable = true;
+                bCardCount2.interactable = false;
+                bCardCount3.interactable = false;
+                break;
+            case 2:
+                bCardCount1.interactable = true;
+                bCardCount2.interactable = true;
+                bCardCount3.interactable = false;
+                break;
+            default:
+                bCardCount1.interactable = true;
+                bCardCount2.interactable = true;
+                bCardCount3.interactable = true;
+                break;
+        }
+    }
 
     public void SetActiveAbility(Ability ability)
     {
@@ -704,29 +757,7 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
                 //Play up to 3 cards from your hand
                 PhaseIndicator.text = "Enhance";
                 gHEROSelect.SetActive(false);
-                gCardCountCollect.SetActive(true);
-                int i = CB.CardsRemaining(CardDataBase.CardDecks.P1Deck);
-                switch (i)
-                {
-                    case 0:
-                        gCardCountCollect.SetActive(false);
-                        break;
-                    case 1:
-                        bCardCount1.interactable = true;
-                        bCardCount2.interactable = false;
-                        bCardCount3.interactable = false;
-                        break;
-                    case 2:
-                        bCardCount1.interactable = true;
-                        bCardCount2.interactable = true;
-                        bCardCount3.interactable = false;
-                        break;
-                    default:
-                        bCardCount1.interactable = true;
-                        bCardCount2.interactable = true;
-                        bCardCount3.interactable = true;
-                        break;
-                }
+                DrawCardOption(3);
                 iTurnCounter = 3;
                 TurnActionIndicator.text = $"Actions Remaining: {iTurnCounter}";
                 break;

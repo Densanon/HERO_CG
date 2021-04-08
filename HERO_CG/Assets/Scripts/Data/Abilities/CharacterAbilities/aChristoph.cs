@@ -11,4 +11,25 @@ public class aChristoph : Ability
         Name = "CHRISTOPH";
         Description = "(P) When an attack against Christoph is resolved, you may choose one of the attacking heroes to be defeated. This occurs even if Christoph is defeated.";
     }
+
+    public override void PassiveCheck(PassiveType passiveType)
+    {
+        base.PassiveCheck(passiveType);
+
+        if(passiveType == PassiveType.BattleComplete && myHero == PhotonGameManager.DefendingHero)
+        {
+            OnSetActive?.Invoke(this);
+        }
+    }
+
+    public override void Target(CardData card)
+    {
+        base.Target(card);
+
+        if (PhotonGameManager.AttackingHeros.Contains(card))
+        {
+            card.DamageCheck(1000);
+            OnAbilityUsed?.Invoke();
+        }
+    }
 }

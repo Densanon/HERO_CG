@@ -30,6 +30,7 @@ public class CardDataBase : MonoBehaviour
     public PhotonGameManager GM;
     public CardData CurrentActiveCard;
     public static bool bTargeting = false;
+    public static int handSize = 0;
 
     #region Debuging
     public bool AiDraft = false;
@@ -755,6 +756,8 @@ public class CardDataBase : MonoBehaviour
         }
         UpdateHandSlider();
         GetHandToShare();
+        handSize = P1Hand.Count;
+        GM.PassiveActivate(Ability.PassiveType.HandCardAdjustment);
     }
 
     private void RemoveCardFromHand(Card cardToRemove)
@@ -782,6 +785,8 @@ public class CardDataBase : MonoBehaviour
         UpdateHandSlider();
         HandCardOffset(0);
         GetHandToShare();
+        handSize = P1Hand.Count;
+        GM.PassiveActivate(Ability.PassiveType.HandCardAdjustment);
     }
 
     private void HandleCardAdjustment(CardData cardToAdjust, string category, int newValue)
@@ -893,6 +898,7 @@ public class CardDataBase : MonoBehaviour
             loc = "P1Field";
         }
 
+        GM.PassiveActivate(Ability.PassiveType.CharacterDestroyed);
         PV.RPC("FieldCardDestroy", RpcTarget.Others, card.Name, loc);
     }
 
@@ -1464,6 +1470,7 @@ public class CardDataBase : MonoBehaviour
         if(PhotonGameManager.myTurn && PhotonGameManager.myPhase == PhotonGameManager.GamePhase.Recruit)
         {
             DrawRandomCard(HeroReserve);
+            GM.PassiveActivate(Ability.PassiveType.HeroRecruited);
             GM.TurnCounterDecrement();
         }
     }
@@ -1515,6 +1522,7 @@ public class CardDataBase : MonoBehaviour
                 P1Hand.Add(card);
                 AddCardToHand(card);
                 RemoveHQCard(card);
+                GM.PassiveActivate(Ability.PassiveType.HeroRecruited);
                 break;
         }
     }

@@ -23,6 +23,8 @@ public class CardData : MonoBehaviour
     public List<Ability> myAbilities = new List<Ability>();
     public List<Enhancement> myEnhancements = new List<Enhancement>();
     public Ability charAbility;
+    int abilityAttModifier = 0;
+    int abilityDefModifier = 0;
 
     public static Action<CardData> IsTarget = delegate { };
     public static Action<CardData, string, int> OnNumericAdjustment = delegate { };
@@ -139,6 +141,17 @@ public class CardData : MonoBehaviour
         HandleEnhancementAddition(amount, 'a');
     }
 
+    public void NewAbilityAttModifier(int amountAdjustment)
+    {
+        int i = abilityAttModifier - amountAdjustment;
+
+        if(i != 0)
+        {
+            AdjustAttack(i);
+            abilityAttModifier = amountAdjustment;
+        }
+    }
+
     public void SetDefense(int amount)
     {
         Defense = amount;
@@ -155,6 +168,17 @@ public class CardData : MonoBehaviour
             OnNumericAdjustment?.Invoke(this, "Defense", Defense);
         }
         HandleEnhancementAddition(amount, 'd');
+    }
+
+    public void NewAbilityDefModifier(int amountAdjustment)
+    {
+        int i = abilityDefModifier - amountAdjustment;
+
+        if(i != 0)
+        {
+            AdjustDefense(i);
+            abilityDefModifier = amountAdjustment;
+        }
     }
 
     public void AdjustCounter(int amount, Ability ability)
