@@ -18,7 +18,7 @@ public class aChristoph : Ability
 
         if(passiveType == PassiveType.BattleComplete && myHero == PhotonGameManager.DefendingHero)
         {
-            OnSetActive?.Invoke(this);
+            OnOpponentAbilityActivation?.Invoke(this);
         }
     }
 
@@ -26,7 +26,7 @@ public class aChristoph : Ability
     {
         base.Target(card);
 
-        if (PhotonGameManager.AttackingHeros.Contains(card))
+        if (PhotonGameManager.PreviousAttackers.Contains(card))
         {
             card.DamageCheck(1000);
             OnAbilityUsed?.Invoke();

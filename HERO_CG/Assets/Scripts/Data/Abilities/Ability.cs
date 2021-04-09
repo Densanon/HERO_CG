@@ -13,15 +13,18 @@ public class Ability : MonoBehaviour
     public string Description;
     protected CardData myHero;
 
+    public static Action<Ability> OnAddAbilityToMasterList = delegate { };
     public static Action OnAbilityUsed = delegate { };
     public static Action OnFeatComplete = delegate { };
     public static Action<int> OnNeedCardDraw = delegate { };
     public static Action<Ability> OnSetActive = delegate { };
+    public static Action<Ability> OnOpponentAbilityActivation = delegate { };
 
     private void Awake()
     {
         PhotonGameManager.OnPassiveActivate += PassiveCheck;
         myHero = this.gameObject.GetComponent<CardData>();
+        OnAddAbilityToMasterList?.Invoke(this);
     }
 
     private void OnDestroy()

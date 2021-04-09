@@ -20,6 +20,7 @@ public class aAkio : Ability
         if(type == PassiveType.BattleComplete && PhotonGameManager.OpponentExhausted)
         {
             myHero.Heal(false);
+            Debug.Log($"{Name} should be unexhausted");
         }
     }
 }

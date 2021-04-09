@@ -62,7 +62,9 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
     public Button bSwitch;
     public Button bBattle;
     public static List<CardData> AttackingHeros = new List<CardData>();
+    public static List<CardData> PreviousAttackers = new List<CardData>();
     public static CardData DefendingHero;
+    public static CardData PreviousDefender;
     public static bool AttDef = true;
     public PlayerBase PB;
     public PlayerBase MyPB;
@@ -88,6 +90,8 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
         Ability.OnAbilityUsed += HandleAbilityEnd;
         Ability.OnFeatComplete += HandleFeatComplete;
         Ability.OnNeedCardDraw += DrawCardOption;
+        Ability.OnSetActive += SetActiveAbility;
+        Ability.OnOpponentAbilityActivation += HandleOpponentAbilityHandover;
     }
 
     private void OnDestroy()
@@ -101,6 +105,8 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
         Ability.OnAbilityUsed -= HandleAbilityEnd;
         Ability.OnFeatComplete -= HandleFeatComplete;
         Ability.OnNeedCardDraw -= DrawCardOption;
+        Ability.OnSetActive -= SetActiveAbility;
+        Ability.OnOpponentAbilityActivation -= HandleOpponentAbilityHandover;
 
     }
 
@@ -202,6 +208,9 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
     {
         if (AttackingHeros.Count > 0 && DefendingHero != null)
         {
+            PreviousAttackers = AttackingHeros;
+            PreviousDefender = DefendingHero;
+
             int tDmg = 0;
             foreach (CardData data in AttackingHeros)
             {
@@ -218,6 +227,7 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
             OnPassiveActivate?.Invoke(Ability.PassiveType.BattleComplete);
             AttackingHeros.Clear();
             DefendingHero = null;
+            CB.SendPreviousAttackersAndDefender(PreviousAttackers, PreviousDefender);
             SwitchAttDef();
         }
     }
@@ -291,6 +301,7 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
     {
         Debug.Log($"Active ability to be set: {ability.Name}");
         activeAbility = ability;
+        StartCoroutine(PhaseDeclaration($"{ability.Name} ability Activated"));
         ability.AbilityAwake();
     }
 
@@ -490,6 +501,11 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
         {
             activeAbility.Target(card);
         }
+    }
+
+    private void HandleOpponentAbilityHandover(Ability ability)
+    {
+        CB.AbilityHandover(ability);
     }
 
     private void HandleAbilityEnd()

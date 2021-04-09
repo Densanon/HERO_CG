@@ -77,6 +77,9 @@ public class CardDataBase : MonoBehaviour
 
     List<Card> cardListToDisplay = new List<Card>();
     Component activeFeat;
+
+    List<Ability> heroAbilitiesOnField = new List<Ability>();
+    List<Ability> cardAbilitiesOnField = new List<Ability>();
     #endregion
 
     #region Unity Methods
@@ -96,6 +99,7 @@ public class CardDataBase : MonoBehaviour
         PlayerBase.OnExhaust += HandleBaseExhaust;
         aDrain.OnStripAllEnhancementsFromSideOfField += StripAllEnhancementsOnSideOfField;
         aUnderSiege.OnHandToBeRevealed += HandleRevealTargetHandAndRemoveNonHeros;
+        Ability.OnAddAbilityToMasterList += HandleAddAbilityToList;
 
         Heros[0] = new Card(Card.Type.Character, "AKIO", 20, 70, HeroImages[0], AlphaHeros[0]);
         Heros[1] = new Card(Card.Type.Character, "AYUMI", 40, 50, HeroImages[1], AlphaHeros[1]);
@@ -233,7 +237,10 @@ public class CardDataBase : MonoBehaviour
         PlayerBase.OnExhaust -= HandleBaseExhaust;
         aDrain.OnStripAllEnhancementsFromSideOfField -= StripAllEnhancementsOnSideOfField;
         aUnderSiege.OnHandToBeRevealed -= HandleRevealTargetHandAndRemoveNonHeros;
+        Ability.OnAddAbilityToMasterList -= HandleAddAbilityToList;
+
     }
+
     #endregion
 
     #region Draft Methods
@@ -1134,6 +1141,21 @@ public class CardDataBase : MonoBehaviour
         SpawnAbility(abilityName, card, true);
     }
 
+    private void HandleAddAbilityToList(Ability ability)
+    {
+        if(ability.myType == Ability.Type.Character)
+        {
+            heroAbilitiesOnField.Add(ability);
+            Debug.Log($"{ability.Name} added to master list.");
+        }
+        else if(ability.myType == Ability.Type.Activate || ability.myType == Ability.Type.Passive)
+        {
+            cardAbilitiesOnField.Add(ability);
+            Debug.Log($"{ability.Name} added to master list.");
+
+        }
+    }
+
     private void StripAllEnhancementsOnSideOfField(string side)
     {
         if(side == "P2Field")
@@ -1150,6 +1172,43 @@ public class CardDataBase : MonoBehaviour
         {
             card.StripAbilities(false);
             card.StripEnhancements(false);
+        }
+    }
+
+    [PunRPC]
+    private void HandleAbilityHandOver(string nameOfAbilityToGiveControl)
+    {
+        Ability ability = heroAbilitiesOnField[0];
+        bool found = false;
+        foreach(Ability a in heroAbilitiesOnField)
+        {
+            if(a.Name == nameOfAbilityToGiveControl)
+            {
+                ability = a;
+                found = true;
+                Debug.Log($"Found {nameOfAbilityToGiveControl} in HeroAbilities");
+                break;
+            }
+        }
+        if(found == false)
+        {
+            foreach (Ability a in cardAbilitiesOnField)
+            {
+                if (a.Name == nameOfAbilityToGiveControl)
+                {
+                    ability = a;
+                    Debug.Log($"Found {nameOfAbilityToGiveControl} in CardAbilities");
+                    break;
+                }
+            }
+        }
+
+        foreach(CardData card in P1Field)
+        {
+            if (card.myAbilities.Contains(ability))
+            {
+                GM.SetActiveAbility(ability);
+            }
         }
     }
 
@@ -1343,6 +1402,51 @@ public class CardDataBase : MonoBehaviour
     #endregion
 
     #region Public Methods
+    public void AbilityHandover(Ability ability)
+    {
+        string name = ability.Name;
+
+        PV.RPC("HandleAbilityHandOver", RpcTarget.Others, name);
+    }
+
+    public void SendPreviousAttackersAndDefender(List<CardData> attackers, CardData defender)
+    {
+        List<string> aNames = new List<string>();
+
+        foreach(CardData card in attackers)
+        {
+            aNames.Add(card.Name);
+        }
+
+        aNames.Add(defender.Name);
+
+        PV.RPC("HandlePreviousAttackersAndDefender", RpcTarget.Others, aNames);
+    }
+
+    [PunRPC]
+    private void HandlePreviousAttackersAndDefender(List<string> names)
+    {
+        List<CardData> cards = new List<CardData>();
+
+        foreach(CardData data in P2Field)
+        {
+            if (names.Contains(data.Name))
+            {
+                cards.Add(data);
+            }
+        }
+        PhotonGameManager.PreviousAttackers = cards;
+
+        foreach(CardData data in P1Field)
+        {
+            if(data.Name == names[names.Count - 1])
+            {
+                PhotonGameManager.PreviousDefender = data;
+                break;
+            }
+        }
+    }
+
     public bool CheckIfMyCard(CardData card)
     {
         bool isMyCard = P1Field.Contains(card);
