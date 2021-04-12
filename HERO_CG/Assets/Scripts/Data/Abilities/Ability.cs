@@ -45,6 +45,6 @@ public class Ability : MonoBehaviour
     public virtual void PassiveCheck(PassiveType passiveType)
     {
         if(myType == Type.Passive || secondaryType == Type.Passive)
-        Debug.Log($"{Name} PassiveCheck Activated");
+        Debug.Log($"{Name} PassiveCheck {passiveType} Activated");
     }
 }

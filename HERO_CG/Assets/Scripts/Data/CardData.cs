@@ -173,9 +173,11 @@ public class CardData : MonoBehaviour
     public void NewAbilityDefModifier(int amountAdjustment)
     {
         int i = abilityDefModifier - amountAdjustment;
+        Debug.Log($"NewAbilityDefModifier: Current modifier{abilityDefModifier}/ Current Adjustment{amountAdjustment}");
 
         if(i != 0)
         {
+            Debug.Log($"NewAbilityDefModifier: amount adjusted {i}");
             AdjustDefense(i);
             abilityDefModifier = amountAdjustment;
         }

@@ -753,12 +753,12 @@ public class CardDataBase : MonoBehaviour
     {
         if(P1Hand.Count < 7)
         {
-            Debug.Log($"Adding a card to hand(hand): {P1Hand.Count}");
+            //Debug.Log($"Adding a card to hand(hand): {P1Hand.Count}");
             GameObject obj = Instantiate(CardHandPrefab, Hand[P1Hand.Count - 1].transform);
             CardData data = obj.GetComponent<CardData>();
             data.CardOverride(cardToAdd, CardData.FieldPlacement.Hand);
             lHandData.Add(data);
-            Debug.Log($"Adding a card to hand(visual hand): {lHandData.Count}");
+            //Debug.Log($"Adding a card to hand(visual hand): {lHandData.Count}");
             CheckActiveCard();
         }
         UpdateHandSlider();
@@ -769,10 +769,10 @@ public class CardDataBase : MonoBehaviour
 
     private void RemoveCardFromHand(Card cardToRemove)
     {
-        Debug.Log($"Removing a card from hand(hand) before removed: {P1Hand.Count}");
+        //Debug.Log($"Removing a card from hand(hand) before removed: {P1Hand.Count}");
         if(P1Hand.Count <= 7)
         {
-            Debug.Log($"Hand visual: {lHandData.Count}");
+            //Debug.Log($"Hand visual: {lHandData.Count}");
             if(lHandData.Count == P1Hand.Count)
             {
                 GameObject obj = lHandData[P1Hand.Count-1].gameObject;
@@ -783,12 +783,12 @@ public class CardDataBase : MonoBehaviour
             {
                 Debug.Log("lHandData doesn't match hand count.");
             }
-            Debug.Log($"Removing a card from hand(visual hand): {lHandData.Count}");
+            //Debug.Log($"Removing a card from hand(visual hand): {lHandData.Count}");
 
         }
-        Debug.Log($"Removing {cardToRemove.Name}");
+        //Debug.Log($"Removing {cardToRemove.Name}");
         P1Hand.Remove(cardToRemove);
-        Debug.Log($"Removing a card from hand(hand) after removed: {P1Hand.Count}");
+        //Debug.Log($"Removing a card from hand(hand) after removed: {P1Hand.Count}");
         UpdateHandSlider();
         HandCardOffset(0);
         GetHandToShare();
@@ -1418,14 +1418,24 @@ public class CardDataBase : MonoBehaviour
             aNames.Add(card.Name);
         }
 
-        aNames.Add(defender.Name);
+        if(defender != null)
+        {
+            Debug.Log($"Defender was {defender.Name}");
+            aNames.Add(defender.Name);
+        }
+        else
+        {
+            Debug.Log("Defender was NULL");
+            aNames.Add("NULL");
+        }
 
-        PV.RPC("HandlePreviousAttackersAndDefender", RpcTarget.Others, aNames);
+        PV.RPC("HandlePreviousAttackersAndDefender", RpcTarget.Others, aNames.ToArray());
     }
 
     [PunRPC]
-    private void HandlePreviousAttackersAndDefender(List<string> names)
+    private void HandlePreviousAttackersAndDefender(string[] names)
     {
+        Debug.Log("Made it into the server HandlePreviousAttackersAndDefender.");
         List<CardData> cards = new List<CardData>();
 
         foreach(CardData data in P2Field)
@@ -1437,12 +1447,15 @@ public class CardDataBase : MonoBehaviour
         }
         PhotonGameManager.PreviousAttackers = cards;
 
-        foreach(CardData data in P1Field)
+        if(names[names.Length-1] != "NULL")
         {
-            if(data.Name == names[names.Count - 1])
+            foreach(CardData data in P1Field)
             {
-                PhotonGameManager.PreviousDefender = data;
-                break;
+                if(data.Name == names[names.Length - 1])
+                {
+                    PhotonGameManager.PreviousDefender = data;
+                    break;
+                }
             }
         }
     }

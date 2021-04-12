@@ -168,6 +168,7 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
 
     public void PassiveActivate(Ability.PassiveType passiveType)
     {
+        Debug.Log($"PhotonGameManager calling {passiveType}");
         OnPassiveActivate?.Invoke(passiveType);
     }
 
@@ -208,7 +209,12 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
     {
         if (AttackingHeros.Count > 0 && DefendingHero != null)
         {
-            PreviousAttackers = AttackingHeros;
+            PreviousAttackers.Clear();
+            PreviousDefender = null;
+            foreach(CardData card in AttackingHeros)
+            {
+                PreviousAttackers.Add(card);
+            }
             PreviousDefender = DefendingHero;
 
             int tDmg = 0;
@@ -224,10 +230,10 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
                 OpponentExhausted = DefendingHero.Exhausted;
             }
 
-            OnPassiveActivate?.Invoke(Ability.PassiveType.BattleComplete);
+            PassiveActivate(Ability.PassiveType.BattleComplete);
+            CB.SendPreviousAttackersAndDefender(AttackingHeros, DefendingHero);
             AttackingHeros.Clear();
             DefendingHero = null;
-            CB.SendPreviousAttackersAndDefender(PreviousAttackers, PreviousDefender);
             SwitchAttDef();
         }
     }
