@@ -20,14 +20,15 @@ public class Ability : MonoBehaviour
     public static Action<Ability> OnSetActive = delegate { };
     public static Action<Ability> OnOpponentAbilityActivation = delegate { };
 
-    private void Awake()
+    protected virtual void Awake()
     {
         PhotonGameManager.OnPassiveActivate += PassiveCheck;
         myHero = this.gameObject.GetComponent<CardData>();
         OnAddAbilityToMasterList?.Invoke(this);
+        Debug.Log("Generic Ability Awake.");
     }
 
-    private void OnDestroy()
+    protected virtual void OnDestroy()
     {
         PhotonGameManager.OnPassiveActivate -= PassiveCheck;
     }

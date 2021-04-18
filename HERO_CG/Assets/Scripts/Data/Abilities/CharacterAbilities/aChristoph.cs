@@ -4,8 +4,10 @@ using UnityEngine;
 
 public class aChristoph : Ability
 {
-    private void Awake()
+    protected override void Awake()
     {
+        base.Awake();
+
         myType = Type.Character;
         secondaryType = Type.Passive;
         Name = "CHRISTOPH";

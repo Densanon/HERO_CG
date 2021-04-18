@@ -4,8 +4,10 @@ using UnityEngine;
 
 public class aAyumi : Ability
 {
-    private void Awake()
+    protected override void Awake()
     {
+        base.Awake();
+
         myType = Type.Character;
         secondaryType = Type.Passive;
         Name = "AYUMI";
@@ -18,6 +20,7 @@ public class aAyumi : Ability
 
         if(passiveType == PassiveType.HeroRecruited && myHero.myPlacement == CardData.FieldPlacement.Mine)
         {
+            Debug.Log($"{myHero.Name} should be activating the draw pasive.");
             OnNeedCardDraw?.Invoke(1);
         }
     }

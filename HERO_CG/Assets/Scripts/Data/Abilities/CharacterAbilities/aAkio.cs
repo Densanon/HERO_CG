@@ -4,8 +4,10 @@ using UnityEngine;
 
 public class aAkio : Ability
 {
-    private void Awake()
+    protected override void Awake()
     {
+        base.Awake();
+
         myType = Type.Character;
         secondaryType = Type.Passive;
         Name = "AKIO";
@@ -20,7 +22,6 @@ public class aAkio : Ability
         if(type == PassiveType.BattleComplete && PhotonGameManager.OpponentExhausted)
         {
             myHero.Heal(false);
-            Debug.Log($"{Name} should be unexhausted");
         }
     }
 }

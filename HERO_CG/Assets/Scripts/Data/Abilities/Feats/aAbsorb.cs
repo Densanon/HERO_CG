@@ -12,7 +12,7 @@ public class aAbsorb : Ability
     List<Enhancement> enhancements = new List<Enhancement>();
 
     #region Unity Methods
-    private void Awake()
+    protected override void Awake()
     {
         myType = Ability.Type.Feat;
         Name = "ABSORB";

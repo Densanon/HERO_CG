@@ -25,6 +25,7 @@ public class CardData : MonoBehaviour
     public Ability charAbility;
     int abilityAttModifier = 0;
     int abilityDefModifier = 0;
+    bool charAbSet = false;
 
     public static Action<CardData> IsTarget = delegate { };
     public static Action<CardData, string, int> OnNumericAdjustment = delegate { };
@@ -87,6 +88,7 @@ public class CardData : MonoBehaviour
         {
             //Destroy
             Debug.Log($"{Name} has been destroyed.");
+            Exhausted = true;
             OnDestroyed?.Invoke(this);
         }else if (dmg >= Defense/2)
         {
@@ -555,6 +557,10 @@ public class CardData : MonoBehaviour
 
     private void SetCharacterAbility()
     {
+        if (charAbSet)
+        {
+            return;
+        }
         switch (Name)
         {
             case "AKIO":
@@ -638,6 +644,7 @@ public class CardData : MonoBehaviour
                 charAbility = t;
                 break;
         }
+        charAbSet = true;
     }
     #endregion
 }

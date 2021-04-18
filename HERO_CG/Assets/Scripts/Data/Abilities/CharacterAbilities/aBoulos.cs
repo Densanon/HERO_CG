@@ -4,8 +4,10 @@ using UnityEngine;
 
 public class aBoulos : Ability
 {
-    private void Awake()
+    protected override void Awake()
     {
+        base.Awake();
+
         myType = Type.Character;
         secondaryType = Type.Passive;
         Name = "BOULOS";
@@ -16,8 +18,9 @@ public class aBoulos : Ability
     {
         base.PassiveCheck(passiveType);
 
-        if(passiveType == PassiveType.HandCardAdjustment)
+        if( passiveType == PassiveType.HandCardAdjustment)
         {
+            Debug.Log($"{myHero.Name} should be activating the defence pasive.");
             myHero.NewAbilityDefModifier(CardDataBase.handSize);
         }
     }

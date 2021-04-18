@@ -228,6 +228,12 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
             if (DefendingHero != null)
             {
                 OpponentExhausted = DefendingHero.Exhausted;
+                Debug.Log($"Opponent exhaust status = {OpponentExhausted}");
+            }
+            else
+            {
+                OpponentExhausted = true;
+                Debug.Log($"Opponent should have been destroyed so exhaust has been set to true");
             }
 
             PassiveActivate(Ability.PassiveType.BattleComplete);
