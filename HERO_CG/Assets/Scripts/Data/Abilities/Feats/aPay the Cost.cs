@@ -9,7 +9,7 @@ public class aPaytheCost : Ability
     CardData Target1;
 
     #region Unity Methods
-    private void Awake()
+    protected override void Awake()
     {
         myType = Ability.Type.Feat;
         Name = "PAY THE COST";

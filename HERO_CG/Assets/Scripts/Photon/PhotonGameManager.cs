@@ -57,6 +57,9 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
     private bool heroDrafted = false;
     private int iTurnCounter = 0;
     private int iTurnGauge = 0;
+    private bool bEndTurn = false;
+    private bool canPlayAbilityToField = true;
+    private int abilityPlaySilenceTurnTimer = 0;
 
     public GameObject gOvercome;
     public Button bSwitch;
@@ -72,11 +75,13 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
     public static bool OpponentExhausted = false;
 
     private Ability activeAbility;
+    private bool abilityTargetting = false;
 
     public static Action<Card, GamePhase> OnCardCollected = delegate { };
     public static Action<bool> OnOvercomeTime = delegate { };
     public static Action OnOvercomeSwitch = delegate { };
     public static Action<Ability.PassiveType> OnPassiveActivate = delegate { };
+    public static Action OnTurnResetabilities = delegate { };
 
     #region Unity Methods
     private void Awake()
@@ -92,6 +97,9 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
         Ability.OnNeedCardDraw += DrawCardOption;
         Ability.OnSetActive += SetActiveAbility;
         Ability.OnOpponentAbilityActivation += HandleOpponentAbilityHandover;
+        Ability.OnActivateable += HandleActivateAbilitySetup;
+        Ability.OnHoldTurn += HandleHoldTurn;
+        Ability.OnPreventAbilitiesToFieldForTurn += HandleAbilityToFieldSilence;
     }
 
     private void OnDestroy()
@@ -107,6 +115,9 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
         Ability.OnNeedCardDraw -= DrawCardOption;
         Ability.OnSetActive -= SetActiveAbility;
         Ability.OnOpponentAbilityActivation -= HandleOpponentAbilityHandover;
+        Ability.OnActivateable -= HandleActivateAbilitySetup;
+        Ability.OnHoldTurn -= HandleHoldTurn;
+        Ability.OnPreventAbilitiesToFieldForTurn -= HandleAbilityToFieldSilence;
 
     }
 
@@ -123,7 +134,8 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
                 myTurn = false;
                 player = PlayerNum.P1;
                 CB.HandlePlayerDeclaration(0);
-                SwitchTurn();
+                bEndTurn = true;
+                StartCoroutine(EndturnDelay());
                 CB.HandleBuildHeroDraft();
             }
             else
@@ -131,7 +143,8 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
                 myTurn = true;
                 player = PlayerNum.P2;
                 CB.HandlePlayerDeclaration(1);
-                SwitchTurn();
+                bEndTurn = true;
+                            StartCoroutine(EndturnDelay());
                 CB.HandleBuildHeroDraft();
             }
         }
@@ -172,6 +185,11 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
         OnPassiveActivate?.Invoke(passiveType);
     }
 
+    public bool canPlayAbilitiesToFieldCheck()
+    {
+        return canPlayAbilityToField;
+    }
+
     public void PhaseChange(GamePhase phaseToChangeTo)
     {
         if(myPhase == GamePhase.Overcome)
@@ -200,7 +218,8 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
 
     public void EndTurn()
     {
-        SwitchTurn();
+        bEndTurn = true;
+                    StartCoroutine(EndturnDelay());
         TurnActionIndicator.text = "0";
     }
 
@@ -269,7 +288,8 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
         else if(AttDef && !CB.CheckMyFieldForUsableHeros())
         {
             //check if all characters are exhausted, if they are, end turn
-            SwitchTurn();
+                        StartCoroutine(EndturnDelay());
+            PassiveActivate(Ability.PassiveType.ActionComplete);
             return;
         }
         OnOvercomeSwitch?.Invoke();
@@ -322,6 +342,7 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
         myTurn = turn;
         StartCoroutine(TurnDeclaration(myTurn));
         PhaseAdjustment();
+        OnTurnResetabilities?.Invoke();
     }
 
     public void SetCardCollectAmount(int amount)
@@ -330,7 +351,10 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
         {
             CB.DrawCard(CardDataBase.CardDecks.P1Deck);
         }
-        StartCoroutine(PhaseDeclaration("Play Cards"));
+        if(myPhase == GamePhase.Enhance)
+        {
+            StartCoroutine(PhaseDeclaration("Play Cards"));
+        }
         gCardCountCollect.SetActive(false);
     }
 
@@ -374,11 +398,18 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
             {
                 CB.FillHQ();
             }
-            SwitchTurn();
+            PassiveActivate(Ability.PassiveType.ActionComplete);
+                        StartCoroutine(EndturnDelay());
             CB.HandleTurnDeclaration(!myTurn);
         }
     }
     #endregion
+
+    public void SilenceAbilityToField(int turns)
+    {
+        abilityPlaySilenceTurnTimer = turns;
+        canPlayAbilityToField = false;
+    }
 
     public void LeaveRoom()
     {
@@ -387,6 +418,21 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
     #endregion
 
     #region Private Methods
+    private void HandleHoldTurn()
+    {
+        bEndTurn = false;
+    }
+
+    private void HandleAbilityToFieldSilence()
+    {
+        if(player == PlayerNum.P1)
+        {
+            CB.SilenceAbilityToField(PlayerNum.P2, 1);
+            return;
+        }
+        CB.SilenceAbilityToField(PlayerNum.P1, 1);
+    }
+
     private void HandleCardSelecion(CardData card)
     {
         if (!CB.SpecificDraw)
@@ -408,28 +454,39 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
             case GamePhase.HEROSelect:
                 break;
             case GamePhase.Heal:
-                if (card.Exhausted)
+                if (abilityTargetting == false && card.Exhausted)
                 {
                     card.Heal(false);
+                        return;
                 }
+                    HandleAbilityTargetting(card);
                 break;
             case GamePhase.Enhance:
-                if (!zoomed)
+                if (abilityTargetting == false && !zoomed)
                 {
                     CardZoom(card);
+                        return;
                 }
+                    HandleAbilityTargetting(card);
                 break;
             case GamePhase.Recruit:
-                if (!zoomed)
+                if (abilityTargetting == false && !zoomed)
                 {
                     CardZoom(card);
+                        return;
                 }
+                    HandleAbilityTargetting(card);
                 break;
             case GamePhase.Overcome:
-                HandleHeroSelected(card);
+                if(abilityTargetting == false)
+                    {
+                        HandleHeroSelected(card);
+                        return;
+                    }
+                    HandleAbilityTargetting(card);
                 break;
             case GamePhase.Feat:
-                HandleFeatSelection(card);
+                HandleAbilityTargetting(card);
                 break;
             case GamePhase.TurnResponse:
                 if (!zoomed)
@@ -507,11 +564,12 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
         handZoomed = false;
     }
 
-    private void HandleFeatSelection(CardData card)
+    private void HandleAbilityTargetting(CardData card)
     {
         if(activeAbility != null && card.CardType == Card.Type.Character)
         {
             activeAbility.Target(card);
+            abilityTargetting = true;
         }
     }
 
@@ -520,18 +578,28 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
         CB.AbilityHandover(ability);
     }
 
+    private void HandleActivateAbilitySetup(Ability ability)
+    {
+        activeAbility = ability;
+        StartCoroutine(PhaseDeclaration("Activate Ability?"));
+        ability.AbilityAwake();
+    }
+
     private void HandleAbilityEnd()
     {
         if(activeAbility.myType == Ability.Type.Feat)
         {
-            SwitchTurn();
+            PassiveActivate(Ability.PassiveType.ActionComplete);
+                        StartCoroutine(EndturnDelay());
         }
         activeAbility = null;
+        abilityTargetting = false;
     }
 
     private void HandleFeatComplete()
     {
-        SwitchTurn();
+        PassiveActivate(Ability.PassiveType.ActionComplete);
+                    StartCoroutine(EndturnDelay());
     }
 
     private void HandlePlayCard(Card card)
@@ -740,7 +808,8 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
         CB.HandleCardCollected(card, myPhase);
         if(myPhase != GamePhase.Recruit)
         {
-            SwitchTurn();
+            PassiveActivate(Ability.PassiveType.ActionComplete);
+                        StartCoroutine(EndturnDelay());
         }
         else
         {
@@ -750,17 +819,27 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
             }
             else
             {
-                SwitchTurn();
+                PassiveActivate(Ability.PassiveType.ActionComplete);
+                            StartCoroutine(EndturnDelay());
             }
         }
     }
 
     private void SwitchTurn()
     {
+        if (myTurn)
+        {
+            abilityPlaySilenceTurnTimer--;
+            if(abilityPlaySilenceTurnTimer == 0)
+            {
+                canPlayAbilityToField = true;
+            }
+        }
         myTurn = !myTurn;
         StartCoroutine(TurnDeclaration(myTurn));
         PhaseAdjustment();
         CB.HandleTurnDeclaration(!myTurn);
+        OnTurnResetabilities?.Invoke();
     }
 
     private void HEROSelectionBegin()
@@ -933,6 +1012,19 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
                     StartCoroutine(PhaseDeclaration("H.E.R.O. Decision"));
                     break;
             }
+        }
+    }
+
+    private IEnumerator EndturnDelay()
+    {
+        yield return new WaitForSeconds(3f);
+        if (bEndTurn)
+        {
+            SwitchTurn();
+        }
+        else
+        {
+            StartCoroutine(EndturnDelay());
         }
     }
     #endregion

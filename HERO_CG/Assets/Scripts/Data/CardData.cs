@@ -25,6 +25,8 @@ public class CardData : MonoBehaviour
     public Ability charAbility;
     int abilityAttModifier = 0;
     int abilityDefModifier = 0;
+    int enhancementAttModifier = 0;
+    int enhancementDefModifier = 0;
     bool charAbSet = false;
 
     public static Action<CardData> IsTarget = delegate { };
@@ -134,13 +136,12 @@ public class CardData : MonoBehaviour
     public void AdjustAttack(int amount)
     {
         bool sendit = (Attack != (Attack + amount));
-        Attack += amount;
-        tAttack.text = Attack.ToString();
+        HandleEnhancementAddition(amount, 'a');
+        ValuesSetup();
         if (sendit)
         {
             OnNumericAdjustment?.Invoke(this, "Attack", Attack);
         }
-        HandleEnhancementAddition(amount, 'a');
     }
 
     public void NewAbilityAttModifier(int amountAdjustment)
@@ -149,8 +150,9 @@ public class CardData : MonoBehaviour
 
         if(i != 0)
         {
-            AdjustAttack(i);
             abilityAttModifier = amountAdjustment;
+            ValuesSetup();
+            OnNumericAdjustment?.Invoke(this, "Attack", Attack);
         }
     }
 
@@ -163,25 +165,30 @@ public class CardData : MonoBehaviour
     public void AdjustDefense(int amount)
     {
         bool sendit = (Defense != (Defense + amount));
-        Defense += amount;
-        tDefense.text = Defense.ToString();
+        HandleEnhancementAddition(amount, 'd');
+        ValuesSetup();
         if (sendit)
         {
             OnNumericAdjustment?.Invoke(this, "Defense", Defense);
         }
-        HandleEnhancementAddition(amount, 'd');
     }
 
     public void NewAbilityDefModifier(int amountAdjustment)
     {
+
         int i = abilityDefModifier - amountAdjustment;
+        if(abilityDefModifier == 0)
+        {
+            i = amountAdjustment;
+        }
         Debug.Log($"NewAbilityDefModifier: Current modifier{abilityDefModifier}/ Current Adjustment{amountAdjustment}");
 
         if(i != 0)
         {
             Debug.Log($"NewAbilityDefModifier: amount adjusted {i}");
-            AdjustDefense(i);
             abilityDefModifier = amountAdjustment;
+            ValuesSetup();
+            OnNumericAdjustment?.Invoke(this, "Defense", Defense);
         }
     }
 
@@ -416,6 +423,26 @@ public class CardData : MonoBehaviour
         }
     }
 
+    private void ValuesSetup()
+    {
+        int a = myCard.Attack;
+        int d = myCard.Defense;
+
+        a += enhancementAttModifier;
+        d += enhancementDefModifier;
+
+        a += abilityAttModifier;
+        d += abilityDefModifier;
+
+        Attack = a;
+        Defense = d;
+        if (Exhausted)
+            Defense = Defense / 2;
+
+        tDefense.text = Defense.ToString();
+        tAttack.text = Attack.ToString();
+    }
+
     private void StateChange(CardState StateToTransitionTo)
     {
         prevState = myState;
@@ -542,10 +569,12 @@ public class CardData : MonoBehaviour
         if(type == 'a')
         {
             e.attack = amount;
+            enhancementAttModifier += amount;
         }
         else
         {
             e.defense = amount;
+            enhancementDefModifier += amount;
         }
         if(myEnhancements == null)
         {

@@ -21,7 +21,7 @@ public class aBoulos : Ability
         if( passiveType == PassiveType.HandCardAdjustment)
         {
             Debug.Log($"{myHero.Name} should be activating the defence pasive.");
-            myHero.NewAbilityDefModifier(CardDataBase.handSize);
+            myHero.NewAbilityDefModifier(CardDataBase.handSize*10);
         }
     }
 }

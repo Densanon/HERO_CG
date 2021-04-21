@@ -4,11 +4,24 @@ using UnityEngine;
 
 public class aIsaac : Ability
 {
-    private void Awake()
+    protected override void Awake()
     {
+        base.Awake();
+
         myType = Type.Character;
         secondaryType = Type.Passive;
         Name = "ISAAC";
         Description = "(P) When another hero is defeated, you may draw a card from your Discard Pile that was there before the hero was defeated.";
+    }
+
+    public override void PassiveCheck(PassiveType passiveType)
+    {
+        base.PassiveCheck(passiveType);
+
+        if(passiveType == PassiveType.CharacterDestroyed)
+        {
+            //need to save what all cards are in discard prior to battle
+            //need to populate said cards on screen to be drawn from
+        }
     }
 }

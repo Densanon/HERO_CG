@@ -4,11 +4,20 @@ using UnityEngine;
 
 public class aHindra : Ability
 {
-    private void Awake()
+    protected override void Awake()
     {
+        base.Awake();
+
         myType = Type.Character;
         secondaryType = Type.Activate;
         Name = "HINDRA";
         Description = "(A) Choose one opponent to prevent from playing Ability Cards to the field on their next turn.";
+    }
+
+    public override void AbilityAwake()
+    {
+        base.AbilityAwake();
+
+        OnPreventAbilitiesToFieldForTurn?.Invoke();
     }
 }

@@ -31,6 +31,7 @@ public class CardDataBase : MonoBehaviour
     public CardData CurrentActiveCard;
     public static bool bTargeting = false;
     public static int handSize = 0;
+    public static int herosFatigued = 0;
 
     #region Debuging
     public bool AiDraft = false;
@@ -100,6 +101,7 @@ public class CardDataBase : MonoBehaviour
         aDrain.OnStripAllEnhancementsFromSideOfField += StripAllEnhancementsOnSideOfField;
         aUnderSiege.OnHandToBeRevealed += HandleRevealTargetHandAndRemoveNonHeros;
         Ability.OnAddAbilityToMasterList += HandleAddAbilityToList;
+        Ability.OnDiscardCard += HandleCardForceDiscard;
 
         Heros[0] = new Card(Card.Type.Character, "AKIO", 20, 70, HeroImages[0], AlphaHeros[0]);
         Heros[1] = new Card(Card.Type.Character, "AYUMI", 40, 50, HeroImages[1], AlphaHeros[1]);
@@ -238,6 +240,7 @@ public class CardDataBase : MonoBehaviour
         aDrain.OnStripAllEnhancementsFromSideOfField -= StripAllEnhancementsOnSideOfField;
         aUnderSiege.OnHandToBeRevealed -= HandleRevealTargetHandAndRemoveNonHeros;
         Ability.OnAddAbilityToMasterList -= HandleAddAbilityToList;
+        Ability.OnDiscardCard -= HandleCardForceDiscard;
 
     }
 
@@ -751,7 +754,7 @@ public class CardDataBase : MonoBehaviour
 
     private void AddCardToHand(Card cardToAdd)
     {
-        if(P1Hand.Count < 7)
+        if(P1Hand.Count < 8)
         {
             //Debug.Log($"Adding a card to hand(hand): {P1Hand.Count}");
             GameObject obj = Instantiate(CardHandPrefab, Hand[P1Hand.Count - 1].transform);
@@ -794,6 +797,41 @@ public class CardDataBase : MonoBehaviour
         GetHandToShare();
         handSize = P1Hand.Count;
         GM.PassiveActivate(Ability.PassiveType.HandCardAdjustment);
+    }
+
+    private void HandleCardForceDiscard(string who, string type, int amount)
+    {
+        switch (who)
+        {
+            case "All":
+                PV.RPC("ForceDiscard", RpcTarget.All, type, amount);
+                break;
+            case "Target":
+                PV.RPC("ForceDiscard", RpcTarget.Others, type, amount);
+                break;
+        }
+    }
+
+    [PunRPC]
+    private void ForceDiscard(string type, int amount)
+    {
+        switch (type)
+        {
+            case "Random":
+                for(int i = amount; i>0; i--)
+                {
+                    RemoveCardFromHand(P1Hand[UnityEngine.Random.Range(0, P1Hand.Count)]);
+                }
+                break;
+            case "Hero":
+                break;
+            case "Enhancement":
+                break;
+            case "Ability":
+                break;
+            case "Feat":
+                break;
+        }
     }
 
     private void HandleCardAdjustment(CardData cardToAdjust, string category, int newValue)
@@ -905,6 +943,7 @@ public class CardDataBase : MonoBehaviour
             loc = "P1Field";
         }
 
+        herosFatigued--;
         GM.PassiveActivate(Ability.PassiveType.CharacterDestroyed);
         PV.RPC("FieldCardDestroy", RpcTarget.Others, card.Name, loc);
     }
@@ -937,6 +976,7 @@ public class CardDataBase : MonoBehaviour
                 }
                 break;
         }
+        herosFatigued--;
     }
 
     private void HandleCardExhaustState(CardData card, bool exhaust)
@@ -949,6 +989,10 @@ public class CardDataBase : MonoBehaviour
         {
             loc = "P2Field";
         }
+
+        herosFatigued = exhaust ? herosFatigued++ : herosFatigued--;
+        Debug.Log($"Heros currently Fatigued: {herosFatigued}");
+
         PV.RPC("ExhaustStateAdjust", RpcTarget.Others, card.Name, loc, exhaust);
     }
 
@@ -963,9 +1007,15 @@ public class CardDataBase : MonoBehaviour
                     if(card.Name == name)
                     {
                         if (state)
+                        {
                             card.Exhaust(true);
+                            herosFatigued++;
+                        }
                         else
+                        {
                             card.Heal(true);
+                            herosFatigued++;
+                        }
                     }
                 }
                 break;
@@ -975,9 +1025,15 @@ public class CardDataBase : MonoBehaviour
                     if (card.Name == name)
                     {
                         if (state)
+                        {
                             card.Exhaust(true);
+                            herosFatigued++;
+                        }
                         else
+                        {
                             card.Heal(true);
+                            herosFatigued++;
+                        }
                     }
                 }
                 break;
@@ -1402,6 +1458,50 @@ public class CardDataBase : MonoBehaviour
     #endregion
 
     #region Public Methods
+    public void SilenceAbilityToField(PhotonGameManager.PlayerNum player, int turns)
+    {
+        switch (player)
+        {
+            case PhotonGameManager.PlayerNum.P1:
+                PV.RPC("SilenceAbilityToFieldCall", RpcTarget.Others, "P1", turns);
+                break;
+            case PhotonGameManager.PlayerNum.P2:
+                PV.RPC("SilenceAbilityToFieldCall", RpcTarget.Others, "P2", turns);
+                break;
+            case PhotonGameManager.PlayerNum.P3:
+                PV.RPC("SilenceAbilityToFieldCall", RpcTarget.Others, "P3", turns);
+                break;
+            case PhotonGameManager.PlayerNum.P4:
+                PV.RPC("SilenceAbilityToFieldCall", RpcTarget.Others, "P4", turns);
+                break;
+        }
+    }
+
+    [PunRPC]
+    private void SilenceAbilityToFieldCall(string name, int turns)
+    {
+        PhotonGameManager.PlayerNum num = PhotonGameManager.PlayerNum.P1;
+        switch (name)
+        {
+            case "P1":
+                num = PhotonGameManager.PlayerNum.P1;
+                break;
+            case "P2":
+                num = PhotonGameManager.PlayerNum.P2;
+                break;
+            case "P3":
+                num = PhotonGameManager.PlayerNum.P3;
+                break;
+            case "P4":
+                num = PhotonGameManager.PlayerNum.P4;
+                break;
+        }
+        if(PhotonGameManager.player == num)
+        {
+            GM.SilenceAbilityToField(turns);
+        }
+    }
+
     public void AbilityHandover(Ability ability)
     {
         string name = ability.Name;
@@ -1547,6 +1647,10 @@ public class CardDataBase : MonoBehaviour
             case Card.Type.Ability:
                 //Target a Character
                 //Update characters
+                if (!GM.canPlayAbilitiesToFieldCheck())
+                {
+                    return;
+                }
                 OnTargeting?.Invoke(card, true);
                 bTargeting = true;
                 break;
