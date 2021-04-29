@@ -14,6 +14,7 @@ public class Ability : MonoBehaviour
     protected CardData myHero;
     protected bool oncePerTurnUsed = false;
     protected bool canActivate = false;
+    protected bool passiveCheckable = false;
 
     public static Action<Ability> OnAddAbilityToMasterList = delegate { };
     public static Action OnAbilityUsed = delegate { };
@@ -23,16 +24,20 @@ public class Ability : MonoBehaviour
     public static Action<Ability> OnSetActive = delegate { };
     public static Action<Ability> OnOpponentAbilityActivation = delegate { };
     public static Action<Ability> OnActivateable = delegate { };
-    public static Action OnHoldTurn = delegate { };
+    public static Action<bool> OnHoldTurn = delegate { };
     public static Action OnPreventAbilitiesToFieldForTurn = delegate { };
 
     protected virtual void Awake()
     {
-        PhotonGameManager.OnPassiveActivate += PassiveCheck;
-        PhotonGameManager.OnTurnResetabilities += ResetOncePerTurn;
         myHero = this.gameObject.GetComponent<CardData>();
-        OnAddAbilityToMasterList?.Invoke(this);
-        Debug.Log("Generic Ability Awake.");
+        passiveCheckable = myHero.myPlacement == CardData.FieldPlacement.Mine || myHero.myPlacement == CardData.FieldPlacement.Opp;
+        if (passiveCheckable)
+        {
+            PhotonGameManager.OnPassiveActivate += PassiveCheck;
+            PhotonGameManager.OnTurnResetabilities += ResetOncePerTurn;
+            OnAddAbilityToMasterList?.Invoke(this);
+            Debug.Log("Generic Ability Awake.");
+        }
     }
 
     protected virtual void OnDestroy()
@@ -58,7 +63,16 @@ public class Ability : MonoBehaviour
 
     public virtual void PassiveCheck(PassiveType passiveType)
     {
-        if(myType == Type.Passive || secondaryType == Type.Passive)
-        Debug.Log($"{Name} PassiveCheck {passiveType} Activated");
+        return;
+        if (passiveCheckable)
+        {
+            if(myType == Type.Passive || secondaryType == Type.Passive)
+            Debug.Log($"{Name} PassiveCheck {passiveType} Activated");
+        }
+    }
+
+    public virtual void ActivateAbility()
+    {
+
     }
 }

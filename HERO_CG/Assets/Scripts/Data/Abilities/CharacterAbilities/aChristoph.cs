@@ -16,6 +16,9 @@ public class aChristoph : Ability
 
     public override void PassiveCheck(PassiveType passiveType)
     {
+        if (!passiveCheckable)
+            return;
+
         base.PassiveCheck(passiveType);
 
         if(passiveType == PassiveType.BattleComplete && myHero == PhotonGameManager.DefendingHero)

@@ -16,12 +16,18 @@ public class aEng : Ability
 
     public override void PassiveCheck(PassiveType passiveType)
     {
+        if (!passiveCheckable)
+            return;
+
         base.PassiveCheck(passiveType);
 
         if(passiveType == PassiveType.ActionComplete)
         {
-            OnActivateable?.Invoke(this);
-            OnHoldTurn?.Invoke();
+            if(CardDataBase.herosFatigued > 0)
+            {
+                OnActivateable?.Invoke(this);
+                OnHoldTurn?.Invoke(true);
+            }
         }
     }
 
@@ -31,5 +37,6 @@ public class aEng : Ability
         Debug.Log($"Healing {card.Name} from {myHero.Name}");
         card.Heal(false);
         OnAbilityUsed();
+        OnHoldTurn?.Invoke(false);
     }
 }

@@ -57,7 +57,7 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
     private bool heroDrafted = false;
     private int iTurnCounter = 0;
     private int iTurnGauge = 0;
-    private bool bEndTurn = false;
+    private bool bEndTurn = true;
     private bool canPlayAbilityToField = true;
     private int abilityPlaySilenceTurnTimer = 0;
 
@@ -134,8 +134,7 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
                 myTurn = false;
                 player = PlayerNum.P1;
                 CB.HandlePlayerDeclaration(0);
-                bEndTurn = true;
-                StartCoroutine(EndturnDelay());
+                SwitchTurn();
                 CB.HandleBuildHeroDraft();
             }
             else
@@ -143,8 +142,7 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
                 myTurn = true;
                 player = PlayerNum.P2;
                 CB.HandlePlayerDeclaration(1);
-                bEndTurn = true;
-                            StartCoroutine(EndturnDelay());
+                SwitchTurn();
                 CB.HandleBuildHeroDraft();
             }
         }
@@ -153,6 +151,7 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
     #endregion
 
     #region Public Methods
+    #region Base Methods
     public void OnBaseDestroyed(PlayerBase.Type pBase)
     {
         if(pBase == PlayerBase.Type.Player)
@@ -178,9 +177,15 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
             MyPB.Exhaust(true);
         }
     }
+    #endregion
 
+    #region Ability Methods
     public void PassiveActivate(Ability.PassiveType passiveType)
     {
+        if(myPhase == GamePhase.HeroDraft || myPhase == GamePhase.AbilityDraft)
+        {
+            return;
+        }
         Debug.Log($"PhotonGameManager calling {passiveType}");
         OnPassiveActivate?.Invoke(passiveType);
     }
@@ -190,40 +195,22 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
         return canPlayAbilityToField;
     }
 
-    public void PhaseChange(GamePhase phaseToChangeTo)
+    public void SetActiveAbility(Ability ability)
     {
-        if(myPhase == GamePhase.Overcome)
-        {
-            gOvercome.SetActive(false);
-            OnOvercomeTime?.Invoke(false);
-        }
-        myPhase = phaseToChangeTo;
-        HandlePhaseChange();
+        Debug.Log($"Active ability to be set: {ability.Name}");
+        activeAbility = ability;
+        StartCoroutine(PhaseDeclaration($"{ability.Name} ability Activated"));
+        ability.AbilityAwake();
     }
 
-    public void SetPlayerNum(PlayerNum playerSet)
+    public void SilenceAbilityToField(int turns)
     {
-        player = playerSet;
+        abilityPlaySilenceTurnTimer = turns;
+        canPlayAbilityToField = false;
     }
+    #endregion
 
-    public void SetTurnGauge(int newNum)
-    {
-        iTurnGauge = newNum;
-    }
-
-    public void SetOpponentHandCount(int number)
-    {
-        tOpponentHandCount.text = $"{number}";
-    }
-
-    public void EndTurn()
-    {
-        bEndTurn = true;
-                    StartCoroutine(EndturnDelay());
-        TurnActionIndicator.text = "0";
-    }
-
-    #region Overcome Method/Functions
+    #region Overcome Methods
     public void CalculateBattle()
     {
         if (AttackingHeros.Count > 0 && DefendingHero != null)
@@ -295,7 +282,64 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
         OnOvercomeSwitch?.Invoke();
     }
     #endregion
+    
+    #region Turn Methods
+    #region Move Counter Methods
+    public int GetTurnCounter()
+    {
+        return iTurnCounter;
+    }
 
+    public void TurnCounterDecrement()
+    {
+        iTurnCounter--;
+        TurnActionIndicator.text = $"Actions Remaining: {iTurnCounter}";
+        if(iTurnCounter == 0)
+        {
+            if(myPhase == GamePhase.Recruit)
+            {
+                CB.FillHQ();
+            }
+            PassiveActivate(Ability.PassiveType.ActionComplete);
+                        StartCoroutine(EndturnDelay());
+            CB.HandleTurnDeclaration(!myTurn);
+        }
+    }
+    #endregion
+
+    public void EndTurn()
+    {
+        bEndTurn = true;
+                    StartCoroutine(EndturnDelay());
+        TurnActionIndicator.text = "0";
+    }
+
+    public void ToldSwitchTurn(bool turn)
+    {
+        myTurn = turn;
+        StartCoroutine(TurnDeclaration(myTurn));
+        PhaseAdjustment();
+        OnTurnResetabilities?.Invoke();
+    }
+
+    public void SetTurnGauge(int newNum)
+    {
+        iTurnGauge = newNum;
+    }
+
+    public void PhaseChange(GamePhase phaseToChangeTo)
+    {
+        if(myPhase == GamePhase.Overcome)
+        {
+            gOvercome.SetActive(false);
+            OnOvercomeTime?.Invoke(false);
+        }
+        myPhase = phaseToChangeTo;
+        HandlePhaseChange();
+    }
+    #endregion
+
+    #region Card Methods
     public void DrawCardOption(int amount)
     {
         gCardCountCollect.SetActive(true);
@@ -327,22 +371,6 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
                 bCardCount3.interactable = true;
                 break;
         }
-    }
-
-    public void SetActiveAbility(Ability ability)
-    {
-        Debug.Log($"Active ability to be set: {ability.Name}");
-        activeAbility = ability;
-        StartCoroutine(PhaseDeclaration($"{ability.Name} ability Activated"));
-        ability.AbilityAwake();
-    }
-
-    public void ToldSwitchTurn(bool turn)
-    {
-        myTurn = turn;
-        StartCoroutine(TurnDeclaration(myTurn));
-        PhaseAdjustment();
-        OnTurnResetabilities?.Invoke();
     }
 
     public void SetCardCollectAmount(int amount)
@@ -381,34 +409,16 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
         }
         ClearAbilityPanel();
     }
-
-    #region Move Counter Methods
-    public int GetTurnCounter()
-    {
-        return iTurnCounter;
-    }
-
-    public void TurnCounterDecrement()
-    {
-        iTurnCounter--;
-        TurnActionIndicator.text = $"Actions Remaining: {iTurnCounter}";
-        if(iTurnCounter == 0)
-        {
-            if(myPhase == GamePhase.Recruit)
-            {
-                CB.FillHQ();
-            }
-            PassiveActivate(Ability.PassiveType.ActionComplete);
-                        StartCoroutine(EndturnDelay());
-            CB.HandleTurnDeclaration(!myTurn);
-        }
-    }
     #endregion
 
-    public void SilenceAbilityToField(int turns)
+    public void SetPlayerNum(PlayerNum playerSet)
     {
-        abilityPlaySilenceTurnTimer = turns;
-        canPlayAbilityToField = false;
+        player = playerSet;
+    }
+
+    public void SetOpponentHandCount(int number)
+    {
+        tOpponentHandCount.text = $"{number}";
     }
 
     public void LeaveRoom()
@@ -418,9 +428,12 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
     #endregion
 
     #region Private Methods
-    private void HandleHoldTurn()
+    private void HandleHoldTurn(bool hold)
     {
-        bEndTurn = false;
+        if (myPhase == GamePhase.AbilityDraft || myPhase == GamePhase.HeroDraft)
+            return;
+
+        bEndTurn = hold ? false : true;
     }
 
     private void HandleAbilityToFieldSilence()
@@ -580,6 +593,10 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
 
     private void HandleActivateAbilitySetup(Ability ability)
     {
+        if(myPhase == GamePhase.AbilityDraft || myPhase == GamePhase.HeroDraft)
+        {
+            return;
+        }
         activeAbility = ability;
         StartCoroutine(PhaseDeclaration("Activate Ability?"));
         ability.AbilityAwake();
@@ -830,7 +847,7 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
         if (myTurn)
         {
             abilityPlaySilenceTurnTimer--;
-            if(abilityPlaySilenceTurnTimer == 0)
+            if(abilityPlaySilenceTurnTimer <= 0)
             {
                 canPlayAbilityToField = true;
             }
@@ -1017,7 +1034,7 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
 
     private IEnumerator EndturnDelay()
     {
-        yield return new WaitForSeconds(3f);
+        yield return new WaitForSeconds(1f);
         if (bEndTurn)
         {
             SwitchTurn();

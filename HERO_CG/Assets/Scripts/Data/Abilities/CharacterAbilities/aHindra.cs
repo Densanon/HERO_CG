@@ -20,4 +20,10 @@ public class aHindra : Ability
 
         OnPreventAbilitiesToFieldForTurn?.Invoke();
     }
+
+    public override void ActivateAbility()
+    {
+        Debug.Log("Hindra Activated");
+        OnActivateable?.Invoke(this);
+    }
 }

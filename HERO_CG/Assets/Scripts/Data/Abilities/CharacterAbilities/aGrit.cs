@@ -16,11 +16,15 @@ public class aGrit : Ability
 
     public override void PassiveCheck(PassiveType passiveType)
     {
+        if (!passiveCheckable)
+            return;
+
         base.PassiveCheck(passiveType);
 
         if(passiveType == PassiveType.HeroFatigued)
         {
             myHero.NewAbilityAttModifier(CardDataBase.herosFatigued * 20);
+            Debug.Log("Grit should gain attack.");
         }
     }
 }

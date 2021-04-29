@@ -930,6 +930,12 @@ public class CardDataBase : MonoBehaviour
 
     private void HandleCharacterDestroyed(CardData card)
     {
+        cardAbilitiesOnField.Remove(card.charAbility);
+        foreach(Ability a in card.myAbilities)
+        {
+            cardAbilitiesOnField.Remove(a);
+        }
+
         string loc = "";
         if (P2Field.Contains(card))
         {
@@ -990,7 +996,12 @@ public class CardDataBase : MonoBehaviour
             loc = "P2Field";
         }
 
-        herosFatigued = exhaust ? herosFatigued++ : herosFatigued--;
+
+        herosFatigued = exhaust ? herosFatigued + 1 : herosFatigued - 1;
+        if (exhaust)
+        {
+            GM.PassiveActivate(Ability.PassiveType.HeroFatigued);
+        }
         Debug.Log($"Heros currently Fatigued: {herosFatigued}");
 
         PV.RPC("ExhaustStateAdjust", RpcTarget.Others, card.Name, loc, exhaust);

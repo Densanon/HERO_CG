@@ -16,6 +16,9 @@ public class aAkio : Ability
 
     public override void PassiveCheck(PassiveType type)
     {
+        if (!passiveCheckable)
+            return;
+
         base.PassiveCheck(type);
 
         //this should only get fired off when Akio battles an opponent and at least exhausts them.

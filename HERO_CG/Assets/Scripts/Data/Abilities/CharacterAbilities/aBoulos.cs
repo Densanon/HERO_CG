@@ -16,6 +16,9 @@ public class aBoulos : Ability
 
     public override void PassiveCheck(PassiveType passiveType)
     {
+        if (!passiveCheckable)
+            return;
+
         base.PassiveCheck(passiveType);
 
         if( passiveType == PassiveType.HandCardAdjustment)
