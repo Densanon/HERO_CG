@@ -16,9 +16,6 @@ public class aEng : Ability
 
     public override void PassiveCheck(PassiveType passiveType)
     {
-        if (!passiveCheckable)
-            return;
-
         base.PassiveCheck(passiveType);
 
         if(passiveType == PassiveType.ActionComplete)

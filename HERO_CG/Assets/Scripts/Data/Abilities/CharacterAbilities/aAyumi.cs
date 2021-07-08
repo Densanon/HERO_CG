@@ -16,14 +16,11 @@ public class aAyumi : Ability
 
     public override void PassiveCheck(PassiveType passiveType)
     {
-        if (!passiveCheckable)
-            return;
-
         base.PassiveCheck(passiveType);
 
         if(passiveType == PassiveType.HeroRecruited && myHero.myPlacement == CardData.FieldPlacement.Mine)
         {
-            Debug.Log($"{myHero.Name} should be activating the draw pasive.");
+            Debug.Log($"{myHero.Name} should be activating the draw passive.");
             OnNeedCardDraw?.Invoke(1);
         }
     }

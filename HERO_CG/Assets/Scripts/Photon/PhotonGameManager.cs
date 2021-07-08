@@ -186,7 +186,7 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
         {
             return;
         }
-        Debug.Log($"PhotonGameManager calling {passiveType}");
+        //Debug.Log($"PhotonGameManager calling {passiveType}");
         OnPassiveActivate?.Invoke(passiveType);
     }
 
@@ -226,6 +226,7 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
             int tDmg = 0;
             foreach (CardData data in AttackingHeros)
             {
+                Debug.Log($"{data.Name} was an attacking hero");
                 tDmg += data.Attack;
                 data.Exhaust(false);
             }
@@ -306,6 +307,11 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
         }
     }
     #endregion
+
+    public void PopUpUpdater(string message)
+    {
+        StartCoroutine(PhaseDeclaration(message));
+    }
 
     public void EndTurn()
     {
@@ -425,17 +431,17 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
     {
         PhotonNetwork.LeaveRoom();
     }
-    #endregion
 
-    #region Private Methods
-    private void HandleHoldTurn(bool hold)
+    public void HandleHoldTurn(bool hold)
     {
         if (myPhase == GamePhase.AbilityDraft || myPhase == GamePhase.HeroDraft)
             return;
 
         bEndTurn = hold ? false : true;
     }
+    #endregion
 
+    #region Private Methods
     private void HandleAbilityToFieldSilence()
     {
         if(player == PlayerNum.P1)
@@ -451,7 +457,7 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
         if (!CB.SpecificDraw)
         {
             switch (myPhase)
-        {
+            {
             case GamePhase.HeroDraft:
                 if (!zoomed)
                 {
@@ -502,12 +508,24 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
                 HandleAbilityTargetting(card);
                 break;
             case GamePhase.TurnResponse:
-                if (!zoomed)
-                {
-                    CardZoom(card);
-                }
+                    if (activeAbility != null)
+                    {
+                        HandleAbilityTargetting(card);
+                        abilityTargetting = false;
+                    }
+                    else
+                    {
+                        Debug.Log($"{activeAbility}");
+                        Debug.Log("No active Ability");
+                    }
+                    /*else if(!zoomed)
+                    {
+                        Debug.Log("Card Zoomed in TurnResponse");
+                        CardZoom(card);
+                    }*/
                 break;
             case GamePhase.Wait:
+                    Debug.Log("Card Zoomed in Wait");
                 if (!zoomed)
                 {
                     CardZoom(card);
@@ -588,6 +606,7 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
 
     private void HandleOpponentAbilityHandover(Ability ability)
     {
+        Debug.Log($"Handing over control of {ability.Name} to opponent");
         CB.AbilityHandover(ability);
     }
 
@@ -604,6 +623,7 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
 
     private void HandleAbilityEnd()
     {
+        Debug.Log("Ability has ended.");
         if(activeAbility.myType == Ability.Type.Feat)
         {
             PassiveActivate(Ability.PassiveType.ActionComplete);
@@ -800,9 +820,11 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
                     NullZoomButtons();
                     break;
                 case GamePhase.TurnResponse:
+                    NullZoomButtons();
+                    /*
                     gCardSelect.SetActive(false);
                     gCardCollect.SetActive(false);
-                    gCardPlay.SetActive(true);
+                    gCardPlay.SetActive(true);*/
                     break;
                 case GamePhase.Wait:
                     NullZoomButtons();

@@ -102,6 +102,7 @@ public class CardDataBase : MonoBehaviour
         aUnderSiege.OnHandToBeRevealed += HandleRevealTargetHandAndRemoveNonHeros;
         Ability.OnAddAbilityToMasterList += HandleAddAbilityToList;
         Ability.OnDiscardCard += HandleCardForceDiscard;
+        Ability.OnHoldTurnOffOppTurn += HandleHoldTurnOff;
 
         Heros[0] = new Card(Card.Type.Character, "AKIO", 20, 70, HeroImages[0], AlphaHeros[0]);
         Heros[1] = new Card(Card.Type.Character, "AYUMI", 40, 50, HeroImages[1], AlphaHeros[1]);
@@ -241,7 +242,7 @@ public class CardDataBase : MonoBehaviour
         aUnderSiege.OnHandToBeRevealed -= HandleRevealTargetHandAndRemoveNonHeros;
         Ability.OnAddAbilityToMasterList -= HandleAddAbilityToList;
         Ability.OnDiscardCard -= HandleCardForceDiscard;
-
+        Ability.OnHoldTurnOffOppTurn -= HandleHoldTurnOff;
     }
 
     #endregion
@@ -883,7 +884,7 @@ public class CardDataBase : MonoBehaviour
         }
         else
         {
-            Debug.Log("I found the Hero Card and adjusted it's values.");
+            //Debug.Log("I found the Hero Card and adjusted it's values.");
         }
     }
 
@@ -1210,15 +1211,16 @@ public class CardDataBase : MonoBehaviour
 
     private void HandleAddAbilityToList(Ability ability)
     {
+        //Debug.Log($"{ability.Name} was to be added to a list");
         if(ability.myType == Ability.Type.Character)
         {
             heroAbilitiesOnField.Add(ability);
-            Debug.Log($"{ability.Name} added to master list.");
+            //Debug.Log($"{ability.Name} ability added to master list.");
         }
         else if(ability.myType == Ability.Type.Activate || ability.myType == Ability.Type.Passive)
         {
             cardAbilitiesOnField.Add(ability);
-            Debug.Log($"{ability.Name} added to master list.");
+            //Debug.Log($"{ability.Name} added to master list.");
 
         }
     }
@@ -1239,43 +1241,6 @@ public class CardDataBase : MonoBehaviour
         {
             card.StripAbilities(false);
             card.StripEnhancements(false);
-        }
-    }
-
-    [PunRPC]
-    private void HandleAbilityHandOver(string nameOfAbilityToGiveControl)
-    {
-        Ability ability = heroAbilitiesOnField[0];
-        bool found = false;
-        foreach(Ability a in heroAbilitiesOnField)
-        {
-            if(a.Name == nameOfAbilityToGiveControl)
-            {
-                ability = a;
-                found = true;
-                Debug.Log($"Found {nameOfAbilityToGiveControl} in HeroAbilities");
-                break;
-            }
-        }
-        if(found == false)
-        {
-            foreach (Ability a in cardAbilitiesOnField)
-            {
-                if (a.Name == nameOfAbilityToGiveControl)
-                {
-                    ability = a;
-                    Debug.Log($"Found {nameOfAbilityToGiveControl} in CardAbilities");
-                    break;
-                }
-            }
-        }
-
-        foreach(CardData card in P1Field)
-        {
-            if (card.myAbilities.Contains(ability))
-            {
-                GM.SetActiveAbility(ability);
-            }
         }
     }
 
@@ -1466,6 +1431,19 @@ public class CardDataBase : MonoBehaviour
                 break;
         }
     }
+
+    private void HandleHoldTurnOff()
+    {
+        PV.RPC("HandleTurnOffTurnHold", RpcTarget.All, true);
+        GM.PhaseChange(PhotonGameManager.GamePhase.Wait);
+    }
+
+    [PunRPC]
+    private void HandleTurnOffTurnHold(bool turnOff)
+    {
+        GM.HandleHoldTurn(false);
+        GM.PhaseChange(PhotonGameManager.GamePhase.Overcome);
+    }
     #endregion
 
     #region Public Methods
@@ -1515,9 +1493,41 @@ public class CardDataBase : MonoBehaviour
 
     public void AbilityHandover(Ability ability)
     {
-        string name = ability.Name;
+        GM.PhaseChange(PhotonGameManager.GamePhase.Wait);
+        PV.RPC("HandleAbilityHandOver", RpcTarget.Others, ability.Name);
+    }
 
-        PV.RPC("HandleAbilityHandOver", RpcTarget.Others, name);
+    [PunRPC]
+    private void HandleAbilityHandOver(string nameOfAbilityToGiveControl)
+    {
+        Ability ability = heroAbilitiesOnField[0];
+        bool found = false;
+        foreach(Ability a in heroAbilitiesOnField)
+        {
+            if(a.Name == nameOfAbilityToGiveControl)
+            {
+                ability = a;
+                found = true;
+                Debug.Log($"Found {ability.Name} in HeroAbilities");
+                break;
+            }
+        }
+        if(found == false)
+        {
+            foreach (Ability a in cardAbilitiesOnField)
+            {
+                if (a.Name == nameOfAbilityToGiveControl)
+                {
+                    ability = a;
+                    Debug.Log($"Found {nameOfAbilityToGiveControl} in CardAbilities");
+                    break;
+                }
+            }
+        }
+
+        GM.SetActiveAbility(ability);
+        GM.PhaseChange(PhotonGameManager.GamePhase.TurnResponse);
+        GM.PopUpUpdater($"{ability.Name} ability activated.");
     }
 
     public void SendPreviousAttackersAndDefender(List<CardData> attackers, CardData defender)
@@ -1546,7 +1556,7 @@ public class CardDataBase : MonoBehaviour
     [PunRPC]
     private void HandlePreviousAttackersAndDefender(string[] names)
     {
-        Debug.Log("Made it into the server HandlePreviousAttackersAndDefender.");
+        //Debug.Log("Made it into the server HandlePreviousAttackersAndDefender.");
         List<CardData> cards = new List<CardData>();
 
         foreach(CardData data in P2Field)

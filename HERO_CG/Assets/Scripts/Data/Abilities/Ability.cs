@@ -25,6 +25,7 @@ public class Ability : MonoBehaviour
     public static Action<Ability> OnOpponentAbilityActivation = delegate { };
     public static Action<Ability> OnActivateable = delegate { };
     public static Action<bool> OnHoldTurn = delegate { };
+    public static Action OnHoldTurnOffOppTurn = delegate { };
     public static Action OnPreventAbilitiesToFieldForTurn = delegate { };
 
     protected virtual void Awake()
@@ -35,9 +36,13 @@ public class Ability : MonoBehaviour
         {
             PhotonGameManager.OnPassiveActivate += PassiveCheck;
             PhotonGameManager.OnTurnResetabilities += ResetOncePerTurn;
-            OnAddAbilityToMasterList?.Invoke(this);
-            Debug.Log("Generic Ability Awake.");
         }
+    }
+
+    private void Start()
+    {
+        if(passiveCheckable)
+            OnAddAbilityToMasterList?.Invoke(this);
     }
 
     protected virtual void OnDestroy()
@@ -63,12 +68,7 @@ public class Ability : MonoBehaviour
 
     public virtual void PassiveCheck(PassiveType passiveType)
     {
-        return;
-        if (passiveCheckable)
-        {
-            if(myType == Type.Passive || secondaryType == Type.Passive)
-            Debug.Log($"{Name} PassiveCheck {passiveType} Activated");
-        }
+
     }
 
     public virtual void ActivateAbility()

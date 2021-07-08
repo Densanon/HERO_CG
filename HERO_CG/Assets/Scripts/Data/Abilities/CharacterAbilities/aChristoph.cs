@@ -16,25 +16,26 @@ public class aChristoph : Ability
 
     public override void PassiveCheck(PassiveType passiveType)
     {
-        if (!passiveCheckable)
-            return;
-
         base.PassiveCheck(passiveType);
 
         if(passiveType == PassiveType.BattleComplete && myHero == PhotonGameManager.DefendingHero)
         {
+            Debug.Log($"{Name} activating switchoff.");
             OnOpponentAbilityActivation?.Invoke(this);
+            OnHoldTurn?.Invoke(true);
         }
     }
 
     public override void Target(CardData card)
     {
+        Debug.Log($"{Name} is targeted {card.Name}");
         base.Target(card);
 
         if (PhotonGameManager.PreviousAttackers.Contains(card))
         {
             card.DamageCheck(1000);
             OnAbilityUsed?.Invoke();
+            OnHoldTurnOffOppTurn?.Invoke();
         }
     }
 }
