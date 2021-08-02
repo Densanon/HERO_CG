@@ -206,7 +206,6 @@ GameObject:
   m_Component:
   - component: {fileID: 21578965}
   - component: {fileID: 21578964}
-  - component: {fileID: 21578963}
   m_Layer: 0
   m_Name: CardDataBase
   m_TagString: Untagged
@@ -214,28 +213,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &21578963
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 21578962}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: aa584fbee541324448dd18d8409c7a41, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  ObservedComponentsFoldoutOpen: 1
-  Group: 0
-  prefixField: -1
-  observableSearch: 2
-  Synchronization: 3
-  OwnershipTransfer: 0
-  ObservedComponents: []
-  viewIdField: 1
-  InstantiationId: 0
-  isRuntimeInstantiated: 0
 --- !u!114 &21578964
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -248,6 +225,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 654e4e4a3d9c23e45a30e6406a0bd44f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  myManager: {fileID: 1509106954}
+  GM: {fileID: 7098869184987679687}
+  CurrentActiveCard: {fileID: 0}
   CardHandPrefab: {fileID: 4413843580739654301, guid: ce61c3044afb3ec468ab8a277d1c53c0,
     type: 3}
   CardDraftPrefab: {fileID: 4413843580739654301, guid: b9abe818281b4ae4bab0ea9773782694,
@@ -274,8 +254,6 @@ MonoBehaviour:
   OppHeroArea: {fileID: 694986171}
   HQArea: {fileID: 182939291}
   HQHeros: []
-  GM: {fileID: 7098869184987679687}
-  CurrentActiveCard: {fileID: 0}
   AiDraft: 0
   AutoDraft: 0
   SpecificDraw: 0
@@ -9836,6 +9814,74 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1483611455}
   m_CullTransparentMesh: 0
+--- !u!1 &1509106952
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1509106953}
+  - component: {fileID: 1509106955}
+  - component: {fileID: 1509106954}
+  m_Layer: 0
+  m_Name: GameManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1509106953
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1509106952}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 1706187830}
+  m_RootOrder: 1
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1509106954
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1509106952}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 282cc162b13390544a4e333ad4cdbe52, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  DataBase: {fileID: 21578964}
+  GameManager: {fileID: 7098869184987679687}
+--- !u!114 &1509106955
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1509106952}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aa584fbee541324448dd18d8409c7a41, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ObservedComponentsFoldoutOpen: 1
+  Group: 0
+  prefixField: -1
+  observableSearch: 2
+  Synchronization: 3
+  OwnershipTransfer: 0
+  ObservedComponents: []
+  viewIdField: 1
+  InstantiationId: 0
+  isRuntimeInstantiated: 0
 --- !u!1 &1514985865
 GameObject:
   m_ObjectHideFlags: 0
@@ -12371,6 +12417,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 7098869184987679686}
+  - {fileID: 1509106953}
   m_Father: {fileID: 0}
   m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -15750,89 +15797,14 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 1429444459656308942, guid: c37408237509d3247850a853e4df00a5,
         type: 3}
-      propertyPath: EndUI
-      value: 
-      objectReference: {fileID: 647486517}
-    - target: {fileID: 1429444459656308942, guid: c37408237509d3247850a853e4df00a5,
-        type: 3}
-      propertyPath: oppBase
-      value: 
-      objectReference: {fileID: 1148206799}
-    - target: {fileID: 1429444459656308942, guid: c37408237509d3247850a853e4df00a5,
-        type: 3}
-      propertyPath: myBase
-      value: 
-      objectReference: {fileID: 7098869184987679688}
-    - target: {fileID: 1429444459656308942, guid: c37408237509d3247850a853e4df00a5,
-        type: 3}
-      propertyPath: EndText
-      value: 
-      objectReference: {fileID: 775136755}
-    - target: {fileID: 1429444459656308942, guid: c37408237509d3247850a853e4df00a5,
-        type: 3}
-      propertyPath: TurnDeclarationUI
-      value: 
-      objectReference: {fileID: 12192083}
-    - target: {fileID: 1429444459656308942, guid: c37408237509d3247850a853e4df00a5,
-        type: 3}
-      propertyPath: TurnText
-      value: 
-      objectReference: {fileID: 1584062311}
-    - target: {fileID: 1429444459656308942, guid: c37408237509d3247850a853e4df00a5,
-        type: 3}
-      propertyPath: gCardZoom
-      value: 
-      objectReference: {fileID: 1917078784950444048}
-    - target: {fileID: 1429444459656308942, guid: c37408237509d3247850a853e4df00a5,
-        type: 3}
-      propertyPath: PhaseDeclarationUI
-      value: 
-      objectReference: {fileID: 12192083}
-    - target: {fileID: 1429444459656308942, guid: c37408237509d3247850a853e4df00a5,
-        type: 3}
-      propertyPath: PhaseText
-      value: 
-      objectReference: {fileID: 1584062311}
-    - target: {fileID: 1429444459656308942, guid: c37408237509d3247850a853e4df00a5,
-        type: 3}
-      propertyPath: gCard
-      value: 
-      objectReference: {fileID: 1334432524106138519}
-    - target: {fileID: 1429444459656308942, guid: c37408237509d3247850a853e4df00a5,
-        type: 3}
-      propertyPath: gCardOption
-      value: 
-      objectReference: {fileID: 1917078784950444050}
-    - target: {fileID: 1429444459656308942, guid: c37408237509d3247850a853e4df00a5,
-        type: 3}
       propertyPath: CB
       value: 
       objectReference: {fileID: 21578964}
     - target: {fileID: 1429444459656308942, guid: c37408237509d3247850a853e4df00a5,
         type: 3}
-      propertyPath: gHEROSelect
+      propertyPath: myManager
       value: 
-      objectReference: {fileID: 538405250}
-    - target: {fileID: 1429444459656308942, guid: c37408237509d3247850a853e4df00a5,
-        type: 3}
-      propertyPath: gCardCountCollect
-      value: 
-      objectReference: {fileID: 1894716997}
-    - target: {fileID: 1429444459656308942, guid: c37408237509d3247850a853e4df00a5,
-        type: 3}
-      propertyPath: bCardCount1
-      value: 
-      objectReference: {fileID: 224219491}
-    - target: {fileID: 1429444459656308942, guid: c37408237509d3247850a853e4df00a5,
-        type: 3}
-      propertyPath: bCardCount2
-      value: 
-      objectReference: {fileID: 1287398012}
-    - target: {fileID: 1429444459656308942, guid: c37408237509d3247850a853e4df00a5,
-        type: 3}
-      propertyPath: bCardCount3
-      value: 
-      objectReference: {fileID: 1567449735}
+      objectReference: {fileID: 1509106954}
     - target: {fileID: 1429444459656308942, guid: c37408237509d3247850a853e4df00a5,
         type: 3}
       propertyPath: TurnIndicator
@@ -15845,14 +15817,35 @@ PrefabInstance:
       objectReference: {fileID: 161671495}
     - target: {fileID: 1429444459656308942, guid: c37408237509d3247850a853e4df00a5,
         type: 3}
+      propertyPath: gCardZoom
+      value: 
+      objectReference: {fileID: 1917078784950444048}
+    - target: {fileID: 1429444459656308942, guid: c37408237509d3247850a853e4df00a5,
+        type: 3}
+      propertyPath: gCard
+      value: 
+      objectReference: {fileID: 1334432524106138519}
+    - target: {fileID: 1429444459656308942, guid: c37408237509d3247850a853e4df00a5,
+        type: 3}
+      propertyPath: pAbilityPrefab
+      value: 
+      objectReference: {fileID: 7982822236385133847, guid: 824aecb26b9c6c744a7607af32b1a1da,
+        type: 3}
+    - target: {fileID: 1429444459656308942, guid: c37408237509d3247850a853e4df00a5,
+        type: 3}
+      propertyPath: tAbilityContainer
+      value: 
+      objectReference: {fileID: 1917078784950444052}
+    - target: {fileID: 1429444459656308942, guid: c37408237509d3247850a853e4df00a5,
+        type: 3}
+      propertyPath: gCardCollect
+      value: 
+      objectReference: {fileID: 1917078784950444050}
+    - target: {fileID: 1429444459656308942, guid: c37408237509d3247850a853e4df00a5,
+        type: 3}
       propertyPath: gCardSelect
       value: 
       objectReference: {fileID: 1917078784950444049}
-    - target: {fileID: 1429444459656308942, guid: c37408237509d3247850a853e4df00a5,
-        type: 3}
-      propertyPath: TurnActionIndicator
-      value: 
-      objectReference: {fileID: 1613720100}
     - target: {fileID: 1429444459656308942, guid: c37408237509d3247850a853e4df00a5,
         type: 3}
       propertyPath: gCardPlay
@@ -15860,24 +15853,24 @@ PrefabInstance:
       objectReference: {fileID: 1917078784950444051}
     - target: {fileID: 1429444459656308942, guid: c37408237509d3247850a853e4df00a5,
         type: 3}
+      propertyPath: PhaseDeclarationUI
+      value: 
+      objectReference: {fileID: 12192083}
+    - target: {fileID: 1429444459656308942, guid: c37408237509d3247850a853e4df00a5,
+        type: 3}
+      propertyPath: PhaseText
+      value: 
+      objectReference: {fileID: 1584062311}
+    - target: {fileID: 1429444459656308942, guid: c37408237509d3247850a853e4df00a5,
+        type: 3}
       propertyPath: tOpponentHandCount
       value: 
       objectReference: {fileID: 1731634374}
     - target: {fileID: 1429444459656308942, guid: c37408237509d3247850a853e4df00a5,
         type: 3}
-      propertyPath: gOvercome
+      propertyPath: gHEROSelect
       value: 
-      objectReference: {fileID: 2095461548}
-    - target: {fileID: 1429444459656308942, guid: c37408237509d3247850a853e4df00a5,
-        type: 3}
-      propertyPath: bSwitch
-      value: 
-      objectReference: {fileID: 1567778353}
-    - target: {fileID: 1429444459656308942, guid: c37408237509d3247850a853e4df00a5,
-        type: 3}
-      propertyPath: bBattle
-      value: 
-      objectReference: {fileID: 263037140}
+      objectReference: {fileID: 538405250}
     - target: {fileID: 1429444459656308942, guid: c37408237509d3247850a853e4df00a5,
         type: 3}
       propertyPath: bHEROSelectHeal
@@ -15905,9 +15898,54 @@ PrefabInstance:
       objectReference: {fileID: 374166952}
     - target: {fileID: 1429444459656308942, guid: c37408237509d3247850a853e4df00a5,
         type: 3}
-      propertyPath: gCardCollect
+      propertyPath: gCardCountCollect
       value: 
-      objectReference: {fileID: 1917078784950444050}
+      objectReference: {fileID: 1894716997}
+    - target: {fileID: 1429444459656308942, guid: c37408237509d3247850a853e4df00a5,
+        type: 3}
+      propertyPath: bCardCount1
+      value: 
+      objectReference: {fileID: 224219491}
+    - target: {fileID: 1429444459656308942, guid: c37408237509d3247850a853e4df00a5,
+        type: 3}
+      propertyPath: bCardCount2
+      value: 
+      objectReference: {fileID: 1287398012}
+    - target: {fileID: 1429444459656308942, guid: c37408237509d3247850a853e4df00a5,
+        type: 3}
+      propertyPath: bCardCount3
+      value: 
+      objectReference: {fileID: 1567449735}
+    - target: {fileID: 1429444459656308942, guid: c37408237509d3247850a853e4df00a5,
+        type: 3}
+      propertyPath: EndUI
+      value: 
+      objectReference: {fileID: 647486517}
+    - target: {fileID: 1429444459656308942, guid: c37408237509d3247850a853e4df00a5,
+        type: 3}
+      propertyPath: EndText
+      value: 
+      objectReference: {fileID: 775136755}
+    - target: {fileID: 1429444459656308942, guid: c37408237509d3247850a853e4df00a5,
+        type: 3}
+      propertyPath: gOvercome
+      value: 
+      objectReference: {fileID: 2095461548}
+    - target: {fileID: 1429444459656308942, guid: c37408237509d3247850a853e4df00a5,
+        type: 3}
+      propertyPath: bSwitch
+      value: 
+      objectReference: {fileID: 1567778353}
+    - target: {fileID: 1429444459656308942, guid: c37408237509d3247850a853e4df00a5,
+        type: 3}
+      propertyPath: bBattle
+      value: 
+      objectReference: {fileID: 263037140}
+    - target: {fileID: 1429444459656308942, guid: c37408237509d3247850a853e4df00a5,
+        type: 3}
+      propertyPath: MyPB
+      value: 
+      objectReference: {fileID: 7098869184987679688}
     - target: {fileID: 1429444459656308942, guid: c37408237509d3247850a853e4df00a5,
         type: 3}
       propertyPath: PB
@@ -15915,20 +15953,9 @@ PrefabInstance:
       objectReference: {fileID: 1148206799}
     - target: {fileID: 1429444459656308942, guid: c37408237509d3247850a853e4df00a5,
         type: 3}
-      propertyPath: tAbilityContainer
+      propertyPath: TurnActionIndicator
       value: 
-      objectReference: {fileID: 1917078784950444052}
-    - target: {fileID: 1429444459656308942, guid: c37408237509d3247850a853e4df00a5,
-        type: 3}
-      propertyPath: pAbilityPrefab
-      value: 
-      objectReference: {fileID: 7982822236385133847, guid: 824aecb26b9c6c744a7607af32b1a1da,
-        type: 3}
-    - target: {fileID: 1429444459656308942, guid: c37408237509d3247850a853e4df00a5,
-        type: 3}
-      propertyPath: MyPB
-      value: 
-      objectReference: {fileID: 7098869184987679688}
+      objectReference: {fileID: 1613720100}
     - target: {fileID: 3568359947860690515, guid: c37408237509d3247850a853e4df00a5,
         type: 3}
       propertyPath: m_LocalPosition.x

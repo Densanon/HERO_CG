@@ -18,11 +18,11 @@ public class aChristoph : Ability
     {
         base.PassiveCheck(passiveType);
 
-        if(passiveType == PassiveType.BattleComplete && myHero == PhotonGameManager.DefendingHero)
+        if(passiveType == PassiveType.BattleComplete && myHero == Referee.DefendingHero)
         {
             Debug.Log($"{Name} activating switchoff.");
             OnOpponentAbilityActivation?.Invoke(this);
-            OnHoldTurn?.Invoke(true);
+            OnHoldTurn?.Invoke(true, false);
         }
     }
 
@@ -31,7 +31,7 @@ public class aChristoph : Ability
         Debug.Log($"{Name} is targeted {card.Name}");
         base.Target(card);
 
-        if (PhotonGameManager.PreviousAttackers.Contains(card))
+        if (Referee.PreviousAttackers.Contains(card))
         {
             card.DamageCheck(1000);
             OnAbilityUsed?.Invoke();

@@ -24,7 +24,7 @@ public class Ability : MonoBehaviour
     public static Action<Ability> OnSetActive = delegate { };
     public static Action<Ability> OnOpponentAbilityActivation = delegate { };
     public static Action<Ability> OnActivateable = delegate { };
-    public static Action<bool> OnHoldTurn = delegate { };
+    public static Action<bool, bool> OnHoldTurn = delegate { };
     public static Action OnHoldTurnOffOppTurn = delegate { };
     public static Action OnPreventAbilitiesToFieldForTurn = delegate { };
 
@@ -34,8 +34,8 @@ public class Ability : MonoBehaviour
         passiveCheckable = myHero.myPlacement == CardData.FieldPlacement.Mine || myHero.myPlacement == CardData.FieldPlacement.Opp;
         if (passiveCheckable)
         {
-            PhotonGameManager.OnPassiveActivate += PassiveCheck;
-            PhotonGameManager.OnTurnResetabilities += ResetOncePerTurn;
+            Referee.OnPassiveActivate += PassiveCheck;
+            Referee.OnTurnResetabilities += ResetOncePerTurn;
         }
     }
 
@@ -47,8 +47,8 @@ public class Ability : MonoBehaviour
 
     protected virtual void OnDestroy()
     {
-        PhotonGameManager.OnPassiveActivate -= PassiveCheck;
-        PhotonGameManager.OnTurnResetabilities -= ResetOncePerTurn;
+        Referee.OnPassiveActivate -= PassiveCheck;
+        Referee.OnTurnResetabilities -= ResetOncePerTurn;
     }
 
     private void ResetOncePerTurn()

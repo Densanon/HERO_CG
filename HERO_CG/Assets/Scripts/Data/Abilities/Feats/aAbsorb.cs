@@ -28,7 +28,7 @@ public class aAbsorb : Ability
         {
             Debug.Log("Getting first target for Absorb");
             Target1 = card;
-            RemoveEnhancements(Target1);
+            RemoveAbilitiesAndEnhancements(Target1);
             return;
         }
         else if (Target2 == null)
@@ -54,13 +54,13 @@ public class aAbsorb : Ability
                 Debug.Log("Gaining Enhancements.");
             }
 
-            RemoveEnhancements(Target2);
+            RemoveAbilitiesAndEnhancements(Target2);
             OnFeatComplete?.Invoke();
         }
     }
     #endregion
 
-    private void RemoveEnhancements(CardData card)
+    private void RemoveAbilitiesAndEnhancements(CardData card)
     {
         card.StripAbilities(false);
         card.StripEnhancements(false);

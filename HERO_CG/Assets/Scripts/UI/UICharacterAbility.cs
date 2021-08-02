@@ -15,12 +15,12 @@ public class UICharacterAbility : MonoBehaviour
 
     public void Awake()
     {
-        PhotonGameManager.OnTurnResetabilities += ResetAbilityInteractible;
+        Referee.OnTurnResetabilities += ResetAbilityInteractible;
     }
 
     public void OnDestroy()
     {
-        PhotonGameManager.OnTurnResetabilities -= ResetAbilityInteractible;
+        Referee.OnTurnResetabilities -= ResetAbilityInteractible;
     }
 
     public void AbilityAwake(Ability ability)

@@ -69,8 +69,8 @@ public class CardData : MonoBehaviour
     private void Awake()
     {
         CardDataBase.OnTargeting += HandleTargetting;
-        PhotonGameManager.OnOvercomeTime += HandleActivateOvercome;
-        PhotonGameManager.OnOvercomeSwitch += HandleSwitchOvercome;
+        Referee.OnOvercomeTime += HandleActivateOvercome;
+        Referee.OnOvercomeSwitch += HandleSwitchOvercome;
 
         UISetup();
     }
@@ -78,8 +78,8 @@ public class CardData : MonoBehaviour
     private void OnDestroy()
     {
         CardDataBase.OnTargeting -= HandleTargetting;
-        PhotonGameManager.OnOvercomeTime -= HandleActivateOvercome;
-        PhotonGameManager.OnOvercomeSwitch -= HandleSwitchOvercome;
+        Referee.OnOvercomeTime -= HandleActivateOvercome;
+        Referee.OnOvercomeSwitch -= HandleSwitchOvercome;
     }
     #endregion
 
@@ -399,7 +399,7 @@ public class CardData : MonoBehaviour
         }
 
         //Feat not Feat card coloring for use
-        if(PhotonGameManager.myPhase == PhotonGameManager.GamePhase.Feat && myPlacement == FieldPlacement.Hand)
+        if(Referee.myPhase == Referee.GamePhase.Feat && myPlacement == FieldPlacement.Hand)
         {
            if(CardType == Card.Type.Feat)
             {
@@ -528,7 +528,7 @@ public class CardData : MonoBehaviour
 
     private void HandleSwitchOvercome()
     {
-        if (PhotonGameManager.AttDef)
+        if (Referee.AttDef)
         {
             switch (myPlacement)
             {

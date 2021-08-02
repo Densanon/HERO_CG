@@ -3,19 +3,19 @@ using System.Collections.Generic;
 using System;
 using UnityEngine;
 using UnityEngine.UI;
-using UnityEngine.SceneManagement;
-using Photon.Pun;
-using Photon.Realtime;
 using TMPro;
+using Photon.Pun;
 
-public class PhotonGameManager : MonoBehaviourPunCallbacks
+public class Referee : MonoBehaviour
 {
     public enum GamePhase { HeroDraft, AbilityDraft, HEROSelect, Heal, Enhance, Recruit, Overcome, Feat, TurnResponse, Wait}
     public static GamePhase myPhase = GamePhase.HeroDraft;
+    public static GamePhase prevPhase = GamePhase.Wait;
     public enum PlayerNum { P1, P2, P3, P4}
     public static PlayerNum player;
 
     public CardDataBase CB;
+    public PhotonInGameManager myManager;
 
     public TMP_Text TurnActionIndicator;
     public TMP_Text TurnIndicator;
@@ -50,14 +50,19 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
     public TMP_Text EndText;
 
     private bool bAI = false;
+
     public static bool myTurn { get; private set; }
+
     private bool bAbilityDraftStart = false;
     private bool zoomed = false;
     private bool handZoomed = false;
+
     private bool heroDrafted = false;
+
     private int iTurnCounter = 0;
     private int iTurnGauge = 0;
     private bool bEndTurn = true;
+
     private bool canPlayAbilityToField = true;
     private int abilityPlaySilenceTurnTimer = 0;
 
@@ -69,10 +74,11 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
     public static CardData DefendingHero;
     public static CardData PreviousDefender;
     public static bool AttDef = true;
-    public PlayerBase PB;
-    public PlayerBase MyPB;
     public static bool OpponentDestroyed = false;
     public static bool OpponentExhausted = false;
+
+    public PlayerBase PB;
+    public PlayerBase MyPB;
 
     private Ability activeAbility;
     private bool abilityTargetting = false;
@@ -96,10 +102,9 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
         Ability.OnFeatComplete += HandleFeatComplete;
         Ability.OnNeedCardDraw += DrawCardOption;
         Ability.OnSetActive += SetActiveAbility;
-        Ability.OnOpponentAbilityActivation += HandleOpponentAbilityHandover;
         Ability.OnActivateable += HandleActivateAbilitySetup;
         Ability.OnHoldTurn += HandleHoldTurn;
-        Ability.OnPreventAbilitiesToFieldForTurn += HandleAbilityToFieldSilence;
+        Ability.OnHoldTurnOffOppTurn += HandleHoldTurnOff;
     }
 
     private void OnDestroy()
@@ -114,11 +119,9 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
         Ability.OnFeatComplete -= HandleFeatComplete;
         Ability.OnNeedCardDraw -= DrawCardOption;
         Ability.OnSetActive -= SetActiveAbility;
-        Ability.OnOpponentAbilityActivation -= HandleOpponentAbilityHandover;
         Ability.OnActivateable -= HandleActivateAbilitySetup;
         Ability.OnHoldTurn -= HandleHoldTurn;
-        Ability.OnPreventAbilitiesToFieldForTurn -= HandleAbilityToFieldSilence;
-
+        Ability.OnHoldTurnOffOppTurn -= HandleHoldTurnOff;
     }
 
     private void Start()
@@ -126,14 +129,14 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
         PhaseIndicator.text = "Hero Draft";
         tOpponentHandCount.text = "0";
         TurnActionIndicator.text = "1";
-        if (PhotonNetwork.IsMasterClient)
+        if (myManager.IsMasterClient())
         {
             var turnStart = UnityEngine.Random.Range(0, 2);
             if(turnStart == 1)
             {
                 myTurn = false;
                 player = PlayerNum.P1;
-                CB.HandlePlayerDeclaration(0);
+                myManager.RPCRequest("DeclarePlayer", RpcTarget.OthersBuffered, 0);
                 SwitchTurn();
                 CB.HandleBuildHeroDraft();
             }
@@ -141,7 +144,7 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
             {
                 myTurn = true;
                 player = PlayerNum.P2;
-                CB.HandlePlayerDeclaration(1);
+                myManager.RPCRequest("DeclarePlayer", RpcTarget.OthersBuffered, 1);
                 SwitchTurn();
                 CB.HandleBuildHeroDraft();
             }
@@ -150,7 +153,6 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
 
     #endregion
 
-    #region Public Methods
     #region Base Methods
     public void OnBaseDestroyed(PlayerBase.Type pBase)
     {
@@ -176,6 +178,18 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
         {
             MyPB.Exhaust(true);
         }
+    }
+    #endregion
+
+    #region Player Declarations
+    public void SetPlayerNum(PlayerNum playerSet)
+    {
+        player = playerSet;
+    }
+
+    public void SetOpponentHandCount(int number)
+    {
+        tOpponentHandCount.text = $"{number}";
     }
     #endregion
 
@@ -285,6 +299,7 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
     #endregion
     
     #region Turn Methods
+
     #region Move Counter Methods
     public int GetTurnCounter()
     {
@@ -303,8 +318,18 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
             }
             PassiveActivate(Ability.PassiveType.ActionComplete);
                         StartCoroutine(EndturnDelay());
-            CB.HandleTurnDeclaration(!myTurn);
+            HandleTurnDeclaration(!myTurn);
         }
+    }
+
+    private void HandleTurnDeclaration(bool myNewTurn)
+    {
+        myManager.RPCRequest("DeclaredTurn", RpcTarget.Others, myNewTurn);
+    }
+
+    public void SetTurnGauge(int newNum)
+    {
+        iTurnGauge = newNum;
     }
     #endregion
 
@@ -324,13 +349,44 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
     {
         myTurn = turn;
         StartCoroutine(TurnDeclaration(myTurn));
-        PhaseAdjustment();
+        NextPhase();
         OnTurnResetabilities?.Invoke();
     }
 
-    public void SetTurnGauge(int newNum)
+    private void SwitchTurn()
     {
-        iTurnGauge = newNum;
+        if (myTurn)
+        {
+            abilityPlaySilenceTurnTimer--;
+            if(abilityPlaySilenceTurnTimer <= 0)
+            {
+                canPlayAbilityToField = true;
+            }
+        }
+        myTurn = !myTurn;
+        StartCoroutine(TurnDeclaration(myTurn));
+        NextPhase();
+        HandleTurnDeclaration(!myTurn);
+        OnTurnResetabilities?.Invoke();
+    }
+
+    public void HandleHoldTurn(bool hold, bool myTurn)
+    {
+        if (myPhase == GamePhase.AbilityDraft || myPhase == GamePhase.HeroDraft)
+            return;
+
+        if (!myTurn)
+            PhaseChange(GamePhase.Wait);
+
+        bEndTurn = !hold;
+    }
+
+    private void HandleHoldTurnOff() => myManager.RPCRequest("HandleTurnOffTurnHold", RpcTarget.All, true);
+
+    #region Phase State Adjustments
+    private void HEROSelectionBegin()
+    {
+        gHEROSelect.SetActive(true);
     }
 
     public void PhaseChange(GamePhase phaseToChangeTo)
@@ -340,9 +396,126 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
             gOvercome.SetActive(false);
             OnOvercomeTime?.Invoke(false);
         }
-        myPhase = phaseToChangeTo;
+        prevPhase = myPhase;
+        myPhase = phaseToChangeTo; 
         HandlePhaseChange();
     }
+
+    private void HandlePhaseChange()
+    {
+        switch (myPhase)
+        {
+            case GamePhase.Heal:
+                //Select 1+ heros to be healed(any)
+                PhaseIndicator.text = "Heal";
+                gHEROSelect.SetActive(false);
+                TurnActionIndicator.text = $"Actions Remaining: ~";
+                StartCoroutine(PhaseDeclaration("Heal Heros"));
+                break;
+            case GamePhase.Enhance:
+                //Ask quantity to draw
+                //Draw up to 3 cards from enhance deck
+                //Play up to 3 cards from your hand
+                PhaseIndicator.text = "Enhance";
+                gHEROSelect.SetActive(false);
+                DrawCardOption(3);
+                iTurnCounter = 3;
+                TurnActionIndicator.text = $"Actions Remaining: {iTurnCounter}";
+                break;
+            case GamePhase.Recruit:
+                //pick up to 2 Heros either from Reserve or HQ
+                PhaseIndicator.text = "Recruit";
+                gHEROSelect.SetActive(false);
+                iTurnCounter = 2;
+                TurnActionIndicator.text = $"Actions Remaining: {iTurnCounter}";
+                break;
+            case GamePhase.Overcome:
+                //Declare attacking hero(s) as a single attack, directed towards a single target
+                //Calculate all attack power from total heros and abilities
+                //Calculate all defensive power from total hero & abilities
+                //Resolve, if defeated, place in discard, all attacking are exhausted
+                //Able to repeate
+                PhaseIndicator.text = "Overcome";
+                gHEROSelect.SetActive(false);
+                gOvercome.SetActive(true);
+                TurnActionIndicator.text = $"Actions Remaining: ~";
+                AttDef = true;
+                OnOvercomeTime?.Invoke(true);
+                break;
+            case GamePhase.Feat:
+                PhaseIndicator.text = "Feat";
+                TurnActionIndicator.text = $"Actions Remaining: 0";
+                StartCoroutine(PhaseDeclaration("Pick Your Feat"));
+                gHEROSelect.SetActive(false);
+                //Resolve card
+                break;
+            case GamePhase.TurnResponse:
+                PhaseIndicator.text = "Turn Response";
+                gCardCollect.SetActive(true);
+                TurnActionIndicator.text = $"Actions Remaining: 0";
+                break;
+            case GamePhase.Wait:
+                PhaseIndicator.text = "Wait";
+                gCardCollect.SetActive(false);
+                TurnActionIndicator.text = $"Actions Remaining: ~";
+                break;
+            case GamePhase.HEROSelect:
+                PhaseIndicator.text = "Hero Selection";
+                HEROSelectionBegin();
+                //check for heros that can be healed
+                bHEROSelectHeal.interactable = CB.CheckForHealableHeros();
+                //check for cards in enhancement deck or hand
+                bHEROSelectEnhance.interactable = (CB.CardsRemaining(CardDataBase.CardDecks.P1Deck) + CB.CardsRemaining(CardDataBase.CardDecks.P1Hand) > 0);
+                //check for heros that are recruitable
+                bHEROSelectRectruit.interactable = (CB.CardsRemaining(CardDataBase.CardDecks.HQ) + CB.CardsRemaining(CardDataBase.CardDecks.Reserve) > 0);
+                //Check for usable hero cards
+                bHEROSelectOvercome.interactable = CB.CheckMyFieldForUsableHeros();
+                //Check for feat cards
+                bHEROSelectFeat.interactable = CB.CheckIfFeatCards();
+                break;
+            case GamePhase.AbilityDraft:
+                PhaseIndicator.text = "Ability Draft";
+                TurnActionIndicator.text = $"Actions Remaining: ~";
+                break;
+            case GamePhase.HeroDraft:
+                PhaseIndicator.text = "Hero Draft";
+                TurnActionIndicator.text = $"Actions Remaining: ~";
+                break;
+        }
+    }
+
+    private void NextPhase()
+    {
+        switch (myPhase)
+        {
+            case GamePhase.Enhance:
+                PhaseChange(GamePhase.Wait);
+                break;
+            case GamePhase.Feat:
+                PhaseChange(GamePhase.Wait);
+                break;
+            case GamePhase.Heal:
+                PhaseChange(GamePhase.Wait);
+                break;
+            case GamePhase.Overcome:
+                gOvercome.SetActive(false);
+                OnOvercomeTime?.Invoke(false);
+                PhaseChange(GamePhase.Wait);
+                break;
+            case GamePhase.Recruit:
+                PhaseChange(GamePhase.Wait);
+                break;
+            case GamePhase.TurnResponse:
+                PhaseChange(GamePhase.HEROSelect);
+                break;
+            case GamePhase.Wait:
+                if(iTurnGauge >= 9)
+                PhaseChange(GamePhase.HEROSelect);
+                break;
+        }
+    }
+    #endregion
+
     #endregion
 
     #region Card Methods
@@ -415,43 +588,47 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
         }
         ClearAbilityPanel();
     }
-    #endregion
 
-    public void SetPlayerNum(PlayerNum playerSet)
+    private void CardZoom(CardData card)
     {
-        player = playerSet;
+        zoomed = true;
+        gCardZoom.SetActive(true);
+        gCard.CardOverride(card, CardData.FieldPlacement.Zoom);
+        HandleCardButtons(card.myPlacement);
+        ClearAbilityPanel();
+        GetNewAbilities(card);
     }
 
-    public void SetOpponentHandCount(int number)
+    private void HandlePlayCard(Card card)
     {
-        tOpponentHandCount.text = $"{number}";
+        CB.PlayCard(card);
     }
 
-    public void LeaveRoom()
+    private void HandleCardCollected(Card card)
     {
-        PhotonNetwork.LeaveRoom();
-    }
-
-    public void HandleHoldTurn(bool hold)
-    {
-        if (myPhase == GamePhase.AbilityDraft || myPhase == GamePhase.HeroDraft)
-            return;
-
-        bEndTurn = hold ? false : true;
-    }
-    #endregion
-
-    #region Private Methods
-    private void HandleAbilityToFieldSilence()
-    {
-        if(player == PlayerNum.P1)
+        zoomed = false;
+        CB.HandleCardCollected(card, myPhase);
+        if(myPhase != GamePhase.Recruit)
         {
-            CB.SilenceAbilityToField(PlayerNum.P2, 1);
-            return;
+            PassiveActivate(Ability.PassiveType.ActionComplete);
+                        StartCoroutine(EndturnDelay());
         }
-        CB.SilenceAbilityToField(PlayerNum.P1, 1);
+        else
+        {
+            if(iTurnCounter > 0)
+            {
+                TurnCounterDecrement();
+            }
+            else
+            {
+                PassiveActivate(Ability.PassiveType.ActionComplete);
+                            StartCoroutine(EndturnDelay());
+            }
+        }
     }
+    #endregion
 
+    #region Selections
     private void HandleCardSelecion(CardData card)
     {
         if (!CB.SpecificDraw)
@@ -594,7 +771,9 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
         zoomed = false;
         handZoomed = false;
     }
+    #endregion
 
+    #region Ability Functions + Feat
     private void HandleAbilityTargetting(CardData card)
     {
         if(activeAbility != null && card.CardType == Card.Type.Character)
@@ -602,12 +781,6 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
             activeAbility.Target(card);
             abilityTargetting = true;
         }
-    }
-
-    private void HandleOpponentAbilityHandover(Ability ability)
-    {
-        Debug.Log($"Handing over control of {ability.Name} to opponent");
-        CB.AbilityHandover(ability);
     }
 
     private void HandleActivateAbilitySetup(Ability ability)
@@ -631,27 +804,6 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
         }
         activeAbility = null;
         abilityTargetting = false;
-    }
-
-    private void HandleFeatComplete()
-    {
-        PassiveActivate(Ability.PassiveType.ActionComplete);
-                    StartCoroutine(EndturnDelay());
-    }
-
-    private void HandlePlayCard(Card card)
-    {
-        CB.PlayCard(card);
-    }
-
-    private void CardZoom(CardData card)
-    {
-        zoomed = true;
-        gCardZoom.SetActive(true);
-        gCard.CardOverride(card, CardData.FieldPlacement.Zoom);
-        HandleCardButtons(card.myPlacement);
-        ClearAbilityPanel();
-        GetNewAbilities(card);
     }
 
     private void GetNewAbilities(CardData card)
@@ -691,6 +843,14 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
         }
     }
 
+    private void HandleFeatComplete()
+    {
+        PassiveActivate(Ability.PassiveType.ActionComplete);
+                    StartCoroutine(EndturnDelay());
+    }
+    #endregion
+
+    #region Button Controls
     private void HandleCardButtons(CardData.FieldPlacement placement)
     {
         if (myTurn)
@@ -840,165 +1000,6 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
         gCardCollect.SetActive(false);
         gCardPlay.SetActive(false);
     }
-
-    private void HandleCardCollected(Card card)
-    {
-        zoomed = false;
-        CB.HandleCardCollected(card, myPhase);
-        if(myPhase != GamePhase.Recruit)
-        {
-            PassiveActivate(Ability.PassiveType.ActionComplete);
-                        StartCoroutine(EndturnDelay());
-        }
-        else
-        {
-            if(iTurnCounter > 0)
-            {
-                TurnCounterDecrement();
-            }
-            else
-            {
-                PassiveActivate(Ability.PassiveType.ActionComplete);
-                            StartCoroutine(EndturnDelay());
-            }
-        }
-    }
-
-    private void SwitchTurn()
-    {
-        if (myTurn)
-        {
-            abilityPlaySilenceTurnTimer--;
-            if(abilityPlaySilenceTurnTimer <= 0)
-            {
-                canPlayAbilityToField = true;
-            }
-        }
-        myTurn = !myTurn;
-        StartCoroutine(TurnDeclaration(myTurn));
-        PhaseAdjustment();
-        CB.HandleTurnDeclaration(!myTurn);
-        OnTurnResetabilities?.Invoke();
-    }
-
-    private void HEROSelectionBegin()
-    {
-        gHEROSelect.SetActive(true);
-    }
-
-    private void HandlePhaseChange()
-    {
-        switch (myPhase)
-        {
-            case GamePhase.Heal:
-                //Select 1+ heros to be healed(any)
-                PhaseIndicator.text = "Heal";
-                gHEROSelect.SetActive(false);
-                TurnActionIndicator.text = $"Actions Remaining: ~";
-                StartCoroutine(PhaseDeclaration("Heal Heros"));
-                break;
-            case GamePhase.Enhance:
-                //Ask quantity to draw
-                //Draw up to 3 cards from enhance deck
-                //Play up to 3 cards from your hand
-                PhaseIndicator.text = "Enhance";
-                gHEROSelect.SetActive(false);
-                DrawCardOption(3);
-                iTurnCounter = 3;
-                TurnActionIndicator.text = $"Actions Remaining: {iTurnCounter}";
-                break;
-            case GamePhase.Recruit:
-                //pick up to 2 Heros either from Reserve or HQ
-                PhaseIndicator.text = "Recruit";
-                gHEROSelect.SetActive(false);
-                iTurnCounter = 2;
-                TurnActionIndicator.text = $"Actions Remaining: {iTurnCounter}";
-                break;
-            case GamePhase.Overcome:
-                //Declare attacking hero(s) as a single attack, directed towards a single target
-                //Calculate all attack power from total heros and abilities
-                //Calculate all defensive power from total hero & abilities
-                //Resolve, if defeated, place in discard, all attacking are exhausted
-                //Able to repeate
-                PhaseIndicator.text = "Overcome";
-                gHEROSelect.SetActive(false);
-                gOvercome.SetActive(true);
-                TurnActionIndicator.text = $"Actions Remaining: ~";
-                AttDef = true;
-                OnOvercomeTime?.Invoke(true);
-                break;
-            case GamePhase.Feat:
-                PhaseIndicator.text = "Feat";
-                TurnActionIndicator.text = $"Actions Remaining: 0";
-                StartCoroutine(PhaseDeclaration("Pick Your Feat"));
-                gHEROSelect.SetActive(false);
-                //Resolve card
-                break;
-            case GamePhase.TurnResponse:
-                PhaseIndicator.text = "Turn Response";
-                gCardCollect.SetActive(true);
-                TurnActionIndicator.text = $"Actions Remaining: 0";
-                break;
-            case GamePhase.Wait:
-                PhaseIndicator.text = "Wait";
-                gCardCollect.SetActive(false);
-                TurnActionIndicator.text = $"Actions Remaining: ~";
-                break;
-            case GamePhase.HEROSelect:
-                PhaseIndicator.text = "Hero Selection";
-                HEROSelectionBegin();
-                //check for heros that can be healed
-                bHEROSelectHeal.interactable = CB.CheckForHealableHeros();
-                //check for cards in enhancement deck or hand
-                bHEROSelectEnhance.interactable = (CB.CardsRemaining(CardDataBase.CardDecks.P1Deck) + CB.CardsRemaining(CardDataBase.CardDecks.P1Hand) > 0);
-                //check for heros that are recruitable
-                bHEROSelectRectruit.interactable = (CB.CardsRemaining(CardDataBase.CardDecks.HQ) + CB.CardsRemaining(CardDataBase.CardDecks.Reserve) > 0);
-                //Check for usable hero cards
-                bHEROSelectOvercome.interactable = CB.CheckMyFieldForUsableHeros();
-                //Check for feat cards
-                bHEROSelectFeat.interactable = CB.CheckIfFeatCards();
-                break;
-            case GamePhase.AbilityDraft:
-                PhaseIndicator.text = "Ability Draft";
-                TurnActionIndicator.text = $"Actions Remaining: ~";
-                break;
-            case GamePhase.HeroDraft:
-                PhaseIndicator.text = "Hero Draft";
-                TurnActionIndicator.text = $"Actions Remaining: ~";
-                break;
-        }
-    }
-
-    private void PhaseAdjustment()
-    {
-        switch (myPhase)
-        {
-            case GamePhase.Enhance:
-                PhaseChange(GamePhase.Wait);
-                break;
-            case GamePhase.Feat:
-                PhaseChange(GamePhase.Wait);
-                break;
-            case GamePhase.Heal:
-                PhaseChange(GamePhase.Wait);
-                break;
-            case GamePhase.Overcome:
-                gOvercome.SetActive(false);
-                OnOvercomeTime?.Invoke(false);
-                PhaseChange(GamePhase.Wait);
-                break;
-            case GamePhase.Recruit:
-                PhaseChange(GamePhase.Wait);
-                break;
-            case GamePhase.TurnResponse:
-                PhaseChange(GamePhase.HEROSelect);
-                break;
-            case GamePhase.Wait:
-                if(iTurnGauge >= 9)
-                PhaseChange(GamePhase.HEROSelect);
-                break;
-        }
-    }
     #endregion
 
     #region IEnumerators
@@ -1064,40 +1065,6 @@ public class PhotonGameManager : MonoBehaviourPunCallbacks
         else
         {
             StartCoroutine(EndturnDelay());
-        }
-    }
-    #endregion
-
-    #region Photon Callbacks
-    /// <summary>
-    /// Called when the local player left the room. We need to load the Main Menu.
-    /// </summary>
-    public override void OnLeftRoom()
-    {
-        SceneManager.LoadScene("MainMenu");
-    }
-
-    public override void OnPlayerEnteredRoom(Player other)
-    {
-        //Not seen if you are the player connecting.
-        Debug.LogFormat("OnPlayerEnteredRoom() {0}", other.NickName);
-
-        if (PhotonNetwork.IsMasterClient)
-        {
-            //Called before OnPlayerLeftRoom
-            Debug.LogFormat("OnPlayerEnteredRoom IsMasterClient", PhotonNetwork.IsMasterClient);
-        }
-    }
-
-    public override void OnPlayerLeftRoom(Player other)
-    {
-        //Seen when other disconnects
-        Debug.LogFormat("OnPlayerLeftRoom() {0}", other.NickName);
-
-        if (PhotonNetwork.IsMasterClient)
-        {
-            //Called before OnPlayerLeftRoom
-            Debug.LogFormat("OnPlayerLeftRoom IsMasterClient {0}", PhotonNetwork.IsMasterClient);
         }
     }
     #endregion

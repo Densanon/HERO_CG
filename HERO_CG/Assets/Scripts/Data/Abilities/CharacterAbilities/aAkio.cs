@@ -19,7 +19,7 @@ public class aAkio : Ability
         base.PassiveCheck(type);
 
         //this should only get fired off when Akio battles an opponent and at least exhausts them.
-        if(type == PassiveType.BattleComplete && PhotonGameManager.OpponentExhausted)
+        if(type == PassiveType.BattleComplete && Referee.OpponentExhausted)
         {
             myHero.Heal(false);
         }

@@ -11,7 +11,7 @@ public class UIConfirmation : MonoBehaviour
     private Card myCardToUse;
     private CardData myTargetCard;
 
-    public static Action<PhotonGameManager.GamePhase> OnHEROSelection = delegate { };
+    public static Action<Referee.GamePhase> OnHEROSelection = delegate { };
     public static Action<CardData, Card> OnTargetAccepted = delegate { };
 
     private void Awake()
@@ -91,20 +91,20 @@ public class UIConfirmation : MonoBehaviour
         switch (typeOfConfirmation)
         {
             case Confirmation.Heal:
-                OnHEROSelection?.Invoke(PhotonGameManager.GamePhase.Heal);
+                OnHEROSelection?.Invoke(Referee.GamePhase.Heal);
                 break;
             case Confirmation.Enhance:
                 //Debug.Log("Sending Enhance Action");
-                OnHEROSelection?.Invoke(PhotonGameManager.GamePhase.Enhance);
+                OnHEROSelection?.Invoke(Referee.GamePhase.Enhance);
                 break;
             case Confirmation.Recruit:
-                OnHEROSelection?.Invoke(PhotonGameManager.GamePhase.Recruit);
+                OnHEROSelection?.Invoke(Referee.GamePhase.Recruit);
                 break;
             case Confirmation.Overcome:
-                OnHEROSelection?.Invoke(PhotonGameManager.GamePhase.Overcome);
+                OnHEROSelection?.Invoke(Referee.GamePhase.Overcome);
                 break;
             case Confirmation.Feat:
-                OnHEROSelection?.Invoke(PhotonGameManager.GamePhase.Feat);
+                OnHEROSelection?.Invoke(Referee.GamePhase.Feat);
                 break;
             case Confirmation.Quit:
                 break;

@@ -8,27 +8,36 @@ using System.Collections;
 
 public class CardDataBase : MonoBehaviour
 {
-    PhotonView PV;
+    public PhotonInGameManager myManager;
+    public Referee GM;
+
+    public CardData CurrentActiveCard;
 
     public enum CardDecks { P1Hand, P1Deck, P1Field, P1Discard, P2Hand, P2Deck, P2Field, P2Discard, Reserve, HQ}
+
+    public static Action<bool> OnTurnDelcarationReceived = delegate { };
+    public static Action<Card> OnAiDraftCollected = delegate { };
+    public static Action<Card, bool> OnTargeting = delegate { };
 
     public GameObject CardHandPrefab;
     public GameObject CardDraftPrefab;
     public GameObject CardMyFieldPrefab;
     public GameObject CardOppFieldPrefab;
     public GameObject CardHeroHQPrefab;
+
     public Button ReserveButton;
+
     public GameObject[] Hand = new GameObject[7];
     private List<CardData> lHandData = new List<CardData>();
     public Slider sHandSlider;
+
     public List<CardData> Draft = new List<CardData>();
     public Transform DraftArea;
     public Transform MyHeroArea;
     public Transform OppHeroArea;
     public Transform HQArea;
     public List<CardData> HQHeros = new List<CardData>();
-    public PhotonGameManager GM;
-    public CardData CurrentActiveCard;
+
     public static bool bTargeting = false;
     public static int handSize = 0;
     public static int herosFatigued = 0;
@@ -39,11 +48,7 @@ public class CardDataBase : MonoBehaviour
     public bool SpecificDraw = false;
     #endregion
 
-    public static Action<bool> OnTurnDelcarationReceived = delegate { };
-    public static Action<Card> OnAiDraftCollected = delegate { };
-    public static Action<Card, bool> OnTargeting = delegate { };
-
-    #region Card Data Base
+    #region Card Database
     [SerializeField] private Sprite[] AlphaHeros = new Sprite[20];
     [SerializeField] private Sprite[] HeroImages = new Sprite[20];
     [SerializeField] private Sprite[] AbilityImages = new Sprite[20];
@@ -84,9 +89,9 @@ public class CardDataBase : MonoBehaviour
     #endregion
 
     #region Unity Methods
+
     private void Awake()
-    {
-        PV = GetComponent<PhotonView>();
+    { 
 
         UIConfirmation.OnTargetAccepted += HandleTargetAccepted;
         CardData.OnNumericAdjustment += HandleCardAdjustment;
@@ -96,13 +101,13 @@ public class CardDataBase : MonoBehaviour
         CardData.OnEnhancementsStripped += HandleEnhancementsStripped;
         CardData.OnGivenAbilities += HandleAbilitiesGiven;
         CardData.OnGivenEnhancements += HandleEnhancementsGiven;
-        PlayerBase.OnBaseDestroyed += HandleBaseDestroyed;
-        PlayerBase.OnExhaust += HandleBaseExhaust;
         aDrain.OnStripAllEnhancementsFromSideOfField += StripAllEnhancementsOnSideOfField;
         aUnderSiege.OnHandToBeRevealed += HandleRevealTargetHandAndRemoveNonHeros;
         Ability.OnAddAbilityToMasterList += HandleAddAbilityToList;
         Ability.OnDiscardCard += HandleCardForceDiscard;
-        Ability.OnHoldTurnOffOppTurn += HandleHoldTurnOff;
+
+        Ability.OnPreventAbilitiesToFieldForTurn += HandleAbilityToFieldSilence;
+        Ability.OnOpponentAbilityActivation += AbilityHandover;
 
         Heros[0] = new Card(Card.Type.Character, "AKIO", 20, 70, HeroImages[0], AlphaHeros[0]);
         Heros[1] = new Card(Card.Type.Character, "AYUMI", 40, 50, HeroImages[1], AlphaHeros[1]);
@@ -236,17 +241,58 @@ public class CardDataBase : MonoBehaviour
         CardData.OnEnhancementsStripped -= HandleEnhancementsStripped;
         CardData.OnGivenAbilities -= HandleAbilitiesGiven;
         CardData.OnGivenEnhancements -= HandleEnhancementsGiven;
-        PlayerBase.OnBaseDestroyed -= HandleBaseDestroyed;
-        PlayerBase.OnExhaust -= HandleBaseExhaust;
         aDrain.OnStripAllEnhancementsFromSideOfField -= StripAllEnhancementsOnSideOfField;
         aUnderSiege.OnHandToBeRevealed -= HandleRevealTargetHandAndRemoveNonHeros;
         Ability.OnAddAbilityToMasterList -= HandleAddAbilityToList;
         Ability.OnDiscardCard -= HandleCardForceDiscard;
-        Ability.OnHoldTurnOffOppTurn -= HandleHoldTurnOff;
+
+        Ability.OnPreventAbilitiesToFieldForTurn -= HandleAbilityToFieldSilence;
+        Ability.OnOpponentAbilityActivation -= AbilityHandover;
     }
 
     #endregion
 
+    #region Debugging
+    public void SetAiDraft(bool set)
+    {
+        AiDraft = set;
+    }
+
+    public void SetAutoDraft(bool set)
+    {
+        AutoDraft = set;
+    }
+
+    public void DrawDraftCard(string draftDeck)
+    {
+        switch (draftDeck)
+        {
+            case "HeroReserve":
+                OnAiDraftCollected?.Invoke(HeroReserve[UnityEngine.Random.Range(0, HeroReserve.Count)]);
+                break;
+            case "AbilityDraft":
+                OnAiDraftCollected?.Invoke(AbilityDraft[UnityEngine.Random.Range(0, AbilityDraft.Count)]);
+                break;
+        }
+    }
+
+    public void StartDrawSpecificCard()
+    {
+        DisplayDraft(P1Deck);
+        SpecificDraw = true;
+    }
+
+    public void DrawSpecificCard(Card card)
+    {
+        DraftArea.gameObject.SetActive(false);
+        P1Hand.Add(card);
+        AddCardToHand(card);
+        P1Deck.Remove(card);
+    }
+    #endregion
+
+    #region DataBase Methods
+    
     #region Draft Methods
     public void HandleBuildHeroDraft()
     {
@@ -260,9 +306,9 @@ public class CardDataBase : MonoBehaviour
             tempHero.Remove(tempHero[picker]);
         }
 
-        if (PV.IsMine)
+        if (myManager.IsMine())
         {
-            PV.RPC("ShareCardList", RpcTarget.Others, "HeroReserve", shareList.ToArray());
+            myManager.RPCRequest("ShareCardList", RpcTarget.Others, "HeroReserve", shareList.ToArray());
         }
 
         DisplayDraft(HeroReserve);
@@ -281,38 +327,37 @@ public class CardDataBase : MonoBehaviour
         }
     }
 
-    [PunRPC]
-    private void SetupAbilityDraft(bool yes)
+    public void SetupAbilityDraft()
     {
         if(!AutoDraft)
         {
             ClearDraft();
 
-            GM.PhaseChange(PhotonGameManager.GamePhase.AbilityDraft);
+            GM.PhaseChange(Referee.GamePhase.AbilityDraft);
 
             DisplayDraft(AbilityDraft);
-        }else if(AutoDraft && PhotonGameManager.player == PhotonGameManager.PlayerNum.P1)
+        }else if(AutoDraft && Referee.player == Referee.PlayerNum.P1)
         {
             foreach(Card card in P1AutoAbilities)
             {
                 P1Deck.Add(card);
             }
-            if (PhotonGameManager.myTurn)
+            if (Referee.myTurn)
             {
-                PV.RPC("EndAbilityDraft", RpcTarget.Others, false);
+                myManager.RPCRequest("EndAbilityDraft", RpcTarget.Others, false);
                 EndAbilityDraft(true);
             }
             DraftArea.gameObject.SetActive(false);
         }
-        else if(AutoDraft && PhotonGameManager.player == PhotonGameManager.PlayerNum.P2)
+        else if(AutoDraft && Referee.player == Referee.PlayerNum.P2)
         {
             foreach (Card card in P2AutoAbilities)
             {
                 P1Deck.Add(card);
             }
-            if (PhotonGameManager.myTurn)
+            if (Referee.myTurn)
             {
-                PV.RPC("EndAbilityDraft", RpcTarget.Others, false);
+                myManager.RPCRequest("EndAbilityDraft", RpcTarget.Others, false);
                 EndAbilityDraft(true);
             }
             DraftArea.gameObject.SetActive(false);
@@ -329,8 +374,7 @@ public class CardDataBase : MonoBehaviour
         }
     }
 
-    [PunRPC]
-    private void RemoveDraftOption( string card)
+    public void RemoveDraftOption( string card)
     {
         foreach(CardData item in Draft)
         {
@@ -338,7 +382,7 @@ public class CardDataBase : MonoBehaviour
             {
                 Draft.Remove(item);
                 Destroy(item.gameObject);
-                if (PhotonGameManager.myTurn)
+                if (Referee.myTurn)
                 {
                     CheckDraft();
                 }
@@ -349,29 +393,28 @@ public class CardDataBase : MonoBehaviour
 
     private void CheckDraft()
     {
-        switch (PhotonGameManager.myPhase)
+        switch (Referee.myPhase)
         {
-            case PhotonGameManager.GamePhase.HeroDraft:
-                if(Draft.Count == 12 && PhotonGameManager.myTurn)
+            case Referee.GamePhase.HeroDraft:
+                if(Draft.Count == 12 && Referee.myTurn)
                 {
                     
-                        HandleCardCollected(HeroReserve[UnityEngine.Random.Range(0, 13)], PhotonGameManager.myPhase);
-                        PV.RPC("SetupAbilityDraft", RpcTarget.All, true);
+                        HandleCardCollected(HeroReserve[UnityEngine.Random.Range(0, 13)], Referee.myPhase);
+                        myManager.RPCRequest("SetupAbilityDraft", RpcTarget.All, true);
    
                 }
                 break;
-            case PhotonGameManager.GamePhase.AbilityDraft:
-                if(Draft.Count == 0 && PhotonGameManager.myTurn)
+            case Referee.GamePhase.AbilityDraft:
+                if(Draft.Count == 0 && Referee.myTurn)
                 {
-                    PV.RPC("EndAbilityDraft", RpcTarget.Others, false);
+                    myManager.RPCRequest("EndAbilityDraft", RpcTarget.Others, false);
                     EndAbilityDraft(true);
                 }
                 break;
         }
     }
 
-    [PunRPC]
-    private void ShareCardList(string list, string[] listToShare)
+    public void ShareCardList(string list, string[] listToShare)
     {
         switch (list)
         {
@@ -421,101 +464,22 @@ public class CardDataBase : MonoBehaviour
         }
     }
 
-    [PunRPC]
-    private void EndAbilityDraft(bool told)
+    public void EndAbilityDraft(bool told)
     {
-        if (PhotonGameManager.player == PhotonGameManager.PlayerNum.P1)
+        if (Referee.player == Referee.PlayerNum.P1)
         {
             GM.SetTurnGauge(9);
-            GM.PhaseChange(PhotonGameManager.GamePhase.HEROSelect);
+            GM.PhaseChange(Referee.GamePhase.HEROSelect);
             FillHQ();
         }
         else
         {
             GM.SetTurnGauge(8);
-            GM.PhaseChange(PhotonGameManager.GamePhase.Wait);
+            GM.PhaseChange(Referee.GamePhase.Wait);
         }
     }
     #endregion
 
-    #region Player Declaration
-    public void HandlePlayerDeclaration(int player)
-    {
-        PV.RPC("DeclarePlayer", RpcTarget.OthersBuffered, player);
-    }
-
-    [PunRPC]
-    private void DeclarePlayer(int currentPlayer)
-    {
-        switch (currentPlayer)
-        {
-            case 0:
-                GM.SetPlayerNum(PhotonGameManager.PlayerNum.P2);
-                break;
-            case 1:
-                GM.SetPlayerNum(PhotonGameManager.PlayerNum.P1);
-                break;
-            case 2:
-                break;
-            case 3:
-                break;
-        }
-    }
-    #endregion
-
-    #region Turn Declaration
-    public void HandleTurnDeclaration(bool myTurn)
-    {
-        PV.RPC("DeclaredTurn", RpcTarget.Others, myTurn);
-    }
-
-    [PunRPC]
-    private void DeclaredTurn(bool myTurn)
-    {
-        GM.ToldSwitchTurn(myTurn);
-    }
-    #endregion
-
-    #region Debugging
-    public void SetAiDraft(bool set)
-    {
-        AiDraft = set;
-    }
-
-    public void SetAutoDraft(bool set)
-    {
-        AutoDraft = set;
-    }
-
-    public void DrawDraftCard(string draftDeck)
-    {
-        switch (draftDeck)
-        {
-            case "HeroReserve":
-                OnAiDraftCollected?.Invoke(HeroReserve[UnityEngine.Random.Range(0, HeroReserve.Count)]);
-                break;
-            case "AbilityDraft":
-                OnAiDraftCollected?.Invoke(AbilityDraft[UnityEngine.Random.Range(0, AbilityDraft.Count)]);
-                break;
-        }
-    }
-
-    public void StartDrawSpecificCard()
-    {
-        DisplayDraft(P1Deck);
-        SpecificDraw = true;
-    }
-
-    public void DrawSpecificCard(Card card)
-    {
-        DraftArea.gameObject.SetActive(false);
-        P1Hand.Add(card);
-        AddCardToHand(card);
-        P1Deck.Remove(card);
-    }
-    #endregion
-
-    #region Private Methods
     private void HandleTargetAccepted(CardData card, Card cardToUse)
     {
         Card.Type type = cardToUse.CardType;
@@ -540,6 +504,30 @@ public class CardDataBase : MonoBehaviour
         //RemoveCardFromHand(cardToUse);
         OnTargeting?.Invoke(cardToUse, false);
         GM.TurnCounterDecrement();
+    }
+
+    private void SetFeatToActiveAbility(Card card)
+    {
+        string name = card.Name;
+        switch (name)
+        {
+            case "ABSORB":
+                activeFeat = GM.gameObject.AddComponent<aAbsorb>();
+                GM.SetActiveAbility((Ability)activeFeat);
+                break;
+            case "DRAIN":
+                activeFeat = GM.gameObject.AddComponent<aDrain>();
+                GM.SetActiveAbility((Ability)activeFeat);
+                break;
+            case "PAY THE COST":
+                activeFeat = GM.gameObject.AddComponent<aPaytheCost>();
+                GM.SetActiveAbility((Ability)activeFeat);
+                break;
+            case "UNDER SEIGE":
+                activeFeat = GM.gameObject.AddComponent<aUnderSiege>();
+                GM.SetActiveAbility((Ability)activeFeat);
+                break;
+        }
     }
 
     #region HQ and Reserve
@@ -574,8 +562,6 @@ public class CardDataBase : MonoBehaviour
         {
             Debug.Log($"Reserves: {HeroReserve.Count}, HQ: {HQ.Count}");
         }
-
-
     }
 
     private void PopulateHQ()
@@ -615,11 +601,10 @@ public class CardDataBase : MonoBehaviour
             temp.Add("Null");
         }
 
-        PV.RPC("PopulatedHQ", RpcTarget.Others, temp.ToArray());
+        myManager.RPCRequest("PopulatedHQ", RpcTarget.Others, temp.ToArray());
     }
 
-    [PunRPC]
-    private void PopulatedHQ(string[] heros)
+    public void PopulatedHQ(string[] heros)
     {
         if (heros[0] != "None")
         {
@@ -686,11 +671,10 @@ public class CardDataBase : MonoBehaviour
             }
         }
 
-        PV.RPC("RemoveHQHero", RpcTarget.Others, card.Name);
+        myManager.RPCRequest("RemoveHQHero", RpcTarget.Others, card.Name);
     }
 
-    [PunRPC]
-    private void RemoveHQHero(string cardName)
+    public void RemoveHQHero(string cardName)
     {
         foreach (CardData data in HQHeros)
         {
@@ -704,8 +688,7 @@ public class CardDataBase : MonoBehaviour
         }
     }
 
-    [PunRPC]
-    private void RemoveHeroFromReserve(string hero)
+    public void RemoveHeroFromReserve(string hero)
     {
         foreach(Card card in HeroReserve)
         {
@@ -735,6 +718,71 @@ public class CardDataBase : MonoBehaviour
         
     }
 
+    private void CheckActiveCard()
+    {
+        int i = P1Hand.Count;
+        switch (i)
+        {
+            case 0:
+                CurrentActiveCard = null;
+                break;
+            case 1:
+                CurrentActiveCard = lHandData[0];
+                break;
+            case 2:
+                CurrentActiveCard = lHandData[1];
+                break;
+            case 3:
+                CurrentActiveCard = lHandData[1];
+                break;
+            case 4:
+                CurrentActiveCard = lHandData[3];
+                break;
+            case 5:
+                CurrentActiveCard = lHandData[3];
+                break;
+            default:
+                CurrentActiveCard = lHandData[5];
+                break;
+        }
+        if(i != 0)
+        GM.CheckHandZoomInEffect();
+    }
+
+    private void GetHandToShare()
+    {
+        List<string> names = new List<string>();
+        foreach(Card card in P1Hand)
+        {
+            names.Add(card.Name);
+        }
+        myManager.RPCRequest("ShareCardList", RpcTarget.Others, "P2Hand" ,names.ToArray());
+    }
+
+    private CardData FindCardOnField(string name)
+    {
+
+        foreach(CardData cd in P1Field)
+        {
+            if(cd.Name == name)
+            {
+                return cd;
+            }
+        }
+
+        foreach(CardData cd in P2Field)
+        {
+            if(cd.Name == name)
+            {
+                return cd;
+            }
+        }
+
+        Debug.Log($"Didn't find {name}");
+        return P1Field[0];
+    }
+
+    #region Drawing and Removing Cards
     private void DrawRandomCard(List<Card> whatDeck)
     {
         var picker = UnityEngine.Random.Range(0, whatDeck.Count - 1);
@@ -745,7 +793,7 @@ public class CardDataBase : MonoBehaviour
 
         if(whatDeck == HeroReserve)
         {
-            PV.RPC("RemoveHeroFromReserve", RpcTarget.Others, pickedCard.Name);
+            myManager.RPCRequest("RemoveHeroFromReserve", RpcTarget.Others, pickedCard.Name);
             if (HeroReserve.Count == 0)
             {
                 ReserveButton.interactable = false;
@@ -799,22 +847,23 @@ public class CardDataBase : MonoBehaviour
         handSize = P1Hand.Count;
         GM.PassiveActivate(Ability.PassiveType.HandCardAdjustment);
     }
+    #endregion
 
+    #region Force Discard
     private void HandleCardForceDiscard(string who, string type, int amount)
     {
         switch (who)
         {
             case "All":
-                PV.RPC("ForceDiscard", RpcTarget.All, type, amount);
+                myManager.RPCRequest("ForceDiscard", RpcTarget.All, type, amount);
                 break;
             case "Target":
-                PV.RPC("ForceDiscard", RpcTarget.Others, type, amount);
+                myManager.RPCRequest("ForceDiscard", RpcTarget.Others, type, amount);
                 break;
         }
     }
 
-    [PunRPC]
-    private void ForceDiscard(string type, int amount)
+    public void ForceDiscard(string type, int amount)
     {
         switch (type)
         {
@@ -834,15 +883,16 @@ public class CardDataBase : MonoBehaviour
                 break;
         }
     }
+    #endregion
 
+    #region Card Adjustment
     private void HandleCardAdjustment(CardData cardToAdjust, string category, int newValue)
     {
         //could also set it to specific player
-        PV.RPC("CardAdjustment", RpcTarget.OthersBuffered, cardToAdjust.Name, category, newValue);
+        myManager.RPCRequest("CardAdjustment", RpcTarget.OthersBuffered, cardToAdjust.Name, category, newValue);
     }
 
-    [PunRPC]
-    private void CardAdjustment(string name, string category, int newValue)
+    public void CardAdjustment(string name, string category, int newValue)
     {
         //P2Field could be set to a specified player
         bool found = false;
@@ -887,48 +937,9 @@ public class CardDataBase : MonoBehaviour
             //Debug.Log("I found the Hero Card and adjusted it's values.");
         }
     }
+    #endregion
 
-    private void CheckActiveCard()
-    {
-        int i = P1Hand.Count;
-        switch (i)
-        {
-            case 0:
-                CurrentActiveCard = null;
-                break;
-            case 1:
-                CurrentActiveCard = lHandData[0];
-                break;
-            case 2:
-                CurrentActiveCard = lHandData[1];
-                break;
-            case 3:
-                CurrentActiveCard = lHandData[1];
-                break;
-            case 4:
-                CurrentActiveCard = lHandData[3];
-                break;
-            case 5:
-                CurrentActiveCard = lHandData[3];
-                break;
-            default:
-                CurrentActiveCard = lHandData[5];
-                break;
-        }
-        if(i != 0)
-        GM.CheckHandZoomInEffect();
-    }
-
-    private void GetHandToShare()
-    {
-        List<string> names = new List<string>();
-        foreach(Card card in P1Hand)
-        {
-            names.Add(card.Name);
-        }
-        PV.RPC("ShareCardList", RpcTarget.Others, "P2Hand" ,names.ToArray());
-    }
-
+    #region Card Destroyed
     private void HandleCharacterDestroyed(CardData card)
     {
         cardAbilitiesOnField.Remove(card.charAbility);
@@ -952,11 +963,10 @@ public class CardDataBase : MonoBehaviour
 
         herosFatigued--;
         GM.PassiveActivate(Ability.PassiveType.CharacterDestroyed);
-        PV.RPC("FieldCardDestroy", RpcTarget.Others, card.Name, loc);
+        myManager.RPCRequest("FieldCardDestroy", RpcTarget.Others, card.Name, loc);
     }
 
-    [PunRPC]
-    private void FieldCardDestroy(string name, string location)
+    public void FieldCardDestroy(string name, string location)
     {
         switch (location)
         {
@@ -966,7 +976,9 @@ public class CardDataBase : MonoBehaviour
                     if(card.Name == name)
                     {
                         P2Field.Remove(card);
-                        Destroy(card.gameObject);
+                        P2Discard.Add(card.myCard);
+                        card.gameObject.SetActive(false);//delaying card destroy to carry abilities
+                        Destroy(card.gameObject, 10f);
                         break;
                     }
                 }
@@ -977,7 +989,9 @@ public class CardDataBase : MonoBehaviour
                     if (card.Name == name)
                     {
                         P1Field.Remove(card);
-                        Destroy(card.gameObject);
+                        P1Discard.Add(card.myCard);
+                        card.gameObject.SetActive(false);//delaying card destroy to carry abilities
+                        Destroy(card.gameObject, 10f);
                         break;
                     }
                 }
@@ -985,7 +999,9 @@ public class CardDataBase : MonoBehaviour
         }
         herosFatigued--;
     }
+    #endregion
 
+    #region Alter Card Exhaust State
     private void HandleCardExhaustState(CardData card, bool exhaust)
     {
         string loc = "";
@@ -1005,11 +1021,10 @@ public class CardDataBase : MonoBehaviour
         }
         Debug.Log($"Heros currently Fatigued: {herosFatigued}");
 
-        PV.RPC("ExhaustStateAdjust", RpcTarget.Others, card.Name, loc, exhaust);
+        myManager.RPCRequest("ExhaustStateAdjust", RpcTarget.Others, card.Name, loc, exhaust);
     }
 
-    [PunRPC]
-    private void ExhaustStateAdjust(string name, string location, bool state)
+    public void ExhaustStateAdjust(string name, string location, bool state)
     {
         switch (location)
         {
@@ -1051,17 +1066,18 @@ public class CardDataBase : MonoBehaviour
                 break;
         }
     }
+    #endregion
 
+    #region Reveal Target Hand and Remove Non-Heros Ability
     private void HandleRevealTargetHandAndRemoveNonHeros()
     {
         ClearDraft();
         cardListToDisplay = P2Hand;
         StartCoroutine(DisplayExtraDraft());
-        PV.RPC("RemoveAllNonHerosFromHand", RpcTarget.Others, "P1Hand");
+        myManager.RPCRequest("RemoveAllNonHerosFromHand", RpcTarget.Others, "P1Hand");
     }
 
-    [PunRPC]
-    private void RemoveAllNonHerosFromHand(string hand)
+    public void RemoveAllNonHerosFromHand(string hand)
     {
         List<Card> removeList = new List<Card>();
 
@@ -1080,9 +1096,12 @@ public class CardDataBase : MonoBehaviour
     }
     #endregion
 
+    #endregion
+
     #region Spawn Character, Ability, Enhancement Functions
-    [PunRPC]
-    private void SpawnCharacterToOpponentField(string heroToSpawn)
+
+    #region Spawn Character to Field
+    public void SpawnCharacterToOpponentField(string heroToSpawn)
     {
         foreach(Card card in Heros)
         {
@@ -1104,7 +1123,9 @@ public class CardDataBase : MonoBehaviour
         data.CardOverride(card, CardData.FieldPlacement.Mine);
         P1Field.Add(data);
     }
+    #endregion
 
+    #region Ability Spawning
     private void SpawnAbility(string AbilityName, CardData cardToAttachTo, bool told)
     {
         Debug.Log($"Spawning {AbilityName} on {cardToAttachTo}.");
@@ -1196,17 +1217,26 @@ public class CardDataBase : MonoBehaviour
         }
         if (!told)
         {
-            PV.RPC("AttachAbility", RpcTarget.OthersBuffered, AbilityName, cardToAttachTo.Name);
+            myManager.RPCRequest("AttachAbility", RpcTarget.OthersBuffered, AbilityName, cardToAttachTo.Name);
         }
     }
 
-    [PunRPC]
-    private void AttachAbility(string abilityName, string cardName)
+    public void AttachAbility(string abilityName, string cardName)
     {
         Debug.Log($"I was told to attach {abilityName} to {cardName}");
 
         CardData card = FindCardOnField(cardName);
         SpawnAbility(abilityName, card, true);
+    }
+
+    private void HandleAbilitiesGiven(List<Ability> abilities, CardData card)
+    {
+        List<string> abilityNames = new List<string>();
+
+        foreach(Ability a in abilities)
+        {
+            myManager.RPCRequest("AttachAbility", RpcTarget.Others, a.Name, card.Name);
+        }
     }
 
     private void HandleAddAbilityToList(Ability ability)
@@ -1224,7 +1254,9 @@ public class CardDataBase : MonoBehaviour
 
         }
     }
+    #endregion
 
+    #region Strip Enhancements
     private void StripAllEnhancementsOnSideOfField(string side)
     {
         if(side == "P2Field")
@@ -1246,26 +1278,28 @@ public class CardDataBase : MonoBehaviour
 
     private void HandleEnhancementsStripped(CardData card)
     {
-        PV.RPC("StripEnhancements", RpcTarget.Others, card.Name);
+        myManager.RPCRequest("StripEnhancements", RpcTarget.Others, card.Name);
     }
 
-    [PunRPC]
-    private void StripEnhancements(string name)
+    public void StripEnhancements(string name)
     {
         FindCardOnField(name).StripEnhancements(true);
     }
+    #endregion
 
+    #region Strip Abilities
     private void HandleAbilityStripped(CardData card)
     {
-        PV.RPC("StripAbilities", RpcTarget.Others, card.Name);
+        myManager.RPCRequest("StripAbilities", RpcTarget.Others, card.Name);
     }
 
-    [PunRPC]
-    private void StripAbilities(string name)
+    public void StripAbilities(string name)
     {
         FindCardOnField(name).StripAbilities(true);
     }
+    #endregion
 
+    #region Gain Enhancements
     private void HandleEnhancementsGiven(List<Enhancement> enhancements, CardData card)
     {
         //need to give enhancements to a card over cloud
@@ -1282,21 +1316,20 @@ public class CardDataBase : MonoBehaviour
 
         if(enhancementNums.Count > 1)
         {
-            PV.RPC("GiveEnhancements", RpcTarget.Others, enhancementNums, card.Name);
+            myManager.RPCRequest("GiveEnhancements", RpcTarget.Others, enhancementNums, card.Name);
         }else if(enhancementNums.Count == 1)
         {
             if(enhancementNums[0][0] > 0)
             {
-                PV.RPC("CardAdjustment", RpcTarget.Others, card.Name, "Attack", enhancementNums[0][0]);
+                myManager.RPCRequest("CardAdjustment", RpcTarget.Others, card.Name, "Attack", enhancementNums[0][0]);
                 return;
             }
 
-            PV.RPC("CardAdjustment", RpcTarget.Others, card.Name, "Defense", enhancementNums[0][1]);
+            myManager.RPCRequest("CardAdjustment", RpcTarget.Others, card.Name, "Defense", enhancementNums[0][1]);
         }
     }
 
-    [PunRPC]
-    private void GiveEnhancements(List<int[]> enhancements, string name)
+    public void GiveEnhancements(List<int[]> enhancements, string name)
     {
         CardData card = FindCardOnField(name);
         List<Enhancement> en = new List<Enhancement>();
@@ -1308,39 +1341,7 @@ public class CardDataBase : MonoBehaviour
 
         card.GainEnhancements(en, true);
     }
-
-    private void HandleAbilitiesGiven(List<Ability> abilities, CardData card)
-    {
-        List<string> abilityNames = new List<string>();
-
-        foreach(Ability a in abilities)
-        {
-            PV.RPC("AttachAbility", RpcTarget.Others, a.Name, card.Name);
-        }
-    }
-
-    private CardData FindCardOnField(string name)
-    {
-
-        foreach(CardData cd in P1Field)
-        {
-            if(cd.Name == name)
-            {
-                return cd;
-            }
-        }
-
-        foreach(CardData cd in P2Field)
-        {
-            if(cd.Name == name)
-            {
-                return cd;
-            }
-        }
-
-        Debug.Log($"Didn't find {name}");
-        return P1Field[0];
-    }
+    #endregion
 
     private Enhancement ConvertEnhancementIntArrayToEnhancement(int[] array)
     {
@@ -1351,154 +1352,22 @@ public class CardDataBase : MonoBehaviour
 
         return enhancement;
     }
+
     #endregion
 
-    #region Base Controls
-    private void HandleBaseExhaust(PlayerBase player)
-    {
-        if (player.type == PlayerBase.Type.Player)
-        {
-            PV.RPC("ExhaustABase", RpcTarget.Others, "Opponent");
-        }
-        else if (player.type == PlayerBase.Type.Opponent)
-        {
-            PV.RPC("ExhaustABase", RpcTarget.Others, "Player");
-        }
-    }
-
-    [PunRPC]
-    private void ExhaustABase(string player)
-    {
-        switch (player)
-        {
-            case "Player":
-                GM.OnBaseExhausted(PlayerBase.Type.Player);
-                break;
-            case "Opponent":
-                GM.OnBaseExhausted(PlayerBase.Type.Opponent);
-                break;
-        }
-    }
-
-    private void HandleBaseDestroyed(PlayerBase player)
-    {
-        if (player.type == PlayerBase.Type.Player)
-        {
-            PV.RPC("DestroyABase", RpcTarget.Others, "Opponent");
-            GM.OnBaseDestroyed(player.type);
-        }else if(player.type == PlayerBase.Type.Opponent)
-        {
-            PV.RPC("DestroyABase", RpcTarget.Others, "Player");
-            GM.OnBaseDestroyed(player.type);
-        }
-    }
-
-    [PunRPC]
-    private void DestroyABase(string player)
-    {
-        switch (player)
-        {
-            case "Player":
-                GM.OnBaseDestroyed(PlayerBase.Type.Player);
-                break;
-            case "Opponent":
-                GM.OnBaseDestroyed(PlayerBase.Type.Opponent);
-                break;
-        }
-    }
     #endregion
 
-    private void SetFeatToActiveAbility(Card card)
-    {
-        string name = card.Name;
-        switch (name)
-        {
-            case "ABSORB":
-                activeFeat = GM.gameObject.AddComponent<aAbsorb>();
-                GM.SetActiveAbility((Ability)activeFeat);
-                break;
-            case "DRAIN":
-                activeFeat = GM.gameObject.AddComponent<aDrain>();
-                GM.SetActiveAbility((Ability)activeFeat);
-                break;
-            case "PAY THE COST":
-                activeFeat = GM.gameObject.AddComponent<aPaytheCost>();
-                GM.SetActiveAbility((Ability)activeFeat);
-                break;
-            case "UNDER SEIGE":
-                activeFeat = GM.gameObject.AddComponent<aUnderSiege>();
-                GM.SetActiveAbility((Ability)activeFeat);
-                break;
-        }
-    }
+    #region Outsource Methods
 
-    private void HandleHoldTurnOff()
-    {
-        PV.RPC("HandleTurnOffTurnHold", RpcTarget.All, true);
-        GM.PhaseChange(PhotonGameManager.GamePhase.Wait);
-    }
-
-    [PunRPC]
-    private void HandleTurnOffTurnHold(bool turnOff)
-    {
-        GM.HandleHoldTurn(false);
-        GM.PhaseChange(PhotonGameManager.GamePhase.Overcome);
-    }
-    #endregion
-
-    #region Public Methods
-    public void SilenceAbilityToField(PhotonGameManager.PlayerNum player, int turns)
-    {
-        switch (player)
-        {
-            case PhotonGameManager.PlayerNum.P1:
-                PV.RPC("SilenceAbilityToFieldCall", RpcTarget.Others, "P1", turns);
-                break;
-            case PhotonGameManager.PlayerNum.P2:
-                PV.RPC("SilenceAbilityToFieldCall", RpcTarget.Others, "P2", turns);
-                break;
-            case PhotonGameManager.PlayerNum.P3:
-                PV.RPC("SilenceAbilityToFieldCall", RpcTarget.Others, "P3", turns);
-                break;
-            case PhotonGameManager.PlayerNum.P4:
-                PV.RPC("SilenceAbilityToFieldCall", RpcTarget.Others, "P4", turns);
-                break;
-        }
-    }
-
-    [PunRPC]
-    private void SilenceAbilityToFieldCall(string name, int turns)
-    {
-        PhotonGameManager.PlayerNum num = PhotonGameManager.PlayerNum.P1;
-        switch (name)
-        {
-            case "P1":
-                num = PhotonGameManager.PlayerNum.P1;
-                break;
-            case "P2":
-                num = PhotonGameManager.PlayerNum.P2;
-                break;
-            case "P3":
-                num = PhotonGameManager.PlayerNum.P3;
-                break;
-            case "P4":
-                num = PhotonGameManager.PlayerNum.P4;
-                break;
-        }
-        if(PhotonGameManager.player == num)
-        {
-            GM.SilenceAbilityToField(turns);
-        }
-    }
-
+    #region Ability Handover
     public void AbilityHandover(Ability ability)
     {
-        GM.PhaseChange(PhotonGameManager.GamePhase.Wait);
-        PV.RPC("HandleAbilityHandOver", RpcTarget.Others, ability.Name);
+        Debug.Log($"Handing over control of {ability.Name} to opponent");
+        GM.PhaseChange(Referee.GamePhase.Wait);
+        myManager.RPCRequest("HandleAbilityHandOver", RpcTarget.Others, ability.Name);
     }
 
-    [PunRPC]
-    private void HandleAbilityHandOver(string nameOfAbilityToGiveControl)
+    public void HandleAbilityHandOver(string nameOfAbilityToGiveControl)
     {
         Ability ability = heroAbilitiesOnField[0];
         bool found = false;
@@ -1526,61 +1395,146 @@ public class CardDataBase : MonoBehaviour
         }
 
         GM.SetActiveAbility(ability);
-        GM.PhaseChange(PhotonGameManager.GamePhase.TurnResponse);
+        GM.PhaseChange(Referee.GamePhase.TurnResponse);
         GM.PopUpUpdater($"{ability.Name} ability activated.");
     }
-
-    public void SendPreviousAttackersAndDefender(List<CardData> attackers, CardData defender)
+    #endregion
+    
+    #region Ability Silence
+    private void HandleAbilityToFieldSilence()
     {
-        List<string> aNames = new List<string>();
-
-        foreach(CardData card in attackers)
+        if (Referee.player == Referee.PlayerNum.P1)
         {
-            aNames.Add(card.Name);
+            SilenceAbilityToField(Referee.PlayerNum.P2, 1);
+            return;
         }
-
-        if(defender != null)
-        {
-            Debug.Log($"Defender was {defender.Name}");
-            aNames.Add(defender.Name);
-        }
-        else
-        {
-            Debug.Log("Defender was NULL");
-            aNames.Add("NULL");
-        }
-
-        PV.RPC("HandlePreviousAttackersAndDefender", RpcTarget.Others, aNames.ToArray());
+        SilenceAbilityToField(Referee.PlayerNum.P1, 1);
     }
 
-    [PunRPC]
-    private void HandlePreviousAttackersAndDefender(string[] names)
+    public void SilenceAbilityToField(Referee.PlayerNum player, int turns)
     {
-        //Debug.Log("Made it into the server HandlePreviousAttackersAndDefender.");
-        List<CardData> cards = new List<CardData>();
-
-        foreach(CardData data in P2Field)
+        switch (player)
         {
-            if (names.Contains(data.Name))
-            {
-                cards.Add(data);
-            }
+            case Referee.PlayerNum.P1:
+                myManager.RPCRequest("SilenceAbilityToFieldCall", RpcTarget.Others, "P1", turns);
+                break;
+            case Referee.PlayerNum.P2:
+                myManager.RPCRequest("SilenceAbilityToFieldCall", RpcTarget.Others, "P2", turns);
+                break;
+            case Referee.PlayerNum.P3:
+                myManager.RPCRequest("SilenceAbilityToFieldCall", RpcTarget.Others, "P3", turns);
+                break;
+            case Referee.PlayerNum.P4:
+                myManager.RPCRequest("SilenceAbilityToFieldCall", RpcTarget.Others, "P4", turns);
+                break;
         }
-        PhotonGameManager.PreviousAttackers = cards;
+    }
 
-        if(names[names.Length-1] != "NULL")
+    public void SilenceAbilityToFieldCall(string name, int turns)
+    {
+        Referee.PlayerNum num = Referee.PlayerNum.P1;
+        switch (name)
         {
-            foreach(CardData data in P1Field)
-            {
-                if(data.Name == names[names.Length - 1])
+            case "P1":
+                num = Referee.PlayerNum.P1;
+                break;
+            case "P2":
+                num = Referee.PlayerNum.P2;
+                break;
+            case "P3":
+                num = Referee.PlayerNum.P3;
+                break;
+            case "P4":
+                num = Referee.PlayerNum.P4;
+                break;
+        }
+        if(Referee.player == num)
+        {
+            GM.SilenceAbilityToField(turns);
+        }
+    }
+    #endregion
+
+    #region Card Actions
+    public void PlayCard(Card card)
+    {
+        //Card should be determined based on type how it will be played.
+        switch (card.CardType)
+        {
+            case Card.Type.Ability:
+                //Target a Character
+                //Update characters
+                if (!GM.canPlayAbilitiesToFieldCheck())
                 {
-                    PhotonGameManager.PreviousDefender = data;
-                    break;
+                    return;
                 }
-            }
+                OnTargeting?.Invoke(card, true);
+                bTargeting = true;
+                break;
+            case Card.Type.Character:
+                //Place Character on the field
+                //Spawn a Character on the field
+                SpawnCharacterToMyField(card);
+                myManager.RPCRequest("SpawnCharacterToOpponentField", RpcTarget.OthersBuffered, card.Name);
+                GM.TurnCounterDecrement();
+                break;
+            case Card.Type.Enhancement:
+                //Target a Character
+                //Update character
+                OnTargeting?.Invoke(card, true);
+                bTargeting = true;
+                break;
+            case Card.Type.Feat:
+                SetFeatToActiveAbility(card);
+                //GM.ToldSwitchTurn(false);
+                //HandleTurnDeclaration(true);
+                break;
+        }
+        RemoveCardFromHand(card);
+    }
+    
+    public void HandleCardCollected(Card card, Referee.GamePhase phase)
+    {
+        switch (phase)
+        {
+            case Referee.GamePhase.HeroDraft:
+                P1Hand.Add(card);
+                AddCardToHand(card);
+                HeroReserve.Remove(card);
+                myManager.RPCRequest("RemoveDraftOption", RpcTarget.All, card.Name);
+                break;
+            case Referee.GamePhase.AbilityDraft:
+                P1Deck.Add(card);
+                UpdateHandSlider();
+                AbilityDraft.Remove(card);
+                myManager.RPCRequest("RemoveDraftOption", RpcTarget.All, card.Name);
+                break;
+            case Referee.GamePhase.Recruit:
+                P1Hand.Add(card);
+                AddCardToHand(card);
+                RemoveHQCard(card);
+                GM.PassiveActivate(Ability.PassiveType.HeroRecruited);
+                break;
         }
     }
 
+    public void HandCardOffset(System.Single offset)
+    {
+        int o = (int)Math.Floor(offset);
+        for(int i = 0; i < lHandData.Count; i++)
+        {
+            int j = o+i;
+            if(j >= P1Hand.Count)
+            {
+                j -= P1Hand.Count;
+            }
+            lHandData[i].CardOverride(P1Hand[j], CardData.FieldPlacement.Hand);
+        }
+        CheckActiveCard();
+    }
+    #endregion
+
+    #region Card Checks
     public bool CheckIfMyCard(CardData card)
     {
         bool isMyCard = P1Field.Contains(card);
@@ -1645,78 +1599,6 @@ public class CardDataBase : MonoBehaviour
         return haveCard;
     }
 
-    public void HandCardOffset(System.Single offset)
-    {
-        int o = (int)Math.Floor(offset);
-        for(int i = 0; i < lHandData.Count; i++)
-        {
-            int j = o+i;
-            if(j >= P1Hand.Count)
-            {
-                j -= P1Hand.Count;
-            }
-            lHandData[i].CardOverride(P1Hand[j], CardData.FieldPlacement.Hand);
-        }
-        CheckActiveCard();
-    }
-
-    public void PlayCard(Card card)
-    {
-        //Card should be determined based on type how it will be played.
-        switch (card.CardType)
-        {
-            case Card.Type.Ability:
-                //Target a Character
-                //Update characters
-                if (!GM.canPlayAbilitiesToFieldCheck())
-                {
-                    return;
-                }
-                OnTargeting?.Invoke(card, true);
-                bTargeting = true;
-                break;
-            case Card.Type.Character:
-                //Place Character on the field
-                //Spawn a Character on the field
-                SpawnCharacterToMyField(card);
-                PV.RPC("SpawnCharacterToOpponentField", RpcTarget.OthersBuffered, card.Name);
-                GM.TurnCounterDecrement();
-                break;
-            case Card.Type.Enhancement:
-                //Target a Character
-                //Update character
-                OnTargeting?.Invoke(card, true);
-                bTargeting = true;
-                break;
-            case Card.Type.Feat:
-                SetFeatToActiveAbility(card);
-                //GM.ToldSwitchTurn(false);
-                //HandleTurnDeclaration(true);
-                break;
-        }
-        RemoveCardFromHand(card);
-    }
-
-    public void DrawCard(CardDecks Deck)
-    {
-        switch (Deck)
-        {
-            case CardDecks.P1Deck:
-                DrawRandomCard(P1Deck);
-                break;
-        }
-    }
-
-    public void DrawReserveCard()
-    {
-        if(PhotonGameManager.myTurn && PhotonGameManager.myPhase == PhotonGameManager.GamePhase.Recruit)
-        {
-            DrawRandomCard(HeroReserve);
-            GM.PassiveActivate(Ability.PassiveType.HeroRecruited);
-            GM.TurnCounterDecrement();
-        }
-    }
-
     public int CardsRemaining(CardDecks Deck)
     {
         int i = 0;
@@ -1743,31 +1625,82 @@ public class CardDataBase : MonoBehaviour
         }
         return i;
     }
-
-    public void HandleCardCollected(Card card, PhotonGameManager.GamePhase phase)
+    #endregion
+    
+    #region Drawing Cards
+    public void DrawCard(CardDecks Deck)
     {
-        switch (phase)
+        switch (Deck)
         {
-            case PhotonGameManager.GamePhase.HeroDraft:
-                P1Hand.Add(card);
-                AddCardToHand(card);
-                HeroReserve.Remove(card);
-                PV.RPC("RemoveDraftOption", RpcTarget.All, card.Name);
-                break;
-            case PhotonGameManager.GamePhase.AbilityDraft:
-                P1Deck.Add(card);
-                UpdateHandSlider();
-                AbilityDraft.Remove(card);
-                PV.RPC("RemoveDraftOption", RpcTarget.All, card.Name);
-                break;
-            case PhotonGameManager.GamePhase.Recruit:
-                P1Hand.Add(card);
-                AddCardToHand(card);
-                RemoveHQCard(card);
-                GM.PassiveActivate(Ability.PassiveType.HeroRecruited);
+            case CardDecks.P1Deck:
+                DrawRandomCard(P1Deck);
                 break;
         }
     }
+
+    public void DrawReserveCard()
+    {
+        if(Referee.myTurn && Referee.myPhase == Referee.GamePhase.Recruit)
+        {
+            DrawRandomCard(HeroReserve);
+            GM.PassiveActivate(Ability.PassiveType.HeroRecruited);
+            GM.TurnCounterDecrement();
+        }
+    }
+    #endregion
+
+    #region Send Previous Attackers and Defender
+    public void SendPreviousAttackersAndDefender(List<CardData> attackers, CardData defender)
+    {
+        List<string> aNames = new List<string>();
+
+        foreach(CardData card in attackers)
+        {
+            aNames.Add(card.Name);
+        }
+
+        if(defender != null)
+        {
+            Debug.Log($"Defender was {defender.Name}");
+            aNames.Add(defender.Name);
+        }
+        else
+        {
+            Debug.Log("Defender was NULL");
+            aNames.Add("NULL");
+        }
+
+        myManager.RPCRequest("HandlePreviousAttackersAndDefender", RpcTarget.Others, aNames.ToArray());
+    }
+
+    public void HandlePreviousAttackersAndDefender(string[] names)
+    {
+        //Debug.Log("Made it into the server HandlePreviousAttackersAndDefender.");
+        List<CardData> cards = new List<CardData>();
+
+        foreach(CardData data in P2Field)
+        {
+            if (names.Contains(data.Name))
+            {
+                cards.Add(data);
+            }
+        }
+        Referee.PreviousAttackers = cards;
+
+        if(names[names.Length-1] != "NULL")
+        {
+            foreach(CardData data in P1Field)
+            {
+                if(data.Name == names[names.Length - 1])
+                {
+                    Referee.PreviousDefender = data;
+                    break;
+                }
+            }
+        }
+    }
+    #endregion
+
     #endregion
 
     #region IEnumerators
@@ -1778,7 +1711,7 @@ public class CardDataBase : MonoBehaviour
         yield return new WaitForSeconds(5f);
         DraftArea.gameObject.SetActive(false);
         GM.ToldSwitchTurn(false);
-        HandleTurnDeclaration(true);
+        myManager.RPCRequest("DeclaredTurn", RpcTarget.Others, true);
     }
     #endregion
 }
