@@ -17472,6 +17472,11 @@ PrefabInstance:
       propertyPath: bDrawEnhancementCards
       value: 
       objectReference: {fileID: 231511302}
+    - target: {fileID: 1429444459656308942, guid: c37408237509d3247850a853e4df00a5,
+        type: 3}
+      propertyPath: btEndTurn
+      value: 
+      objectReference: {fileID: 9175484302207531335}
     - target: {fileID: 3568359947860690515, guid: c37408237509d3247850a853e4df00a5,
         type: 3}
       propertyPath: m_LocalPosition.x
