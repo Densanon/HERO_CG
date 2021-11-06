@@ -466,16 +466,20 @@ public class CardDataBase : MonoBehaviour
 
     public void EndAbilityDraft(bool told)
     {
+        Debug.Log("Initializing the End of the Ability Draft.");
         if (Referee.player == Referee.PlayerNum.P1)
         {
             GM.SetTurnGauge(9);
-            GM.PhaseChange(Referee.GamePhase.HEROSelect);
+            Debug.Log("Setting first player to Pre - Selection.");
+            GM.PhaseChange(Referee.GamePhase.PreSelection);
             FillHQ();
         }
         else
         {
             GM.SetTurnGauge(8);
+            Debug.Log("Setting second player to wait.");
             GM.PhaseChange(Referee.GamePhase.Wait);
+            GM.SetDeckNumberAmounts();
         }
     }
     #endregion
@@ -503,7 +507,7 @@ public class CardDataBase : MonoBehaviour
         }
         //RemoveCardFromHand(cardToUse);
         OnTargeting?.Invoke(cardToUse, false);
-        GM.TurnCounterDecrement();
+        //GM.TurnCounterDecrement();
     }
 
     private void SetFeatToActiveAbility(Card card)
@@ -1476,7 +1480,7 @@ public class CardDataBase : MonoBehaviour
                 //Spawn a Character on the field
                 SpawnCharacterToMyField(card);
                 myManager.RPCRequest("SpawnCharacterToOpponentField", RpcTarget.OthersBuffered, card.Name);
-                GM.TurnCounterDecrement();
+                //GM.TurnCounterDecrement();
                 break;
             case Card.Type.Enhancement:
                 //Target a Character
@@ -1645,6 +1649,10 @@ public class CardDataBase : MonoBehaviour
             DrawRandomCard(HeroReserve);
             GM.PassiveActivate(Ability.PassiveType.HeroRecruited);
             GM.TurnCounterDecrement();
+            if(GM.GetTurnCounter() == 0)
+            {
+                ReserveButton.interactable = false;
+            }
         }
     }
     #endregion

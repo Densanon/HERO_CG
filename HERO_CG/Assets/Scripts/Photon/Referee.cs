@@ -8,7 +8,7 @@ using Photon.Pun;
 
 public class Referee : MonoBehaviour
 {
-    public enum GamePhase { HeroDraft, AbilityDraft, HEROSelect, Heal, Enhance, Recruit, Overcome, Feat, TurnResponse, Wait}
+    public enum GamePhase { HeroDraft, AbilityDraft, PreSelection, HEROSelect, Heal, Enhance, Recruit, Overcome, Feat, TurnResponse, Wait}
     public static GamePhase myPhase = GamePhase.HeroDraft;
     public static GamePhase prevPhase = GamePhase.Wait;
     public enum PlayerNum { P1, P2, P3, P4}
@@ -17,7 +17,7 @@ public class Referee : MonoBehaviour
     public CardDataBase CB;
     public PhotonInGameManager myManager;
 
-    public TMP_Text TurnActionIndicator;
+    //public TMP_Text TurnActionIndicator;
     public TMP_Text TurnIndicator;
     public TMP_Text PhaseIndicator;
 
@@ -26,7 +26,10 @@ public class Referee : MonoBehaviour
     public GameObject pAbilityPrefab;
     public Transform tAbilityContainer;
     List<GameObject> gAbilities = new List<GameObject>();
-    public GameObject gCardCollect;
+    //public GameObject gCardCollect;
+    public TMP_Text tCardsToCollectReserve;
+    public TMP_Text tCardsToDrawMyDeck;
+    public int iEnhanceCardsToCollect;
     public GameObject gCardSelect;
     public GameObject gCardPlay;
 
@@ -41,10 +44,8 @@ public class Referee : MonoBehaviour
     public Button bHEROSelectRectruit;
     public Button bHEROSelectOvercome;
     public Button bHEROSelectFeat;
-    public GameObject gCardCountCollect;
-    public Button bCardCount1;
-    public Button bCardCount2;
-    public Button bCardCount3;
+    public Button bDrawEnhancementCards;
+    public GameObject gTurnOnHeroSelection;
 
     public GameObject EndUI;
     public TMP_Text EndText;
@@ -128,7 +129,9 @@ public class Referee : MonoBehaviour
     {
         PhaseIndicator.text = "Hero Draft";
         tOpponentHandCount.text = "0";
-        TurnActionIndicator.text = "1";
+        tCardsToCollectReserve.text = "";
+        tCardsToDrawMyDeck.text = "";
+        bDrawEnhancementCards.interactable = false;
         if (myManager.IsMasterClient())
         {
             var turnStart = UnityEngine.Random.Range(0, 2);
@@ -200,7 +203,6 @@ public class Referee : MonoBehaviour
         {
             return;
         }
-        //Debug.Log($"PhotonGameManager calling {passiveType}");
         OnPassiveActivate?.Invoke(passiveType);
     }
 
@@ -309,16 +311,29 @@ public class Referee : MonoBehaviour
     public void TurnCounterDecrement()
     {
         iTurnCounter--;
-        TurnActionIndicator.text = $"Actions Remaining: {iTurnCounter}";
-        if(iTurnCounter == 0)
+        //TurnActionIndicator.text = $"Actions Remaining: {iTurnCounter}";
+        if (iTurnCounter > 0)
         {
-            if(myPhase == GamePhase.Recruit)
+            if (myPhase == GamePhase.Recruit)
+            {
+                tCardsToCollectReserve.text = $"{iTurnCounter}/{CB.CardsRemaining(CardDataBase.CardDecks.Reserve)}";
+            }
+            if (myPhase == GamePhase.Enhance)
+            {
+                tCardsToDrawMyDeck.text = $"{iTurnCounter}/{CB.CardsRemaining(CardDataBase.CardDecks.P1Deck)}";
+            }
+            /*if(myPhase == GamePhase.Recruit)
             {
                 CB.FillHQ();
             }
             PassiveActivate(Ability.PassiveType.ActionComplete);
                         StartCoroutine(EndturnDelay());
-            HandleTurnDeclaration(!myTurn);
+            HandleTurnDeclaration(!myTurn);*/
+        }
+        else
+        {
+            tCardsToCollectReserve.text = $"{CB.CardsRemaining(CardDataBase.CardDecks.Reserve)}";
+
         }
     }
 
@@ -341,8 +356,12 @@ public class Referee : MonoBehaviour
     public void EndTurn()
     {
         bEndTurn = true;
-                    StartCoroutine(EndturnDelay());
-        TurnActionIndicator.text = "0";
+        if (myPhase == GamePhase.Recruit)
+        {
+            CB.FillHQ();
+        }
+        StartCoroutine(EndturnDelay());
+        //TurnActionIndicator.text = "0";
     }
 
     public void ToldSwitchTurn(bool turn)
@@ -389,8 +408,14 @@ public class Referee : MonoBehaviour
         gHEROSelect.SetActive(true);
     }
 
+    public void ToHero()
+    {
+        PhaseChange(GamePhase.HEROSelect);
+    }
+
     public void PhaseChange(GamePhase phaseToChangeTo)
     {
+        Debug.Log($"{player}: Changing Phase to {phaseToChangeTo} from {myPhase}");
         if(myPhase == GamePhase.Overcome)
         {
             gOvercome.SetActive(false);
@@ -405,29 +430,65 @@ public class Referee : MonoBehaviour
     {
         switch (myPhase)
         {
+            case GamePhase.PreSelection:
+                //This is for actions that happen before selecting a turn action, like looking at your hand and the board
+                PhaseIndicator.text = "Pre Selection";
+                SetDeckNumberAmounts();
+                gTurnOnHeroSelection.SetActive(true);
+                break;
             case GamePhase.Heal:
                 //Select 1+ heros to be healed(any)
                 PhaseIndicator.text = "Heal";
                 gHEROSelect.SetActive(false);
-                TurnActionIndicator.text = $"Actions Remaining: ~";
                 StartCoroutine(PhaseDeclaration("Heal Heros"));
                 break;
             case GamePhase.Enhance:
                 //Ask quantity to draw
                 //Draw up to 3 cards from enhance deck
                 //Play up to 3 cards from your hand
+                StartCoroutine(PhaseDeclaration("Draw and Play Cards"));
                 PhaseIndicator.text = "Enhance";
                 gHEROSelect.SetActive(false);
-                DrawCardOption(3);
+                bDrawEnhancementCards.interactable = true;
+                //DrawCardOption(3);
                 iTurnCounter = 3;
-                TurnActionIndicator.text = $"Actions Remaining: {iTurnCounter}";
+                int temp = CB.CardsRemaining(CardDataBase.CardDecks.P1Deck);
+                switch (temp)
+                {
+                    case 0:
+                        tCardsToDrawMyDeck.text = $"0/0";
+                        break;
+                    case 1:
+                        tCardsToDrawMyDeck.text = $"1/1";
+                        break;
+                    case 2:
+                        tCardsToDrawMyDeck.text = $"2/2";
+                        break;
+                    default:
+                        tCardsToDrawMyDeck.text = $"3/{temp}";
+                        break;
+                }
+                //TurnActionIndicator.text = $"Actions Remaining: {iTurnCounter}";
                 break;
             case GamePhase.Recruit:
                 //pick up to 2 Heros either from Reserve or HQ
+                StartCoroutine(PhaseDeclaration("Recruit Heros"));
                 PhaseIndicator.text = "Recruit";
                 gHEROSelect.SetActive(false);
+                int temp1 = CB.CardsRemaining(CardDataBase.CardDecks.Reserve);
+                switch (temp1)
+                {
+                    case 0:
+                        tCardsToCollectReserve.text = $"0/0";
+                        break;
+                    case 1:
+                        tCardsToCollectReserve.text = $"1/1";
+                        break;
+                    default:
+                        tCardsToCollectReserve.text = $"2/{temp1}";
+                        break;
+                }
                 iTurnCounter = 2;
-                TurnActionIndicator.text = $"Actions Remaining: {iTurnCounter}";
                 break;
             case GamePhase.Overcome:
                 //Declare attacking hero(s) as a single attack, directed towards a single target
@@ -435,29 +496,26 @@ public class Referee : MonoBehaviour
                 //Calculate all defensive power from total hero & abilities
                 //Resolve, if defeated, place in discard, all attacking are exhausted
                 //Able to repeate
+                StartCoroutine(PhaseDeclaration("Select Heros to Battle"));
                 PhaseIndicator.text = "Overcome";
                 gHEROSelect.SetActive(false);
                 gOvercome.SetActive(true);
-                TurnActionIndicator.text = $"Actions Remaining: ~";
                 AttDef = true;
                 OnOvercomeTime?.Invoke(true);
                 break;
             case GamePhase.Feat:
                 PhaseIndicator.text = "Feat";
-                TurnActionIndicator.text = $"Actions Remaining: 0";
                 StartCoroutine(PhaseDeclaration("Pick Your Feat"));
                 gHEROSelect.SetActive(false);
                 //Resolve card
                 break;
             case GamePhase.TurnResponse:
+                StartCoroutine(PhaseDeclaration("Player Response"));
                 PhaseIndicator.text = "Turn Response";
-                gCardCollect.SetActive(true);
-                TurnActionIndicator.text = $"Actions Remaining: 0";
                 break;
             case GamePhase.Wait:
+                StartCoroutine(PhaseDeclaration("Wait for Opponent"));
                 PhaseIndicator.text = "Wait";
-                gCardCollect.SetActive(false);
-                TurnActionIndicator.text = $"Actions Remaining: ~";
                 break;
             case GamePhase.HEROSelect:
                 PhaseIndicator.text = "Hero Selection";
@@ -475,11 +533,9 @@ public class Referee : MonoBehaviour
                 break;
             case GamePhase.AbilityDraft:
                 PhaseIndicator.text = "Ability Draft";
-                TurnActionIndicator.text = $"Actions Remaining: ~";
                 break;
             case GamePhase.HeroDraft:
                 PhaseIndicator.text = "Hero Draft";
-                TurnActionIndicator.text = $"Actions Remaining: ~";
                 break;
         }
     }
@@ -506,11 +562,11 @@ public class Referee : MonoBehaviour
                 PhaseChange(GamePhase.Wait);
                 break;
             case GamePhase.TurnResponse:
-                PhaseChange(GamePhase.HEROSelect);
+                PhaseChange(GamePhase.Wait);
                 break;
             case GamePhase.Wait:
                 if(iTurnGauge >= 9)
-                PhaseChange(GamePhase.HEROSelect);
+                PhaseChange(GamePhase.PreSelection);
                 break;
         }
     }
@@ -521,7 +577,9 @@ public class Referee : MonoBehaviour
     #region Card Methods
     public void DrawCardOption(int amount)
     {
-        gCardCountCollect.SetActive(true);
+        //Need to figure out how to add the drawing options in there...
+
+        //gCardCountCollect.SetActive(true);
 
         int i = CB.CardsRemaining(CardDataBase.CardDecks.P1Deck);
         if (i < amount)
@@ -529,7 +587,7 @@ public class Referee : MonoBehaviour
             amount = i;
         }
 
-        switch (amount)
+        /*switch (amount)
         {
             case 0:
                 gCardCountCollect.SetActive(false);
@@ -549,20 +607,51 @@ public class Referee : MonoBehaviour
                 bCardCount2.interactable = true;
                 bCardCount3.interactable = true;
                 break;
-        }
+        }*/
+    }
+
+    public void SetDeckNumberAmounts()
+    {
+        tCardsToCollectReserve.text = $"{CB.CardsRemaining(CardDataBase.CardDecks.Reserve)}";
+        tCardsToDrawMyDeck.text = $"{CB.CardsRemaining(CardDataBase.CardDecks.P1Deck)}";
     }
 
     public void SetCardCollectAmount(int amount)
     {
+
+        for (int i = amount; i > 0; i--)
+        {
+            iEnhanceCardsToCollect--;
+            CB.DrawCard(CardDataBase.CardDecks.P1Deck);
+        }
+        Debug.Log($"Enhance cards to be collected: {iEnhanceCardsToCollect}");
+
+        if (iEnhanceCardsToCollect > 0)
+        {
+            tCardsToDrawMyDeck.text = $"{iEnhanceCardsToCollect}/{CB.CardsRemaining(CardDataBase.CardDecks.P1Deck)}";
+        }
+        else
+        {
+            Debug.Log("Ran out of cards to draw for the turn.");
+            tCardsToDrawMyDeck.text = $"{CB.CardsRemaining(CardDataBase.CardDecks.P1Deck)}";
+            bDrawEnhancementCards.interactable = false;
+        }
+            /*if (myPhase == GamePhase.Enhance)
+        {
+            StartCoroutine(PhaseDeclaration("Play Cards"));
+        }
+
+        if (amount == 0)
+        {
+            gCardCountCollect.SetActive(false);
+            return;
+        }
+
         for(int i = amount; i>0; i--)
         {
             CB.DrawCard(CardDataBase.CardDecks.P1Deck);
         }
-        if(myPhase == GamePhase.Enhance)
-        {
-            StartCoroutine(PhaseDeclaration("Play Cards"));
-        }
-        gCardCountCollect.SetActive(false);
+        gCardCountCollect.SetActive(false);*/
     }
 
     public void HandCardZoom()
@@ -615,7 +704,7 @@ public class Referee : MonoBehaviour
         }
         else
         {
-            if(iTurnCounter > 0)
+            /*if(iTurnCounter > 0)
             {
                 TurnCounterDecrement();
             }
@@ -623,7 +712,7 @@ public class Referee : MonoBehaviour
             {
                 PassiveActivate(Ability.PassiveType.ActionComplete);
                             StartCoroutine(EndturnDelay());
-            }
+            }*/
         }
     }
     #endregion
@@ -862,17 +951,17 @@ public class Referee : MonoBehaviour
                     break;
                 case GamePhase.AbilityDraft:
                     gCardSelect.SetActive(false);
-                    gCardCollect.SetActive(true);
+                    //gCardCollect.SetActive(true);
                     gCardPlay.SetActive(false);
                     break;
                 case GamePhase.HeroDraft:
                     gCardSelect.SetActive(false);
-                    gCardCollect.SetActive(true);
+                    //gCardCollect.SetActive(true);
                     gCardPlay.SetActive(false);
                     break;
                 case GamePhase.Heal:
                     gCardSelect.SetActive(true);
-                    gCardCollect.SetActive(false);
+                    //gCardCollect.SetActive(false);
                     gCardPlay.SetActive(false);
                     break;
                 case GamePhase.Enhance:
@@ -880,7 +969,7 @@ public class Referee : MonoBehaviour
                     {
                         case CardData.FieldPlacement.Hand:
                             gCardSelect.SetActive(false);
-                            gCardCollect.SetActive(false);
+                            //gCardCollect.SetActive(false);
                             gCardPlay.SetActive(true);
                             break;
                         case CardData.FieldPlacement.HQ:
@@ -902,7 +991,7 @@ public class Referee : MonoBehaviour
                             break;
                         case CardData.FieldPlacement.HQ:
                             gCardSelect.SetActive(false);
-                            gCardCollect.SetActive(true);
+                            //gCardCollect.SetActive(true);
                             gCardPlay.SetActive(false);
                             break;
                         case CardData.FieldPlacement.Mine:
@@ -926,7 +1015,7 @@ public class Referee : MonoBehaviour
                                 break;
                             case CardData.FieldPlacement.Mine:
                                 gCardSelect.SetActive(true);
-                                gCardCollect.SetActive(false);
+                                //gCardCollect.SetActive(false);
                                 gCardPlay.SetActive(false);
                                 break;
                             case CardData.FieldPlacement.Opp:
@@ -949,7 +1038,7 @@ public class Referee : MonoBehaviour
                                 break;
                         case CardData.FieldPlacement.Opp:
                                 gCardSelect.SetActive(true);
-                                gCardCollect.SetActive(false);
+                                //gCardCollect.SetActive(false);
                                 gCardPlay.SetActive(false);
                                 break;
                     }
@@ -963,7 +1052,7 @@ public class Referee : MonoBehaviour
                     else
                     {
                         gCardSelect.SetActive(false);
-                        gCardCollect.SetActive(false);
+                        //gCardCollect.SetActive(false);
                         gCardPlay.SetActive(true);
                     }
                     break;
@@ -997,7 +1086,7 @@ public class Referee : MonoBehaviour
     private void NullZoomButtons()
     {
         gCardSelect.SetActive(false);
-        gCardCollect.SetActive(false);
+        //gCardCollect.SetActive(false);
         gCardPlay.SetActive(false);
     }
     #endregion
