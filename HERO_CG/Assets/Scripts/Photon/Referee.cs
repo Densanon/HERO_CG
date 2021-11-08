@@ -52,6 +52,7 @@ public class Referee : MonoBehaviour
     private bool bAI = false;
 
     public static bool myTurn { get; private set; }
+    bool bAwaitingResponse = false;
 
     private bool bAbilityDraftStart = false;
     private bool zoomed = false;
@@ -89,6 +90,7 @@ public class Referee : MonoBehaviour
     public static Action OnOvercomeSwitch = delegate { };
     public static Action<Ability.PassiveType> OnPassiveActivate = delegate { };
     public static Action OnTurnResetabilities = delegate { };
+    public static Action OnWaitTimer = delegate { };
 
     #region Unity Methods
     private void Awake()
@@ -229,6 +231,13 @@ public class Referee : MonoBehaviour
     #region Overcome Methods
     public void CalculateBattle()
     {
+        bAwaitingResponse = true;
+        StartCoroutine(WaitResponse(GamePhase.Overcome));
+    }
+
+    private void ActualCalculateBattle()
+    {
+        ///////////////////////////////////////////////////////////You were trying to set up a response system, we needed to share the characters that are getting attacked and by whom
         if (AttackingHeros.Count > 0 && DefendingHero != null)
         {
             PreviousAttackers.Clear();
@@ -408,6 +417,18 @@ public class Referee : MonoBehaviour
 
     private void HandleHoldTurnOff() => myManager.RPCRequest("HandleTurnOffTurnHold", RpcTarget.All, true);
 
+    #region PlayerResponse
+    public void ResponseTimer()
+    {
+        OnWaitTimer?.Invoke();
+    }
+
+    private void NeedAResponseFromOpponent()
+    {
+        myManager.RPCRequest("NeedResponse", RpcTarget.Others, true);
+    }
+    #endregion
+
     #region Phase State Adjustments
     private void HEROSelectionBegin()
     {
@@ -522,6 +543,7 @@ public class Referee : MonoBehaviour
             case GamePhase.TurnResponse:
                 StartCoroutine(PhaseDeclaration("Player Response"));
                 PhaseIndicator.text = "Turn Response";
+                OnWaitTimer?.Invoke();
                 break;
             case GamePhase.Wait:
                 StartCoroutine(PhaseDeclaration("Wait for Opponent"));
@@ -1132,6 +1154,24 @@ public class Referee : MonoBehaviour
         else
         {
             StartCoroutine(EndturnDelay());
+        }
+    }
+
+    private IEnumerator WaitResponse(GamePhase phase)
+    {
+        yield return new WaitForSeconds(1f);
+        if (!bAwaitingResponse)
+        {
+            StartCoroutine(WaitResponse(phase));
+        }
+        else
+        {
+            switch (phase)
+            {
+                case GamePhase.Overcome:
+                    ActualCalculateBattle();
+                    break;
+            }
         }
     }
     #endregion

@@ -45,6 +45,12 @@ public class PhotonInGameManager : MonoBehaviourPunCallbacks
     }
 
     //Referee
+    [PunRPC]
+    private void NeedResponse(bool value)
+    {
+        GameManager.ResponseTimer();
+    }
+
     #region Player Declaration
     [PunRPC]
     private void DeclarePlayer(int currentPlayer)
