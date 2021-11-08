@@ -8,7 +8,7 @@ using Photon.Pun;
 
 public class Referee : MonoBehaviour
 {
-    public enum GamePhase { HeroDraft, AbilityDraft, PreSelection, HEROSelect, Heal, Enhance, Recruit, Overcome, Feat, PostAction, TurnResponse, Wait}
+    public enum GamePhase { HeroDraft, AbilityDraft, HEROSelect, Heal, Enhance, Recruit, Overcome, Feat, PostAction, TurnResponse, Wait}
     public static GamePhase myPhase = GamePhase.HeroDraft;
     public static GamePhase prevPhase = GamePhase.Wait;
     public enum PlayerNum { P1, P2, P3, P4}
@@ -44,7 +44,6 @@ public class Referee : MonoBehaviour
     public Button bHEROSelectOvercome;
     public Button bHEROSelectFeat;
     public Button bDrawEnhancementCards;
-    public GameObject gTurnOnHeroSelection;
 
     public GameObject EndUI;
     public TMP_Text EndText;
@@ -430,16 +429,6 @@ public class Referee : MonoBehaviour
     #endregion
 
     #region Phase State Adjustments
-    private void HEROSelectionBegin()
-    {
-        gHEROSelect.SetActive(true);
-    }
-
-    public void ToHero()
-    {
-        PhaseChange(GamePhase.HEROSelect);
-    }
-
     public void PhaseChange(GamePhase phaseToChangeTo)
     {
         Debug.Log($"{player}: Changing Phase to {phaseToChangeTo} from {myPhase}");
@@ -457,12 +446,6 @@ public class Referee : MonoBehaviour
     {
         switch (myPhase)
         {
-            case GamePhase.PreSelection:
-                //This is for actions that happen before selecting a turn action, like looking at your hand and the board
-                PhaseIndicator.text = "Pre Selection";
-                SetDeckNumberAmounts();
-                gTurnOnHeroSelection.SetActive(true);
-                break;
             case GamePhase.Heal:
                 //Select 1+ heros to be healed(any)
                 PhaseIndicator.text = "Heal";
@@ -551,7 +534,8 @@ public class Referee : MonoBehaviour
                 break;
             case GamePhase.HEROSelect:
                 PhaseIndicator.text = "Hero Selection";
-                HEROSelectionBegin();
+                SetDeckNumberAmounts();
+                gHEROSelect.SetActive(true);
                 //check for heros that can be healed
                 bHEROSelectHeal.interactable = CB.CheckForHealableHeros();
                 //check for cards in enhancement deck or hand
@@ -601,7 +585,7 @@ public class Referee : MonoBehaviour
                 break;
             case GamePhase.Wait:
                 if(iTurnGauge >= 9)
-                PhaseChange(GamePhase.PreSelection);
+                PhaseChange(GamePhase.HEROSelect);
                 break;
         }
     }
@@ -728,13 +712,11 @@ public class Referee : MonoBehaviour
                         CardZoom(card);
                     }
                     break;
-                case GamePhase.PreSelection:
+                case GamePhase.HEROSelect:
                     if (!zoomed)
                     {
                         CardZoom(card);
                     }
-                    break;
-                case GamePhase.HEROSelect:
                     break;
                 case GamePhase.Heal:
                     if (abilityTargetting == false && card.Exhausted)
@@ -956,9 +938,6 @@ public class Referee : MonoBehaviour
                     gCardSelect.SetActive(false);
                     //gCardCollect.SetActive(true);
                     gCardPlay.SetActive(false);
-                    break;
-                case GamePhase.PreSelection:
-                    NullZoomButtons();
                     break;
                 case GamePhase.Heal:
                     gCardSelect.SetActive(true);

@@ -471,7 +471,7 @@ public class CardDataBase : MonoBehaviour
         {
             GM.SetTurnGauge(9);
             Debug.Log("Setting first player to Pre - Selection.");
-            GM.PhaseChange(Referee.GamePhase.PreSelection);
+            GM.PhaseChange(Referee.GamePhase.HEROSelect);
             FillHQ();
         }
         else
