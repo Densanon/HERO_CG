@@ -10,6 +10,7 @@ public class UIResponseTimer : MonoBehaviour
     float timer = 0f;
     public Slider mySlider;
     public TMP_Text mySliderText;
+    public GameObject gContainer;
 
     public static Action OnTimerRunOut = delegate { };
 
@@ -34,14 +35,14 @@ public class UIResponseTimer : MonoBehaviour
         else
         {
             OnTimerRunOut?.Invoke();
-            mySlider.gameObject.SetActive(false);
+            gContainer.gameObject.SetActive(false);
         }
     }
 
     private void OnStartTimer()
     {
         timer = timerTime;
-        mySlider.gameObject.SetActive(true);
+        gContainer.gameObject.SetActive(true);
         mySlider.maxValue = timerTime;
         mySlider.value = timerTime;
         mySliderText.text = timerTime.ToString();

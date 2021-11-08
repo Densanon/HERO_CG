@@ -1159,6 +1159,7 @@ public class Referee : MonoBehaviour
 
     private IEnumerator WaitResponse(GamePhase phase)
     {
+        NeedAResponseFromOpponent();
         yield return new WaitForSeconds(1f);
         if (!bAwaitingResponse)
         {
