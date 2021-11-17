@@ -400,7 +400,7 @@ public class Referee : MonoBehaviour
 
     private void SwitchEndTurnButtonInteractible(bool interactible)
     {
-        btEndTurn.interactable = interactible;
+        btEndTurn.gameObject.SetActive(interactible);
     }
 
     public void HandleHoldTurn(bool hold, bool myTurn)
