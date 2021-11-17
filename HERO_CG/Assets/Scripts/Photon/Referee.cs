@@ -25,7 +25,7 @@ public class Referee : MonoBehaviour
     public GameObject pAbilityPrefab;
     public Transform tAbilityContainer;
     List<GameObject> gAbilities = new List<GameObject>();
-    //public GameObject gCardCollect;
+    public GameObject gCardCollect;
     public TMP_Text tCardsToCollectReserve;
     public TMP_Text tCardsToDrawMyDeck;
     public int iEnhanceCardsToCollect;
@@ -462,6 +462,7 @@ public class Referee : MonoBehaviour
                 bDrawEnhancementCards.interactable = true;
                 //DrawCardOption(3);
                 iTurnCounter = 3;
+                iEnhanceCardsToCollect = 3;
                 int temp = CB.CardsRemaining(CardDataBase.CardDecks.P1Deck);
                 switch (temp)
                 {
@@ -666,6 +667,12 @@ public class Referee : MonoBehaviour
 
     private void HandlePlayCard(Card card)
     {
+        if(myPhase == GamePhase.Enhance)
+        {
+            iEnhanceCardsToCollect = 0;
+            tCardsToDrawMyDeck.text = $"{CB.CardsRemaining(CardDataBase.CardDecks.P1Deck)}";
+            bDrawEnhancementCards.interactable = false;
+        }
         CB.PlayCard(card);
     }
 
@@ -931,17 +938,17 @@ public class Referee : MonoBehaviour
                     break;
                 case GamePhase.AbilityDraft:
                     gCardSelect.SetActive(false);
-                    //gCardCollect.SetActive(true);
+                    gCardCollect.SetActive(true);
                     gCardPlay.SetActive(false);
                     break;
                 case GamePhase.HeroDraft:
                     gCardSelect.SetActive(false);
-                    //gCardCollect.SetActive(true);
+                    gCardCollect.SetActive(true);
                     gCardPlay.SetActive(false);
                     break;
                 case GamePhase.Heal:
                     gCardSelect.SetActive(true);
-                    //gCardCollect.SetActive(false);
+                    gCardCollect.SetActive(false);
                     gCardPlay.SetActive(false);
                     break;
                 case GamePhase.Enhance:
@@ -949,7 +956,7 @@ public class Referee : MonoBehaviour
                     {
                         case CardData.FieldPlacement.Hand:
                             gCardSelect.SetActive(false);
-                            //gCardCollect.SetActive(false);
+                            gCardCollect.SetActive(false);
                             gCardPlay.SetActive(true);
                             break;
                         case CardData.FieldPlacement.HQ:
@@ -971,7 +978,7 @@ public class Referee : MonoBehaviour
                             break;
                         case CardData.FieldPlacement.HQ:
                             gCardSelect.SetActive(false);
-                            //gCardCollect.SetActive(true);
+                            gCardCollect.SetActive(true);
                             gCardPlay.SetActive(false);
                             break;
                         case CardData.FieldPlacement.Mine:
@@ -995,7 +1002,7 @@ public class Referee : MonoBehaviour
                                 break;
                             case CardData.FieldPlacement.Mine:
                                 gCardSelect.SetActive(true);
-                                //gCardCollect.SetActive(false);
+                                gCardCollect.SetActive(false);
                                 gCardPlay.SetActive(false);
                                 break;
                             case CardData.FieldPlacement.Opp:
@@ -1018,7 +1025,7 @@ public class Referee : MonoBehaviour
                                 break;
                         case CardData.FieldPlacement.Opp:
                                 gCardSelect.SetActive(true);
-                                //gCardCollect.SetActive(false);
+                                gCardCollect.SetActive(false);
                                 gCardPlay.SetActive(false);
                                 break;
                     }
@@ -1032,7 +1039,7 @@ public class Referee : MonoBehaviour
                     else
                     {
                         gCardSelect.SetActive(false);
-                        //gCardCollect.SetActive(false);
+                        gCardCollect.SetActive(false);
                         gCardPlay.SetActive(true);
                     }
                     break;
@@ -1065,7 +1072,7 @@ public class Referee : MonoBehaviour
     private void NullZoomButtons()
     {
         gCardSelect.SetActive(false);
-        //gCardCollect.SetActive(false);
+        gCardCollect.SetActive(false);
         gCardPlay.SetActive(false);
     }
     #endregion
