@@ -28,6 +28,7 @@ public class Referee : MonoBehaviour
     public GameObject gCardCollect;
     public TMP_Text tCardsToCollectReserve;
     public TMP_Text tCardsToDrawMyDeck;
+    public GameObject DrawDeckButton;
     public int iEnhanceCardsToCollect;
     public GameObject gCardSelect;
     public GameObject gCardPlay;
@@ -328,7 +329,7 @@ public class Referee : MonoBehaviour
             }
             if (myPhase == GamePhase.Enhance)
             {
-                tCardsToDrawMyDeck.text = $"{iTurnCounter}/{CB.CardsRemaining(CardDataBase.CardDecks.P1Deck)}";
+                tCardsToDrawMyDeck.text = $"{iEnhanceCardsToCollect}/{CB.CardsRemaining(CardDataBase.CardDecks.P1Deck)}";
             }
             /*if(myPhase == GamePhase.Recruit)
             {
@@ -341,7 +342,8 @@ public class Referee : MonoBehaviour
         else
         {
             tCardsToCollectReserve.text = $"{CB.CardsRemaining(CardDataBase.CardDecks.Reserve)}";
-
+            btEndTurn.gameObject.SetActive(true);
+            PopUpUpdater("No More Actions");
         }
     }
 
@@ -375,6 +377,7 @@ public class Referee : MonoBehaviour
     public void ToldSwitchTurn(bool turn)
     {
         myTurn = turn;
+        SwitchEndTurnButtonInteractible(myTurn);
         StartCoroutine(TurnDeclaration(myTurn));
         NextPhase();
         OnTurnResetabilities?.Invoke();
@@ -590,6 +593,11 @@ public class Referee : MonoBehaviour
                 break;
         }
     }
+
+    public void TurnOnPersonalDeckVisual()
+    {
+        DrawDeckButton.SetActive(true);
+    }
     #endregion
 
     #endregion
@@ -672,6 +680,7 @@ public class Referee : MonoBehaviour
             iEnhanceCardsToCollect = 0;
             tCardsToDrawMyDeck.text = $"{CB.CardsRemaining(CardDataBase.CardDecks.P1Deck)}";
             bDrawEnhancementCards.interactable = false;
+            TurnCounterDecrement();
         }
         CB.PlayCard(card);
     }

@@ -26,13 +26,17 @@ public class CardDataBase : MonoBehaviour
     public GameObject CardHeroHQPrefab;
 
     public Button ReserveButton;
+    public GameObject ReserveButtonParentObject;
 
     public GameObject[] Hand = new GameObject[7];
+    public GameObject HandContainer;
+    public GameObject HandButton;
     private List<CardData> lHandData = new List<CardData>();
     public Slider sHandSlider;
 
     public List<CardData> Draft = new List<CardData>();
     public Transform DraftArea;
+    public GameObject DraftAreaOffButton;
     public Transform MyHeroArea;
     public Transform OppHeroArea;
     public Transform HQArea;
@@ -472,7 +476,11 @@ public class CardDataBase : MonoBehaviour
             GM.SetTurnGauge(9);
             Debug.Log("Setting first player to Pre - Selection.");
             GM.PhaseChange(Referee.GamePhase.HEROSelect);
+            GM.TurnOnPersonalDeckVisual();
             FillHQ();
+            HandContainer.SetActive(true);
+            HandButton.SetActive(true);
+            ReserveButtonParentObject.SetActive(true);
         }
         else
         {
@@ -480,6 +488,10 @@ public class CardDataBase : MonoBehaviour
             Debug.Log("Setting second player to wait.");
             GM.PhaseChange(Referee.GamePhase.Wait);
             GM.SetDeckNumberAmounts();
+            GM.TurnOnPersonalDeckVisual();
+            HandContainer.SetActive(true);
+            HandButton.SetActive(true);
+            ReserveButtonParentObject.SetActive(true);
         }
     }
     #endregion
@@ -1362,6 +1374,18 @@ public class CardDataBase : MonoBehaviour
     #endregion
 
     #region Outsource Methods
+
+    public void SetUpHandCardsToBeViewed()
+    {
+        ClearDraft();
+        DisplayDraft(P1Hand);
+        DraftAreaOffButton.SetActive(true);
+    }
+
+    public void RemoveHandCardsDraft()
+    {
+        DraftArea.gameObject.SetActive(false);
+    }
 
     #region Ability Handover
     public void AbilityHandover(Ability ability)

@@ -14,7 +14,7 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/1VOnline.unity
     guid: ef5670f0206f0fb4192ef64e4c3e8d0b
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/AI.unity
     guid: deb4e2b7039d1094dae129693dabfaa0
   m_configObjects: {}
