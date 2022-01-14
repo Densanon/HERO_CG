@@ -48,7 +48,7 @@ public class PhotonInGameManager : MonoBehaviourPunCallbacks
     [PunRPC]
     private void NeedResponse(bool value)
     {
-        GameManager.ResponseTimer();
+        //sGameManager.ResponseTimer();
     }
 
     #region Player Declaration
@@ -81,7 +81,7 @@ public class PhotonInGameManager : MonoBehaviourPunCallbacks
     [PunRPC]
     private void HandleTurnOffTurnHold(bool turnOff)
     {
-        GameManager.HandleHoldTurn(false, true);
+        //GameManager.HandleHoldTurn(false, true);
         GameManager.PhaseChange(Referee.prevPhase);
     }
     #endregion
@@ -105,10 +105,10 @@ public class PhotonInGameManager : MonoBehaviourPunCallbacks
         switch (player)
         {
             case "Player":
-                GameManager.OnBaseExhausted(PlayerBase.Type.Player);
+                //GameManager.OnBaseExhausted(PlayerBase.Type.Player);
                 break;
             case "Opponent":
-                GameManager.OnBaseExhausted(PlayerBase.Type.Opponent);
+                //GameManager.OnBaseExhausted(PlayerBase.Type.Opponent);
                 break;
         }
     }
@@ -118,12 +118,12 @@ public class PhotonInGameManager : MonoBehaviourPunCallbacks
         if (player.type == PlayerBase.Type.Player)
         {
             RPCRequest("DestroyABase", RpcTarget.Others, "Opponent");
-            GameManager.OnBaseDestroyed(player.type);
+            //GameManager.OnBaseDestroyed(player.type);
         }
         else if (player.type == PlayerBase.Type.Opponent)
         {
             RPCRequest("DestroyABase", RpcTarget.Others, "Player");
-            GameManager.OnBaseDestroyed(player.type);
+            //GameManager.OnBaseDestroyed(player.type);
         }
     }
 
@@ -133,10 +133,10 @@ public class PhotonInGameManager : MonoBehaviourPunCallbacks
         switch (player)
         {
             case "Player":
-                GameManager.OnBaseDestroyed(PlayerBase.Type.Player);
+                //GameManager.OnBaseDestroyed(PlayerBase.Type.Player);
                 break;
             case "Opponent":
-                GameManager.OnBaseDestroyed(PlayerBase.Type.Opponent);
+                //GameManager.OnBaseDestroyed(PlayerBase.Type.Opponent);
                 break;
         }
     }

@@ -8,10 +8,10 @@ using Photon.Pun;
 
 public class Referee : MonoBehaviour
 {
-    public enum GamePhase { HeroDraft, AbilityDraft, HEROSelect, Heal, Enhance, Recruit, Overcome, Feat, PostAction, TurnResponse, Wait}
+    public enum GamePhase { HeroDraft, AbilityDraft, HEROSelect, Heal, Enhance, Recruit, Overcome, Feat, PostAction, TurnResponse, Wait }
     public static GamePhase myPhase = GamePhase.HeroDraft;
     public static GamePhase prevPhase = GamePhase.Wait;
-    public enum PlayerNum { P1, P2, P3, P4}
+    public enum PlayerNum { P1, P2, P3, P4 }
     public static PlayerNum player;
 
     public CardDataBase CB;
@@ -85,7 +85,7 @@ public class Referee : MonoBehaviour
     private Ability activeAbility;
     private bool abilityTargetting = false;
 
-    public static Action<Card, GamePhase> OnCardCollected = delegate { };
+    //public static Action<Card, GamePhase> OnCardCollected = delegate { };
     public static Action<bool> OnOvercomeTime = delegate { };
     public static Action OnOvercomeSwitch = delegate { };
     public static Action<Ability.PassiveType> OnPassiveActivate = delegate { };
@@ -98,16 +98,16 @@ public class Referee : MonoBehaviour
         CardFunction.OnCardSelected += HandleCardSelecion;
         CardFunction.OnCardDeselected += HandleDeselection;
         CardFunction.OnCardCollected += HandleCardCollected;
-        CardFunction.OnCardPlayed += HandlePlayCard;
+        //CardFunction.OnCardPlayed += HandlePlayCard;
         UIConfirmation.OnHEROSelection += PhaseChange;
         CardDataBase.OnAiDraftCollected += HandleCardCollected;
-        Ability.OnAbilityUsed += HandleAbilityEnd;
+        /*Ability.OnAbilityUsed += HandleAbilityEnd;
         Ability.OnFeatComplete += HandleFeatComplete;
         Ability.OnNeedCardDraw += DrawCardOption;
         Ability.OnSetActive += SetActiveAbility;
         Ability.OnActivateable += HandleActivateAbilitySetup;
         Ability.OnHoldTurn += HandleHoldTurn;
-        Ability.OnHoldTurnOffOppTurn += HandleHoldTurnOff;
+        Ability.OnHoldTurnOffOppTurn += HandleHoldTurnOff;*/
     }
 
     private void OnDestroy()
@@ -115,16 +115,16 @@ public class Referee : MonoBehaviour
         CardFunction.OnCardSelected -= HandleCardSelecion;
         CardFunction.OnCardDeselected -= HandleDeselection;
         CardFunction.OnCardCollected -= HandleCardCollected;
-        CardFunction.OnCardPlayed -= HandlePlayCard;
+        //CardFunction.OnCardPlayed -= HandlePlayCard;
         UIConfirmation.OnHEROSelection -= PhaseChange;
         CardDataBase.OnAiDraftCollected -= HandleCardCollected;
-        Ability.OnAbilityUsed -= HandleAbilityEnd;
+        /*Ability.OnAbilityUsed -= HandleAbilityEnd;
         Ability.OnFeatComplete -= HandleFeatComplete;
         Ability.OnNeedCardDraw -= DrawCardOption;
         Ability.OnSetActive -= SetActiveAbility;
         Ability.OnActivateable -= HandleActivateAbilitySetup;
         Ability.OnHoldTurn -= HandleHoldTurn;
-        Ability.OnHoldTurnOffOppTurn -= HandleHoldTurnOff;
+        Ability.OnHoldTurnOffOppTurn -= HandleHoldTurnOff;*/
     }
 
     private void Start()
@@ -137,7 +137,7 @@ public class Referee : MonoBehaviour
         if (myManager.IsMasterClient())
         {
             var turnStart = UnityEngine.Random.Range(0, 2);
-            if(turnStart == 1)
+            if (turnStart == 1)
             {
                 myTurn = false;
                 player = PlayerNum.P1;
@@ -155,35 +155,6 @@ public class Referee : MonoBehaviour
             }
         }
     }
-
-    #endregion
-
-    #region Base Methods
-    public void OnBaseDestroyed(PlayerBase.Type pBase)
-    {
-        if(pBase == PlayerBase.Type.Player)
-        {
-            EndUI.SetActive(true);
-            EndText.text = "You were Overcome!";
-        }
-        else
-        {
-            EndUI.SetActive(true);
-            EndText.text = "You have Overcome!";
-        }
-    }
-
-    public void OnBaseExhausted(PlayerBase.Type pBase)
-    {
-        if (pBase == PlayerBase.Type.Player)
-        {
-            PB.Exhaust(true);
-        }
-        else
-        {
-            MyPB.Exhaust(true);
-        }
-    }
     #endregion
 
     #region Player Declarations
@@ -198,197 +169,15 @@ public class Referee : MonoBehaviour
     }
     #endregion
 
-    #region Ability Methods
-    public void PassiveActivate(Ability.PassiveType passiveType)
-    {
-        if(myPhase == GamePhase.HeroDraft || myPhase == GamePhase.AbilityDraft)
-        {
-            return;
-        }
-        OnPassiveActivate?.Invoke(passiveType);
-    }
-
-    public bool canPlayAbilitiesToFieldCheck()
-    {
-        return canPlayAbilityToField;
-    }
-
-    public void SetActiveAbility(Ability ability)
-    {
-        Debug.Log($"Active ability to be set: {ability.Name}");
-        activeAbility = ability;
-        StartCoroutine(PhaseDeclaration($"{ability.Name} ability Activated"));
-        ability.AbilityAwake();
-    }
-
-    public void SilenceAbilityToField(int turns)
-    {
-        abilityPlaySilenceTurnTimer = turns;
-        canPlayAbilityToField = false;
-    }
-    #endregion
-
-    #region Overcome Methods
-    public void CalculateBattle()
-    {
-        bAwaitingResponse = true;
-        StartCoroutine(WaitResponse(GamePhase.Overcome));
-    }
-
-    private void ActualCalculateBattle()
-    {
-        ///////////////////////////////////////////////////////////You were trying to set up a response system, we needed to share the characters that are getting attacked and by whom
-        if (AttackingHeros.Count > 0 && DefendingHero != null)
-        {
-            PreviousAttackers.Clear();
-            PreviousDefender = null;
-            foreach(CardData card in AttackingHeros)
-            {
-                PreviousAttackers.Add(card);
-            }
-            PreviousDefender = DefendingHero;
-
-            int tDmg = 0;
-            foreach (CardData data in AttackingHeros)
-            {
-                Debug.Log($"{data.Name} was an attacking hero");
-                tDmg += data.Attack;
-                data.Exhaust(false);
-            }
-
-            DefendingHero.DamageCheck(tDmg);
-            if (DefendingHero != null)
-            {
-                OpponentExhausted = DefendingHero.Exhausted;
-                Debug.Log($"Opponent exhaust status = {OpponentExhausted}");
-            }
-            else
-            {
-                OpponentExhausted = true;
-                Debug.Log($"Opponent should have been destroyed so exhaust has been set to true");
-            }
-
-            PassiveActivate(Ability.PassiveType.BattleComplete);
-            CB.SendPreviousAttackersAndDefender(AttackingHeros, DefendingHero);
-            AttackingHeros.Clear();
-            DefendingHero = null;
-            SwitchAttDef();
-        }
-    }
-
-    public void SwitchAttDef()
-    {
-        AttDef = !AttDef;
-        if (AttDef)
-        {
-            OnPassiveActivate?.Invoke(Ability.PassiveType.BattleStart);
-        }
-        if (!AttDef && !CB.CheckFieldForOpponents() && AttackingHeros.Count > 0)
-        {
-            //Target base
-            int tDmg = 0;
-            foreach (CardData data in AttackingHeros)
-            {
-                tDmg += data.Attack;
-                data.Exhaust(false);
-            }
-            AttackingHeros.Clear();
-
-            PB.Damage(tDmg);
-
-            SwitchAttDef();
-        }
-        else if(AttDef && !CB.CheckMyFieldForUsableHeros())
-        {
-            //check if all characters are exhausted, if they are, end turn
-                        StartCoroutine(EndturnDelay());
-            PassiveActivate(Ability.PassiveType.ActionComplete);
-            return;
-        }
-        OnOvercomeSwitch?.Invoke();
-    }
-    #endregion
-    
     #region Turn Methods
 
-    #region Move Counter Methods
-    public int GetTurnCounter()
-    {
-        return iTurnCounter;
-    }
-
-    public void TurnCounterDecrement()
-    {
-        iTurnCounter--;
-        //TurnActionIndicator.text = $"Actions Remaining: {iTurnCounter}";
-        if (iTurnCounter > 0)
-        {
-            if (myPhase == GamePhase.Recruit)
-            {
-                tCardsToCollectReserve.text = $"{iTurnCounter}/{CB.CardsRemaining(CardDataBase.CardDecks.Reserve)}";
-            }
-            if (myPhase == GamePhase.Enhance)
-            {
-                tCardsToDrawMyDeck.text = $"{iEnhanceCardsToCollect}/{CB.CardsRemaining(CardDataBase.CardDecks.P1Deck)}";
-            }
-            /*if(myPhase == GamePhase.Recruit)
-            {
-                CB.FillHQ();
-            }
-            PassiveActivate(Ability.PassiveType.ActionComplete);
-                        StartCoroutine(EndturnDelay());
-            HandleTurnDeclaration(!myTurn);*/
-        }
-        else
-        {
-            tCardsToCollectReserve.text = $"{CB.CardsRemaining(CardDataBase.CardDecks.Reserve)}";
-            btEndTurn.gameObject.SetActive(true);
-            PopUpUpdater("No More Actions");
-        }
-    }
-
-    private void HandleTurnDeclaration(bool myNewTurn)
-    {
-        myManager.RPCRequest("DeclaredTurn", RpcTarget.Others, myNewTurn);
-    }
-
-    public void SetTurnGauge(int newNum)
-    {
-        iTurnGauge = newNum;
-    }
-    #endregion
-
-    public void PopUpUpdater(string message)
-    {
-        StartCoroutine(PhaseDeclaration(message));
-    }
-
-    public void EndTurn()
-    {
-        bEndTurn = true;
-        if (myPhase == GamePhase.Recruit)
-        {
-            CB.FillHQ();
-        }
-        StartCoroutine(EndturnDelay());
-        //TurnActionIndicator.text = "0";
-    }
-
-    public void ToldSwitchTurn(bool turn)
-    {
-        myTurn = turn;
-        SwitchEndTurnButtonInteractible(myTurn);
-        StartCoroutine(TurnDeclaration(myTurn));
-        NextPhase();
-        OnTurnResetabilities?.Invoke();
-    }
-
+    #region Switching Turn Methods
     private void SwitchTurn()
     {
         if (myTurn)
         {
             abilityPlaySilenceTurnTimer--;
-            if(abilityPlaySilenceTurnTimer <= 0)
+            if (abilityPlaySilenceTurnTimer <= 0)
             {
                 canPlayAbilityToField = true;
             }
@@ -401,47 +190,125 @@ public class Referee : MonoBehaviour
         OnTurnResetabilities?.Invoke();
     }
 
+    public void ToldSwitchTurn(bool turn)
+    {
+        myTurn = turn;
+        SwitchEndTurnButtonInteractible(myTurn);
+        StartCoroutine(TurnDeclaration(myTurn));
+        NextPhase();
+        OnTurnResetabilities?.Invoke();
+    }
+
     private void SwitchEndTurnButtonInteractible(bool interactible)
     {
         btEndTurn.gameObject.SetActive(interactible);
     }
+    #endregion
 
-    public void HandleHoldTurn(bool hold, bool myTurn)
+    #region Turn Declarations Methods
+    private IEnumerator TurnDeclaration(bool myTurn)
     {
-        if (myPhase == GamePhase.AbilityDraft || myPhase == GamePhase.HeroDraft)
-            return;
+        if (myTurn)
+        {
+            iTurnGauge++;
+        }
+        PhaseText.text = myTurn ? "Your Turn!" : "Opponent's Turn";
+        TurnIndicator.text = myTurn ? "My Turn" : "Opponent's Turn";
+        PhaseDeclarationUI.SetActive(true);
+        yield return new WaitForSeconds(2f);
+        PhaseDeclarationUI.SetActive(false);
+        if (myTurn)
+        {
+            switch (myPhase)
+            {
+                case GamePhase.HeroDraft:
+                    StartCoroutine(PhaseDeclaration("Hero Drafting"));
+                    if (CB.AiDraft)
+                    {
+                        CB.DrawDraftCard("HeroReserve");
+                    }
+                    break;
+                case GamePhase.AbilityDraft:
+                    if (!bAbilityDraftStart)
+                    {
+                        StartCoroutine(PhaseDeclaration("Ability Drafting"));
+                        bAbilityDraftStart = true;
+                    }
+                    if (CB.AiDraft)
+                    {
+                        CB.DrawDraftCard("AbilityDraft");
+                    }
+                    if (CB.AutoDraft)
+                    {
 
-        if (!myTurn)
-            PhaseChange(GamePhase.Wait);
-
-        bEndTurn = !hold;
+                    }
+                    break;
+                case GamePhase.HEROSelect:
+                    StartCoroutine(PhaseDeclaration("H.E.R.O. Decision"));
+                    break;
+            }
+        }
     }
 
-    private void HandleHoldTurnOff() => myManager.RPCRequest("HandleTurnOffTurnHold", RpcTarget.All, true);
-
-    #region PlayerResponse
-    public void ResponseTimer()
+    private IEnumerator PhaseDeclaration(string phase)
     {
-        OnWaitTimer?.Invoke();
+        PhaseText.text = phase;
+        PhaseDeclarationUI.SetActive(true);
+        yield return new WaitForSeconds(2f);
+        PhaseDeclarationUI.SetActive(false);
     }
 
-    private void NeedAResponseFromOpponent()
+    private void HandleTurnDeclaration(bool myNewTurn)
     {
-        myManager.RPCRequest("NeedResponse", RpcTarget.Others, true);
+        myManager.RPCRequest("DeclaredTurn", RpcTarget.Others, myNewTurn);
     }
     #endregion
 
-    #region Phase State Adjustments
+    #region Phase Methods
+    private void NextPhase()
+    {
+        switch (myPhase)
+        {
+            case GamePhase.Enhance:
+                PhaseChange(GamePhase.PostAction);
+                break;
+            case GamePhase.Feat:
+                PhaseChange(GamePhase.PostAction);
+                break;
+            case GamePhase.Heal:
+                PhaseChange(GamePhase.PostAction);
+                break;
+            case GamePhase.Overcome:
+                gOvercome.SetActive(false);
+                OnOvercomeTime?.Invoke(false);
+                PhaseChange(GamePhase.PostAction);
+                break;
+            case GamePhase.Recruit:
+                PhaseChange(GamePhase.PostAction);
+                break;
+            case GamePhase.PostAction:
+                PhaseChange(GamePhase.Wait);
+                break;
+            case GamePhase.TurnResponse:
+                PhaseChange(GamePhase.Wait);
+                break;
+            case GamePhase.Wait:
+                if (iTurnGauge >= 9)
+                    PhaseChange(GamePhase.HEROSelect);
+                break;
+        }
+    }
+
     public void PhaseChange(GamePhase phaseToChangeTo)
     {
         Debug.Log($"{player}: Changing Phase to {phaseToChangeTo} from {myPhase}");
-        if(myPhase == GamePhase.Overcome)
+        if (myPhase == GamePhase.Overcome)
         {
             gOvercome.SetActive(false);
             OnOvercomeTime?.Invoke(false);
         }
         prevPhase = myPhase;
-        myPhase = phaseToChangeTo; 
+        myPhase = phaseToChangeTo;
         HandlePhaseChange();
     }
 
@@ -559,108 +426,16 @@ public class Referee : MonoBehaviour
                 break;
         }
     }
-
-    private void NextPhase()
-    {
-        switch (myPhase)
-        {
-            case GamePhase.Enhance:
-                PhaseChange(GamePhase.PostAction);
-                break;
-            case GamePhase.Feat:
-                PhaseChange(GamePhase.PostAction);
-                break;
-            case GamePhase.Heal:
-                PhaseChange(GamePhase.PostAction);
-                break;
-            case GamePhase.Overcome:
-                gOvercome.SetActive(false);
-                OnOvercomeTime?.Invoke(false);
-                PhaseChange(GamePhase.PostAction);
-                break;
-            case GamePhase.Recruit:
-                PhaseChange(GamePhase.PostAction);
-                break;
-            case GamePhase.PostAction:
-                PhaseChange(GamePhase.Wait);
-                break;
-            case GamePhase.TurnResponse:
-                PhaseChange(GamePhase.Wait);
-                break;
-            case GamePhase.Wait:
-                if(iTurnGauge >= 9)
-                PhaseChange(GamePhase.HEROSelect);
-                break;
-        }
-    }
-
-    public void TurnOnPersonalDeckVisual()
-    {
-        DrawDeckButton.SetActive(true);
-    }
     #endregion
 
     #endregion
 
     #region Card Methods
-    public void DrawCardOption(int amount)
-    {
-        int i = CB.CardsRemaining(CardDataBase.CardDecks.P1Deck);
-        if (i < amount)
-        {
-            amount = i;
-        }
-    }
 
     public void SetDeckNumberAmounts()
     {
         tCardsToCollectReserve.text = $"{CB.CardsRemaining(CardDataBase.CardDecks.Reserve)}";
         tCardsToDrawMyDeck.text = $"{CB.CardsRemaining(CardDataBase.CardDecks.P1Deck)}";
-    }
-
-    public void SetCardCollectAmount(int amount)
-    {
-        for (int i = amount; i > 0; i--)
-        {
-            iEnhanceCardsToCollect--;
-            CB.DrawCard(CardDataBase.CardDecks.P1Deck);
-        }
-        Debug.Log($"Enhance cards to be collected: {iEnhanceCardsToCollect}");
-
-        if (iEnhanceCardsToCollect > 0)
-        {
-            tCardsToDrawMyDeck.text = $"{iEnhanceCardsToCollect}/{CB.CardsRemaining(CardDataBase.CardDecks.P1Deck)}";
-        }
-        else
-        {
-            Debug.Log("Ran out of cards to draw for the turn.");
-            tCardsToDrawMyDeck.text = $"{CB.CardsRemaining(CardDataBase.CardDecks.P1Deck)}";
-            bDrawEnhancementCards.interactable = false;
-        }
-    }
-
-    public void HandCardZoom()
-    {
-        handZoomed = true;
-        gCardZoom.SetActive(true);
-        gCard.CardOverride(CB.CurrentActiveCard, CardData.FieldPlacement.Zoom);
-        HandleCardButtons(CardData.FieldPlacement.Hand);
-        if(CB.CurrentActiveCard.CardType == Card.Type.Feat && myPhase != GamePhase.Feat)
-        {
-            NullZoomButtons();
-        }
-        ClearAbilityPanel();
-    }
-
-    public void CheckHandZoomInEffect()
-    {
-       gCard.CardOverride(CB.CurrentActiveCard, CardData.FieldPlacement.Hand);
-       HandleCardButtons(CardData.FieldPlacement.Hand);
-        if (CB.CurrentActiveCard.CardType == Card.Type.Feat && myPhase != GamePhase.Feat)
-        {
-            NullZoomButtons();
-        }
-        ClearAbilityPanel();
     }
 
     private void CardZoom(CardData card)
@@ -673,26 +448,14 @@ public class Referee : MonoBehaviour
         GetNewAbilities(card);
     }
 
-    private void HandlePlayCard(Card card)
-    {
-        if(myPhase == GamePhase.Enhance)
-        {
-            iEnhanceCardsToCollect = 0;
-            tCardsToDrawMyDeck.text = $"{CB.CardsRemaining(CardDataBase.CardDecks.P1Deck)}";
-            bDrawEnhancementCards.interactable = false;
-            TurnCounterDecrement();
-        }
-        CB.PlayCard(card);
-    }
-
     private void HandleCardCollected(Card card)
     {
         zoomed = false;
         CB.HandleCardCollected(card, myPhase);
-        if(myPhase != GamePhase.Recruit)
+        if (myPhase != GamePhase.Recruit)
         {
-            PassiveActivate(Ability.PassiveType.ActionComplete);
-                        StartCoroutine(EndturnDelay());
+            //PassiveActivate(Ability.PassiveType.ActionComplete);
+            //StartCoroutine(EndturnDelay());
         }
         else
         {
@@ -707,193 +470,25 @@ public class Referee : MonoBehaviour
             }*/
         }
     }
-    #endregion
 
-    #region Selections
-    private void HandleCardSelecion(CardData card)
+    #region Ability Methods
+
+    private void ClearAbilityPanel()
     {
-        if (!CB.SpecificDraw)
+        if (gAbilities != null)
         {
-            switch (myPhase)
+            for (int i = gAbilities.Count - 1; i > -1; i--)
             {
-                case GamePhase.HeroDraft:
-                    if (!zoomed)
-                    {
-                        CardZoom(card);
-                    }
-                    break;
-                case GamePhase.AbilityDraft:
-                    if (!zoomed)
-                    {
-                        CardZoom(card);
-                    }
-                    break;
-                case GamePhase.HEROSelect:
-                    if (!zoomed)
-                    {
-                        CardZoom(card);
-                    }
-                    break;
-                case GamePhase.Heal:
-                    if (abilityTargetting == false && card.Exhausted)
-                    {
-                        card.Heal(false);
-                            return;
-                    }
-                        HandleAbilityTargetting(card);
-                    break;
-                case GamePhase.Enhance:
-                    if (abilityTargetting == false && !zoomed)
-                    {
-                        CardZoom(card);
-                            return;
-                    }
-                        HandleAbilityTargetting(card);
-                    break;
-                case GamePhase.Recruit:
-                    if (abilityTargetting == false && !zoomed)
-                    {
-                        CardZoom(card);
-                            return;
-                    }
-                        HandleAbilityTargetting(card);
-                    break;
-                case GamePhase.Overcome:
-                    if(abilityTargetting == false)
-                        {
-                            HandleHeroSelected(card);
-                            return;
-                        }
-                        HandleAbilityTargetting(card);
-                    break;
-                case GamePhase.Feat:
-                    HandleAbilityTargetting(card);
-                    break;
-                case GamePhase.PostAction:
-                    if (!zoomed)
-                    {
-                        CardZoom(card);
-                    }
-                    break;
-                case GamePhase.TurnResponse:
-                        if (activeAbility != null)
-                        {
-                            HandleAbilityTargetting(card);
-                            abilityTargetting = false;
-                        }
-                        else
-                        {
-                            Debug.Log($"{activeAbility}");
-                            Debug.Log("No active Ability");
-                        }
-                    break;
-                case GamePhase.Wait:
-                    if (!zoomed)
-                    {
-                        CardZoom(card);
-                    }
-                    break;
+                GameObject obj = gAbilities[i];
+                gAbilities.Remove(obj);
+                Destroy(obj);
             }
         }
-        else
-        {
-            CB.DrawSpecificCard(card.myCard);
-            CB.SpecificDraw = false;
-        }
-    }
-
-    private void HandleHeroSelected(CardData card)
-    {
-        if (CB.CheckIfMyCard(card))
-        {
-            if (!card.Exhausted)
-            {
-                if (AttackingHeros.Contains(card))
-                {
-                    Debug.Log($"Removing {card.Name} from Attacking.");
-                    //Untarget Card
-                    AttackingHeros.Remove(card);
-                    card.OvercomeTarget(false);
-                }
-                else
-                {
-                    Debug.Log($"Adding {card.Name} to Attacking.");
-                    //Target Card
-                    AttackingHeros.Add(card);
-                    card.OvercomeTarget(true);
-                }
-            }
-        }
-        else
-        {
-            if (!AttDef)
-            {
-                if (DefendingHero == card)
-                {
-                    Debug.Log($"Removing {card.Name} from Defending.");
-                    //Untarget Card
-                    DefendingHero = null;
-                    card.OvercomeTarget(false);
-                }
-                else
-                {
-                    Debug.Log($"Adding {card.Name} to Defending.");
-                    //Target Card
-                    if (DefendingHero != null)
-                    {
-                        DefendingHero.OvercomeTarget(false);
-                    }
-                    DefendingHero = card;
-                    //turn on interactible for calculate
-                    card.OvercomeTarget(true);
-                }
-            }
-        }
-    }
-
-    private void HandleDeselection()
-    {
-        zoomed = false;
-        handZoomed = false;
-    }
-    #endregion
-
-    #region Ability Functions + Feat
-    private void HandleAbilityTargetting(CardData card)
-    {
-        if(activeAbility != null && card.CardType == Card.Type.Character)
-        {
-            activeAbility.Target(card);
-            abilityTargetting = true;
-        }
-    }
-
-    private void HandleActivateAbilitySetup(Ability ability)
-    {
-        if(myPhase == GamePhase.AbilityDraft || myPhase == GamePhase.HeroDraft)
-        {
-            return;
-        }
-        activeAbility = ability;
-        StartCoroutine(PhaseDeclaration("Activate Ability?"));
-        ability.AbilityAwake();
-    }
-
-    private void HandleAbilityEnd()
-    {
-        Debug.Log("Ability has ended.");
-        if(activeAbility.myType == Ability.Type.Feat)
-        {
-            PassiveActivate(Ability.PassiveType.ActionComplete);
-                        StartCoroutine(EndturnDelay());
-        }
-        activeAbility = null;
-        abilityTargetting = false;
     }
 
     private void GetNewAbilities(CardData card)
     {
-        if(card.charAbility != null)
+        if (card.charAbility != null)
         {
             GameObject obj = Instantiate(pAbilityPrefab, tAbilityContainer);
             UICharacterAbility ca = obj.GetComponent<UICharacterAbility>();
@@ -915,24 +510,8 @@ public class Referee : MonoBehaviour
         }
     }
 
-    private void ClearAbilityPanel()
-    {
-        if (gAbilities != null)
-        {
-            for(int i = gAbilities.Count-1; i > -1; i--)
-            {
-                GameObject obj = gAbilities[i]; 
-                gAbilities.Remove(obj);
-                Destroy(obj);
-            }
-        }
-    }
+    #endregion
 
-    private void HandleFeatComplete()
-    {
-        PassiveActivate(Ability.PassiveType.ActionComplete);
-                    StartCoroutine(EndturnDelay());
-    }
     #endregion
 
     #region Button Controls
@@ -1022,22 +601,22 @@ public class Referee : MonoBehaviour
                     else
                     {
                         switch (placement)
-                    {
-                        case CardData.FieldPlacement.Hand:
+                        {
+                            case CardData.FieldPlacement.Hand:
                                 NullZoomButtons();
                                 break;
-                        case CardData.FieldPlacement.HQ:
+                            case CardData.FieldPlacement.HQ:
                                 NullZoomButtons();
                                 break;
-                        case CardData.FieldPlacement.Mine:
+                            case CardData.FieldPlacement.Mine:
                                 NullZoomButtons();
                                 break;
-                        case CardData.FieldPlacement.Opp:
+                            case CardData.FieldPlacement.Opp:
                                 gCardSelect.SetActive(true);
                                 gCardCollect.SetActive(false);
                                 gCardPlay.SetActive(false);
                                 break;
-                    }
+                        }
                     }
                     break;
                 case GamePhase.Feat:
@@ -1059,22 +638,7 @@ public class Referee : MonoBehaviour
         }
         else
         {
-            switch (myPhase)
-            {
-                case GamePhase.AbilityDraft:
-                    NullZoomButtons();
-                    break;
-                case GamePhase.HeroDraft:
-                    NullZoomButtons();
-                    break;
-                case GamePhase.TurnResponse:
-                    NullZoomButtons();
-                    break;
-                case GamePhase.Wait:
-                    NullZoomButtons();
-                    break;
-                
-            }
+            NullZoomButtons();
         }
     }
 
@@ -1086,89 +650,103 @@ public class Referee : MonoBehaviour
     }
     #endregion
 
-    #region IEnumerators
-    private IEnumerator PhaseDeclaration(string phase)
+    #region Selections
+    private void HandleCardSelecion(CardData card)
     {
-        PhaseText.text = phase;
-        PhaseDeclarationUI.SetActive(true);
-        yield return new WaitForSeconds(2f);
-        PhaseDeclarationUI.SetActive(false);
-    }
-
-    private IEnumerator TurnDeclaration(bool myTurn)
-    {
-        if (myTurn)
-        { 
-            iTurnGauge++;
-        }
-        PhaseText.text = myTurn ? "Your Turn!" : "Opponent's Turn";
-        TurnIndicator.text = myTurn ? "My Turn" : "Opponent's Turn";
-        PhaseDeclarationUI.SetActive(true);
-        yield return new WaitForSeconds(2f);
-        PhaseDeclarationUI.SetActive(false);
-        if (myTurn)
+        if (!CB.SpecificDraw)
         {
             switch (myPhase)
             {
                 case GamePhase.HeroDraft:
-                    StartCoroutine(PhaseDeclaration("Hero Drafting"));
-                    if (CB.AiDraft)
+                    if (!zoomed)
                     {
-                        CB.DrawDraftCard("HeroReserve");
+                        CardZoom(card);
                     }
                     break;
                 case GamePhase.AbilityDraft:
-                    if (!bAbilityDraftStart)
+                    if (!zoomed)
                     {
-                        StartCoroutine(PhaseDeclaration("Ability Drafting"));
-                        bAbilityDraftStart = true;
-                    }
-                    if (CB.AiDraft)
-                    {
-                        CB.DrawDraftCard("AbilityDraft");
-                    }
-                    if (CB.AutoDraft)
-                    {
-
+                        CardZoom(card);
                     }
                     break;
                 case GamePhase.HEROSelect:
-                    StartCoroutine(PhaseDeclaration("H.E.R.O. Decision"));
+                    if (!zoomed)
+                    {
+                        CardZoom(card);
+                    }
                     break;
-            }
-        }
-    }
-
-    private IEnumerator EndturnDelay()
-    {
-        yield return new WaitForSeconds(1f);
-        if (bEndTurn)
-        {
-            SwitchTurn();
-        }
-        else
-        {
-            StartCoroutine(EndturnDelay());
-        }
-    }
-
-    private IEnumerator WaitResponse(GamePhase phase)
-    {
-        NeedAResponseFromOpponent();
-        yield return new WaitForSeconds(1f);
-        if (!bAwaitingResponse)
-        {
-            StartCoroutine(WaitResponse(phase));
-        }
-        else
-        {
-            switch (phase)
-            {
+                case GamePhase.Heal:
+                    if (abilityTargetting == false && card.Exhausted)
+                    {
+                        card.Heal(false);
+                        return;
+                    }
+                    //HandleAbilityTargetting(card);
+                    break;
+                case GamePhase.Enhance:
+                    if (abilityTargetting == false && !zoomed)
+                    {
+                        CardZoom(card);
+                        return;
+                    }
+                    //HandleAbilityTargetting(card);
+                    break;
+                case GamePhase.Recruit:
+                    if (abilityTargetting == false && !zoomed)
+                    {
+                        CardZoom(card);
+                        return;
+                    }
+                    //HandleAbilityTargetting(card);
+                    break;
                 case GamePhase.Overcome:
-                    ActualCalculateBattle();
+                    if (abilityTargetting == false)
+                    {
+                        //HandleHeroSelected(card);
+                        return;
+                    }
+                    //HandleAbilityTargetting(card);
+                    break;
+                case GamePhase.Feat:
+                    //HandleAbilityTargetting(card);
+                    break;
+                case GamePhase.PostAction:
+                    if (!zoomed)
+                    {
+                        CardZoom(card);
+                    }
+                    break;
+                case GamePhase.TurnResponse:
+                    if (activeAbility != null)
+                    {
+                        //HandleAbilityTargetting(card);
+                        abilityTargetting = false;
+                    }
+                    else
+                    {
+                        Debug.Log($"{activeAbility}");
+                        Debug.Log("No active Ability");
+                    }
+                    break;
+                case GamePhase.Wait:
+                    if (!zoomed)
+                    {
+                        CardZoom(card);
+                    }
                     break;
             }
         }
+        else
+        {
+            CB.DrawSpecificCard(card.myCard);
+            CB.SpecificDraw = false;
+        }
+    }
+
+    private void HandleDeselection()
+    {
+        zoomed = false;
+        handZoomed = false;
     }
     #endregion
 }

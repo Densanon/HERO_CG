@@ -473,10 +473,10 @@ public class CardDataBase : MonoBehaviour
         Debug.Log("Initializing the End of the Ability Draft.");
         if (Referee.player == Referee.PlayerNum.P1)
         {
-            GM.SetTurnGauge(9);
+            //GM.SetTurnGauge(9);
             Debug.Log("Setting first player to Pre - Selection.");
             GM.PhaseChange(Referee.GamePhase.HEROSelect);
-            GM.TurnOnPersonalDeckVisual();
+            //GM.TurnOnPersonalDeckVisual();
             FillHQ();
             HandContainer.SetActive(true);
             HandButton.SetActive(true);
@@ -484,11 +484,11 @@ public class CardDataBase : MonoBehaviour
         }
         else
         {
-            GM.SetTurnGauge(8);
+            //GM.SetTurnGauge(8);
             Debug.Log("Setting second player to wait.");
             GM.PhaseChange(Referee.GamePhase.Wait);
             GM.SetDeckNumberAmounts();
-            GM.TurnOnPersonalDeckVisual();
+            //GM.TurnOnPersonalDeckVisual();
             HandContainer.SetActive(true);
             HandButton.SetActive(true);
             ReserveButtonParentObject.SetActive(true);
@@ -529,19 +529,19 @@ public class CardDataBase : MonoBehaviour
         {
             case "ABSORB":
                 activeFeat = GM.gameObject.AddComponent<aAbsorb>();
-                GM.SetActiveAbility((Ability)activeFeat);
+                //GM.SetActiveAbility((Ability)activeFeat);
                 break;
             case "DRAIN":
                 activeFeat = GM.gameObject.AddComponent<aDrain>();
-                GM.SetActiveAbility((Ability)activeFeat);
+                //GM.SetActiveAbility((Ability)activeFeat);
                 break;
             case "PAY THE COST":
                 activeFeat = GM.gameObject.AddComponent<aPaytheCost>();
-                GM.SetActiveAbility((Ability)activeFeat);
+                //GM.SetActiveAbility((Ability)activeFeat);
                 break;
             case "UNDER SEIGE":
                 activeFeat = GM.gameObject.AddComponent<aUnderSiege>();
-                GM.SetActiveAbility((Ability)activeFeat);
+                //GM.SetActiveAbility((Ability)activeFeat);
                 break;
         }
     }
@@ -761,8 +761,8 @@ public class CardDataBase : MonoBehaviour
                 CurrentActiveCard = lHandData[5];
                 break;
         }
-        if(i != 0)
-        GM.CheckHandZoomInEffect();
+        if (i != 0) ;
+        //GM.CheckHandZoomInEffect();
     }
 
     private void GetHandToShare()
@@ -832,7 +832,7 @@ public class CardDataBase : MonoBehaviour
         UpdateHandSlider();
         GetHandToShare();
         handSize = P1Hand.Count;
-        GM.PassiveActivate(Ability.PassiveType.HandCardAdjustment);
+        //GM.PassiveActivate(Ability.PassiveType.HandCardAdjustment);
     }
 
     private void RemoveCardFromHand(Card cardToRemove)
@@ -861,7 +861,7 @@ public class CardDataBase : MonoBehaviour
         HandCardOffset(0);
         GetHandToShare();
         handSize = P1Hand.Count;
-        GM.PassiveActivate(Ability.PassiveType.HandCardAdjustment);
+        //GM.PassiveActivate(Ability.PassiveType.HandCardAdjustment);
     }
     #endregion
 
@@ -978,7 +978,7 @@ public class CardDataBase : MonoBehaviour
         }
 
         herosFatigued--;
-        GM.PassiveActivate(Ability.PassiveType.CharacterDestroyed);
+        //GM.PassiveActivate(Ability.PassiveType.CharacterDestroyed);
         myManager.RPCRequest("FieldCardDestroy", RpcTarget.Others, card.Name, loc);
     }
 
@@ -1033,7 +1033,7 @@ public class CardDataBase : MonoBehaviour
         herosFatigued = exhaust ? herosFatigued + 1 : herosFatigued - 1;
         if (exhaust)
         {
-            GM.PassiveActivate(Ability.PassiveType.HeroFatigued);
+            //GM.PassiveActivate(Ability.PassiveType.HeroFatigued);
         }
         Debug.Log($"Heros currently Fatigued: {herosFatigued}");
 
@@ -1422,9 +1422,9 @@ public class CardDataBase : MonoBehaviour
             }
         }
 
-        GM.SetActiveAbility(ability);
+        //GM.SetActiveAbility(ability);
         GM.PhaseChange(Referee.GamePhase.TurnResponse);
-        GM.PopUpUpdater($"{ability.Name} ability activated.");
+        //GM.PopUpUpdater($"{ability.Name} ability activated.");
     }
     #endregion
     
@@ -1478,7 +1478,7 @@ public class CardDataBase : MonoBehaviour
         }
         if(Referee.player == num)
         {
-            GM.SilenceAbilityToField(turns);
+            //GM.SilenceAbilityToField(turns);
         }
     }
     #endregion
@@ -1492,10 +1492,10 @@ public class CardDataBase : MonoBehaviour
             case Card.Type.Ability:
                 //Target a Character
                 //Update characters
-                if (!GM.canPlayAbilitiesToFieldCheck())
+                /*if (!GM.canPlayAbilitiesToFieldCheck())
                 {
                     return;
-                }
+                }*/
                 OnTargeting?.Invoke(card, true);
                 bTargeting = true;
                 break;
@@ -1530,6 +1530,8 @@ public class CardDataBase : MonoBehaviour
                 AddCardToHand(card);
                 HeroReserve.Remove(card);
                 myManager.RPCRequest("RemoveDraftOption", RpcTarget.All, card.Name);
+                myManager.RPCRequest("DeclaredTurn", RpcTarget.Others, true);
+                GM.ToldSwitchTurn(false);
                 break;
             case Referee.GamePhase.AbilityDraft:
                 P1Deck.Add(card);
@@ -1541,7 +1543,7 @@ public class CardDataBase : MonoBehaviour
                 P1Hand.Add(card);
                 AddCardToHand(card);
                 RemoveHQCard(card);
-                GM.PassiveActivate(Ability.PassiveType.HeroRecruited);
+                //GM.PassiveActivate(Ability.PassiveType.HeroRecruited);
                 break;
         }
     }
@@ -1671,12 +1673,12 @@ public class CardDataBase : MonoBehaviour
         if(Referee.myTurn && Referee.myPhase == Referee.GamePhase.Recruit)
         {
             DrawRandomCard(HeroReserve);
-            GM.PassiveActivate(Ability.PassiveType.HeroRecruited);
+            /*GM.PassiveActivate(Ability.PassiveType.HeroRecruited);
             GM.TurnCounterDecrement();
             if(GM.GetTurnCounter() == 0)
             {
                 ReserveButton.interactable = false;
-            }
+            }*/
         }
     }
     #endregion
@@ -1742,7 +1744,7 @@ public class CardDataBase : MonoBehaviour
         Debug.Log("New Card list displayed.");
         yield return new WaitForSeconds(5f);
         DraftArea.gameObject.SetActive(false);
-        GM.ToldSwitchTurn(false);
+        //GM.ToldSwitchTurn(false);
         myManager.RPCRequest("DeclaredTurn", RpcTarget.Others, true);
     }
     #endregion
