@@ -326,7 +326,14 @@ public class CardDataBase : MonoBehaviour
         {
             GameObject obj = Instantiate(CardDraftPrefab, DraftArea);
             CardData cd = obj.GetComponent<CardData>();
-            cd.CardOverride(card, CardData.FieldPlacement.Draft);
+            if(whichDeck != P1Hand)
+            {
+                cd.CardOverride(card, CardData.FieldPlacement.Draft);
+            }
+            else
+            {
+                cd.CardOverride(card, CardData.FieldPlacement.Hand);
+            }
             Draft.Add(cd);
         }
     }
@@ -475,8 +482,9 @@ public class CardDataBase : MonoBehaviour
         {
             //GM.SetTurnGauge(9);
             Debug.Log("Setting first player to Pre - Selection.");
+            GM.ToldSwitchTurn(true);
             GM.PhaseChange(Referee.GamePhase.HEROSelect);
-            //GM.TurnOnPersonalDeckVisual();
+            GM.TurnOnPersonalDeckVisual();
             FillHQ();
             HandContainer.SetActive(true);
             HandButton.SetActive(true);
@@ -486,9 +494,10 @@ public class CardDataBase : MonoBehaviour
         {
             //GM.SetTurnGauge(8);
             Debug.Log("Setting second player to wait.");
+            GM.ToldSwitchTurn(true);
             GM.PhaseChange(Referee.GamePhase.Wait);
             GM.SetDeckNumberAmounts();
-            //GM.TurnOnPersonalDeckVisual();
+            GM.TurnOnPersonalDeckVisual();
             HandContainer.SetActive(true);
             HandButton.SetActive(true);
             ReserveButtonParentObject.SetActive(true);
@@ -629,7 +638,6 @@ public class CardDataBase : MonoBehaviour
             {
                 Names += $" {name},";
             }
-            Debug.Log(Names);
 
             List<string> cardNames = new List<string>();
             List<Card> cardsToAdd = new List<Card>();
@@ -722,17 +730,6 @@ public class CardDataBase : MonoBehaviour
     #endregion
 
     #region Hand and Cards
-    private void UpdateHandSlider()
-    {
-        if(P1Hand.Count != 0)
-        {
-            sHandSlider.maxValue = P1Hand.Count-1;
-            return;
-        }
-
-        sHandSlider.maxValue = 0;
-        
-    }
 
     private void CheckActiveCard()
     {
@@ -829,7 +826,6 @@ public class CardDataBase : MonoBehaviour
             //Debug.Log($"Adding a card to hand(visual hand): {lHandData.Count}");
             CheckActiveCard();
         }
-        UpdateHandSlider();
         GetHandToShare();
         handSize = P1Hand.Count;
         //GM.PassiveActivate(Ability.PassiveType.HandCardAdjustment);
@@ -857,7 +853,6 @@ public class CardDataBase : MonoBehaviour
         //Debug.Log($"Removing {cardToRemove.Name}");
         P1Hand.Remove(cardToRemove);
         //Debug.Log($"Removing a card from hand(hand) after removed: {P1Hand.Count}");
-        UpdateHandSlider();
         HandCardOffset(0);
         GetHandToShare();
         handSize = P1Hand.Count;
@@ -1123,6 +1118,7 @@ public class CardDataBase : MonoBehaviour
         {
             if(card.Name == heroToSpawn)
             {
+                Debug.Log("spawning a card to field from opponent");
                 GameObject obj = Instantiate(CardOppFieldPrefab, OppHeroArea);
                 CardData data = obj.GetComponent<CardData>();
                 data.CardOverride(card, CardData.FieldPlacement.Opp);
@@ -1502,6 +1498,7 @@ public class CardDataBase : MonoBehaviour
             case Card.Type.Character:
                 //Place Character on the field
                 //Spawn a Character on the field
+                Debug.Log($"I should spawn {card.Name} to field.");
                 SpawnCharacterToMyField(card);
                 myManager.RPCRequest("SpawnCharacterToOpponentField", RpcTarget.OthersBuffered, card.Name);
                 //GM.TurnCounterDecrement();
@@ -1535,9 +1532,14 @@ public class CardDataBase : MonoBehaviour
                 break;
             case Referee.GamePhase.AbilityDraft:
                 P1Deck.Add(card);
-                UpdateHandSlider();
                 AbilityDraft.Remove(card);
                 myManager.RPCRequest("RemoveDraftOption", RpcTarget.All, card.Name);
+                if (Draft.Count != 0)
+                {
+                    Debug.Log($"Draft count: {Draft.Count}");
+                    myManager.RPCRequest("DeclaredTurn", RpcTarget.Others, true);
+                    GM.ToldSwitchTurn(false);
+                }
                 break;
             case Referee.GamePhase.Recruit:
                 P1Hand.Add(card);

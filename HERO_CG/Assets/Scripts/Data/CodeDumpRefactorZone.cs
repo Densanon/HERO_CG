@@ -189,16 +189,7 @@
         StartCoroutine(PhaseDeclaration(message));
     }
 
-    public void EndTurn()
-    {
-        bEndTurn = true;
-        if (myPhase == GamePhase.Recruit)
-        {
-            CB.FillHQ();
-        }
-        StartCoroutine(EndturnDelay());
-        //TurnActionIndicator.text = "0";
-    }
+    
 
     
 
@@ -231,18 +222,7 @@
     }
     #endregion
 
-    #region Phase State Adjustments
     
-
-    
-
-    
-
-    public void TurnOnPersonalDeckVisual()
-    {
-        DrawDeckButton.SetActive(true);
-    }
-    #endregion
 
     #endregion
 
@@ -258,26 +238,7 @@
 
     
 
-    public void SetCardCollectAmount(int amount)
-    {
-        for (int i = amount; i > 0; i--)
-        {
-            iEnhanceCardsToCollect--;
-            CB.DrawCard(CardDataBase.CardDecks.P1Deck);
-        }
-        Debug.Log($"Enhance cards to be collected: {iEnhanceCardsToCollect}");
-
-        if (iEnhanceCardsToCollect > 0)
-        {
-            tCardsToDrawMyDeck.text = $"{iEnhanceCardsToCollect}/{CB.CardsRemaining(CardDataBase.CardDecks.P1Deck)}";
-        }
-        else
-        {
-            Debug.Log("Ran out of cards to draw for the turn.");
-            tCardsToDrawMyDeck.text = $"{CB.CardsRemaining(CardDataBase.CardDecks.P1Deck)}";
-            bDrawEnhancementCards.interactable = false;
-        }
-    }
+    
 
     public void HandCardZoom()
     {
@@ -305,17 +266,7 @@
 
     
 
-    private void HandlePlayCard(Card card)
-    {
-        if (myPhase == GamePhase.Enhance)
-        {
-            iEnhanceCardsToCollect = 0;
-            tCardsToDrawMyDeck.text = $"{CB.CardsRemaining(CardDataBase.CardDecks.P1Deck)}";
-            bDrawEnhancementCards.interactable = false;
-            TurnCounterDecrement();
-        }
-        CB.PlayCard(card);
-    }
+    
 
 
 #endregion

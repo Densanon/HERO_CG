@@ -17878,6 +17878,16 @@ PrefabInstance:
       propertyPath: m_IsActive
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 1985162032546035682, guid: c2635df660bb08f46ac474a6b76ada3f,
+        type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[2].m_Target
+      value: 
+      objectReference: {fileID: 1321246902}
+    - target: {fileID: 1985162032546035682, guid: c2635df660bb08f46ac474a6b76ada3f,
+        type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[3].m_Target
+      value: 
+      objectReference: {fileID: 21578964}
     - target: {fileID: 2166334539001568888, guid: c2635df660bb08f46ac474a6b76ada3f,
         type: 3}
       propertyPath: m_textInfo.characterCount

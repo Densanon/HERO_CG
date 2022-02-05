@@ -98,7 +98,7 @@ public class Referee : MonoBehaviour
         CardFunction.OnCardSelected += HandleCardSelecion;
         CardFunction.OnCardDeselected += HandleDeselection;
         CardFunction.OnCardCollected += HandleCardCollected;
-        //CardFunction.OnCardPlayed += HandlePlayCard;
+        CardFunction.OnCardPlayed += HandlePlayCard;
         UIConfirmation.OnHEROSelection += PhaseChange;
         CardDataBase.OnAiDraftCollected += HandleCardCollected;
         /*Ability.OnAbilityUsed += HandleAbilityEnd;
@@ -115,7 +115,7 @@ public class Referee : MonoBehaviour
         CardFunction.OnCardSelected -= HandleCardSelecion;
         CardFunction.OnCardDeselected -= HandleDeselection;
         CardFunction.OnCardCollected -= HandleCardCollected;
-        //CardFunction.OnCardPlayed -= HandlePlayCard;
+        CardFunction.OnCardPlayed -= HandlePlayCard;
         UIConfirmation.OnHEROSelection -= PhaseChange;
         CardDataBase.OnAiDraftCollected -= HandleCardCollected;
         /*Ability.OnAbilityUsed -= HandleAbilityEnd;
@@ -183,19 +183,37 @@ public class Referee : MonoBehaviour
             }
         }
         myTurn = !myTurn;
-        SwitchEndTurnButtonInteractible(myTurn);
-        StartCoroutine(TurnDeclaration(myTurn));
+        GenericTurnChangables();
         NextPhase();
         HandleTurnDeclaration(!myTurn);
-        OnTurnResetabilities?.Invoke();
+
     }
 
     public void ToldSwitchTurn(bool turn)
     {
         myTurn = turn;
+        GenericTurnChangables();
+        NextPhase();
+        
+    }
+
+    public void EndTurn()
+    {
+        GenericTurnChangables();
+        bEndTurn = true;
+        if (myPhase == GamePhase.Recruit)
+        {
+            CB.FillHQ();
+        }
+        //StartCoroutine(EndturnDelay());
+        //TurnActionIndicator.text = "0";
+        PhaseChange(GamePhase.Wait);
+    }
+
+    private void GenericTurnChangables()
+    {
         SwitchEndTurnButtonInteractible(myTurn);
         StartCoroutine(TurnDeclaration(myTurn));
-        NextPhase();
         OnTurnResetabilities?.Invoke();
     }
 
@@ -426,6 +444,7 @@ public class Referee : MonoBehaviour
                 break;
         }
     }
+
     #endregion
 
     #endregion
@@ -468,6 +487,27 @@ public class Referee : MonoBehaviour
                 PassiveActivate(Ability.PassiveType.ActionComplete);
                             StartCoroutine(EndturnDelay());
             }*/
+        }
+    }
+
+    public void SetCardCollectAmount(int amount)
+    {
+        for (int i = amount; i > 0; i--)
+        {
+            iEnhanceCardsToCollect--;
+            CB.DrawCard(CardDataBase.CardDecks.P1Deck);
+        }
+        Debug.Log($"Enhance cards to be collected: {iEnhanceCardsToCollect}");
+
+        if (iEnhanceCardsToCollect > 0)
+        {
+            tCardsToDrawMyDeck.text = $"{iEnhanceCardsToCollect}/{CB.CardsRemaining(CardDataBase.CardDecks.P1Deck)}";
+        }
+        else
+        {
+            Debug.Log("Ran out of cards to draw for the turn.");
+            tCardsToDrawMyDeck.text = $"{CB.CardsRemaining(CardDataBase.CardDecks.P1Deck)}";
+            bDrawEnhancementCards.interactable = false;
         }
     }
 
@@ -648,6 +688,11 @@ public class Referee : MonoBehaviour
         gCardCollect.SetActive(false);
         gCardPlay.SetActive(false);
     }
+
+    public void TurnOnPersonalDeckVisual()
+    {
+        DrawDeckButton.SetActive(true);
+    }
     #endregion
 
     #region Selections
@@ -747,6 +792,19 @@ public class Referee : MonoBehaviour
     {
         zoomed = false;
         handZoomed = false;
+    }
+
+    private void HandlePlayCard(Card card)
+    {
+        if (myPhase == GamePhase.Enhance)
+        {
+            iEnhanceCardsToCollect = 0;
+            tCardsToDrawMyDeck.text = $"{CB.CardsRemaining(CardDataBase.CardDecks.P1Deck)}";
+            bDrawEnhancementCards.interactable = false;
+            //TurnCounterDecrement();
+        }
+        zoomed = false;
+        CB.PlayCard(card);
     }
     #endregion
 }
