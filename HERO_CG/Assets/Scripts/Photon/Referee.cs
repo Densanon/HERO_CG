@@ -33,6 +33,7 @@ public class Referee : MonoBehaviour
     public GameObject gCardSelect;
     public GameObject gCardPlay;
 
+    public GameObject ResponsePanel;
     public GameObject PhaseDeclarationUI;
     public TMP_Text PhaseText;
 
@@ -90,7 +91,8 @@ public class Referee : MonoBehaviour
     public static Action OnOvercomeSwitch = delegate { };
     public static Action<Ability.PassiveType> OnPassiveActivate = delegate { };
     public static Action OnTurnResetabilities = delegate { };
-    public static Action OnWaitTimer = delegate { };
+    public static Action<bool> OnWaitTimer = delegate { };
+    public static Action OnPlayerResponded = delegate { };
 
     #region Unity Methods
     private void Awake()
@@ -222,6 +224,60 @@ public class Referee : MonoBehaviour
         btEndTurn.gameObject.SetActive(interactible);
     }
     #endregion
+
+    public void Respond(bool response)
+    {
+        OnPlayerResponded?.Invoke();
+        myManager.RPCRequest("HandlePlayerResponded", RpcTarget.Others, response);
+        NextPhase();
+    }
+
+    public void AwatePlayerResponse(bool wait)
+    {
+        if (wait)
+        {
+            Debug.Log("Freezing Zoom so player can't interact with anything while waiting.");
+            zoomed = true;
+            return;
+        }
+        Debug.Log("Unfreezing zoom so the player can interact again.");
+        zoomed = false;
+        
+    }
+
+    public void TurnCounterDecrement()
+    {
+        iTurnCounter--;
+        PopUpUpdater($"{iTurnCounter} moves left.");
+        if (iTurnCounter > 0)
+        {
+            if (myPhase == GamePhase.Recruit)
+            {
+                tCardsToCollectReserve.text = $"{iTurnCounter}/{CB.CardsRemaining(CardDataBase.CardDecks.Reserve)}";
+            }
+            if (myPhase == GamePhase.Enhance)
+            {
+                tCardsToDrawMyDeck.text = $"{iEnhanceCardsToCollect}/{CB.CardsRemaining(CardDataBase.CardDecks.P1Deck)}";
+            }
+            
+            //PassiveActivate(Ability.PassiveType.ActionComplete);
+            //StartCoroutine(EndturnDelay());
+            //HandleTurnDeclaration(!myTurn);///
+        }
+        else
+        {
+            tCardsToCollectReserve.text = $"{CB.CardsRemaining(CardDataBase.CardDecks.Reserve)}";
+            //btEndTurn.gameObject.SetActive(true);
+            PopUpUpdater("No More Actions");
+            NullZoomButtons();
+        }
+
+    }
+
+    public void PopUpUpdater(string message)
+    {
+        StartCoroutine(PhaseDeclaration(message));
+    }
 
     #region Turn Declarations Methods
     private IEnumerator TurnDeclaration(bool myTurn)
@@ -415,7 +471,8 @@ public class Referee : MonoBehaviour
             case GamePhase.TurnResponse:
                 StartCoroutine(PhaseDeclaration("Player Response"));
                 PhaseIndicator.text = "Turn Response";
-                OnWaitTimer?.Invoke();
+                OnWaitTimer?.Invoke(true);
+                ResponsePanel.SetActive(true);
                 break;
             case GamePhase.Wait:
                 StartCoroutine(PhaseDeclaration("Wait for Opponent"));
@@ -450,6 +507,29 @@ public class Referee : MonoBehaviour
     #endregion
 
     #region Card Methods
+    private void HandlePlayCard(Card card)
+    {
+        if (iTurnCounter <= 0)
+        {
+            zoomed = false;
+            Debug.Log("You are trying to play a card while having no moves.");
+            return;
+        }
+        if (myPhase == GamePhase.Enhance)
+        {
+            iEnhanceCardsToCollect = 0;
+            tCardsToDrawMyDeck.text = $"{CB.CardsRemaining(CardDataBase.CardDecks.P1Deck)}";
+            bDrawEnhancementCards.interactable = false;
+            TurnCounterDecrement();
+            
+        }
+        else
+        {
+            Debug.Log("Referee: HandlePlayCard: Playing from some phase that isn't Enhance.");
+        }
+        zoomed = false;
+        CB.PlayCard(card);
+    }
 
     public void SetDeckNumberAmounts()
     {
@@ -465,6 +545,14 @@ public class Referee : MonoBehaviour
         HandleCardButtons(card.myPlacement);
         ClearAbilityPanel();
         GetNewAbilities(card);
+    }
+
+    public IEnumerator ShowOpponentPlayedCard(CardData card)
+    {
+        CardZoom(card);
+        yield return new WaitForSeconds(2f);
+        HandleDeselection();
+        gCardZoom.SetActive(false);
     }
 
     private void HandleCardCollected(Card card)
@@ -551,7 +639,6 @@ public class Referee : MonoBehaviour
     }
 
     #endregion
-
     #endregion
 
     #region Button Controls
@@ -792,19 +879,6 @@ public class Referee : MonoBehaviour
     {
         zoomed = false;
         handZoomed = false;
-    }
-
-    private void HandlePlayCard(Card card)
-    {
-        if (myPhase == GamePhase.Enhance)
-        {
-            iEnhanceCardsToCollect = 0;
-            tCardsToDrawMyDeck.text = $"{CB.CardsRemaining(CardDataBase.CardDecks.P1Deck)}";
-            bDrawEnhancementCards.interactable = false;
-            //TurnCounterDecrement();
-        }
-        zoomed = false;
-        CB.PlayCard(card);
     }
     #endregion
 }

@@ -146,34 +146,7 @@
         return iTurnCounter;
     }
 
-    public void TurnCounterDecrement()
-    {
-        iTurnCounter--;
-        PopUpUpdater($"{iTurnCounter} moves left.");
-        if (iTurnCounter > 0)
-        {
-            if (myPhase == GamePhase.Recruit)
-            {
-                tCardsToCollectReserve.text = $"{iTurnCounter}/{CB.CardsRemaining(CardDataBase.CardDecks.Reserve)}";
-            }
-            if (myPhase == GamePhase.Enhance)
-            {
-                tCardsToDrawMyDeck.text = $"{iEnhanceCardsToCollect}/{CB.CardsRemaining(CardDataBase.CardDecks.P1Deck)}";
-            }
-            ///if(myPhase == GamePhase.Recruit)
-            {
-                CB.FillHQ();
-            }
-            PassiveActivate(Ability.PassiveType.ActionComplete);
-                        StartCoroutine(EndturnDelay());
-            HandleTurnDeclaration(!myTurn);///
-        }
-        else
-        {
-            tCardsToCollectReserve.text = $"{CB.CardsRemaining(CardDataBase.CardDecks.Reserve)}";
-            btEndTurn.gameObject.SetActive(true);
-            PopUpUpdater("No More Actions");
-        }
+    
     }
 
     
@@ -184,10 +157,7 @@
     }
     #endregion
 
-    public void PopUpUpdater(string message)
-    {
-        StartCoroutine(PhaseDeclaration(message));
-    }
+   
 
     
 

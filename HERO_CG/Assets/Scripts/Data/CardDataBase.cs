@@ -1370,7 +1370,6 @@ public class CardDataBase : MonoBehaviour
     #endregion
 
     #region Outsource Methods
-
     public void SetUpHandCardsToBeViewed()
     {
         ClearDraft();
@@ -1491,14 +1490,17 @@ public class CardDataBase : MonoBehaviour
                 /*if (!GM.canPlayAbilitiesToFieldCheck())
                 {
                     return;
+
                 }*/
+                myManager.RPCRequest("HandlePlayerAction", RpcTarget.Others, false, card.Name);
                 OnTargeting?.Invoke(card, true);
                 bTargeting = true;
                 break;
             case Card.Type.Character:
                 //Place Character on the field
                 //Spawn a Character on the field
-                Debug.Log($"I should spawn {card.Name} to field.");
+                myManager.RPCRequest("HandlePlayerAction", RpcTarget.Others, true, card.Name);
+                GM.AwatePlayerResponse(true);
                 SpawnCharacterToMyField(card);
                 myManager.RPCRequest("SpawnCharacterToOpponentField", RpcTarget.OthersBuffered, card.Name);
                 //GM.TurnCounterDecrement();
@@ -1506,10 +1508,12 @@ public class CardDataBase : MonoBehaviour
             case Card.Type.Enhancement:
                 //Target a Character
                 //Update character
+                myManager.RPCRequest("HandlePlayerAction", RpcTarget.Others, false, card.Name);
                 OnTargeting?.Invoke(card, true);
                 bTargeting = true;
                 break;
             case Card.Type.Feat:
+                myManager.RPCRequest("HandlePlayerAction", RpcTarget.Others, false, card.Name);
                 SetFeatToActiveAbility(card);
                 //GM.ToldSwitchTurn(false);
                 //HandleTurnDeclaration(true);
@@ -1518,6 +1522,19 @@ public class CardDataBase : MonoBehaviour
         RemoveCardFromHand(card);
     }
     
+    public void HandleShowOpponentcard(string cardName)
+    {
+        foreach(Card card in CardBase)
+        {
+            if(cardName == card.Name)
+            {
+                CardData dt = new CardData(card, CardData.FieldPlacement.Opp);
+                GM.ShowOpponentPlayedCard(dt);
+                break;
+            }
+        }
+    }
+
     public void HandleCardCollected(Card card, Referee.GamePhase phase)
     {
         switch (phase)

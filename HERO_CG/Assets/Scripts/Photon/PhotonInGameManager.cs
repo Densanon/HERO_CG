@@ -16,12 +16,20 @@ public class PhotonInGameManager : MonoBehaviourPunCallbacks
 
         PlayerBase.OnExhaust += HandleBaseExhaust;
         PlayerBase.OnBaseDestroyed += HandleBaseDestroyed;
+        UIResponseTimer.OnTimerRunOut += HandlePlayerResponseRunOut;
+
     }
 
     private void OnDestroy()
     {
         PlayerBase.OnExhaust -= HandleBaseExhaust;
         PlayerBase.OnBaseDestroyed -= HandleBaseDestroyed;
+        UIResponseTimer.OnTimerRunOut -= HandlePlayerResponseRunOut;
+    }
+
+    private void HandlePlayerResponseRunOut()
+    {
+        RPCRequest("HandlePlayerNoResponse", RpcTarget.Others, false);
     }
 
     public bool IsMine()
@@ -83,6 +91,32 @@ public class PhotonInGameManager : MonoBehaviourPunCallbacks
     {
         //GameManager.HandleHoldTurn(false, true);
         GameManager.PhaseChange(Referee.prevPhase);
+    }
+
+    [PunRPC]
+    private void HandlePlayerAction(bool responseNeeded, string showCard)
+    {
+        if (responseNeeded)
+        {
+            Debug.Log("We need to set up some sort of response.");
+            GameManager.PhaseChange(Referee.GamePhase.TurnResponse);
+        }
+        DataBase.HandleShowOpponentcard(showCard);
+    }
+
+    [PunRPC]
+    private void HandlePlayerResponded(bool b)
+    {
+        //Do Something...
+        Debug.Log($"PhotonGameManager: Player responded with {b}");
+        GameManager.AwatePlayerResponse(false);
+    }
+
+    [PunRPC]
+    private void HandlePlayerNoResponse(bool b)
+    {
+        //Do Something...
+        GameManager.AwatePlayerResponse(false);
     }
     #endregion
 
