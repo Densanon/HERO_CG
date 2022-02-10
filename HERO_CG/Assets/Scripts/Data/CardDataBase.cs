@@ -355,6 +355,7 @@ public class CardDataBase : MonoBehaviour
             }
             if (Referee.myTurn)
             {
+                Debug.Log("SetUpabilityDraft: As player 1, activating EndAbilityDraft for self and others");
                 myManager.RPCRequest("EndAbilityDraft", RpcTarget.Others, false);
                 EndAbilityDraft(true);
             }
@@ -366,11 +367,11 @@ public class CardDataBase : MonoBehaviour
             {
                 P1Deck.Add(card);
             }
-            if (Referee.myTurn)
+            /*if (Referee.myTurn)
             {
-                myManager.RPCRequest("EndAbilityDraft", RpcTarget.Others, false);
-                EndAbilityDraft(true);
-            }
+                //myManager.RPCRequest("EndAbilityDraft", RpcTarget.Others, false);
+                //EndAbilityDraft(true);
+            }*/
             DraftArea.gameObject.SetActive(false);
         }
     }
@@ -480,28 +481,28 @@ public class CardDataBase : MonoBehaviour
         Debug.Log("Initializing the End of the Ability Draft.");
         if (Referee.player == Referee.PlayerNum.P1)
         {
-            //GM.SetTurnGauge(9);
             Debug.Log("Setting first player to Pre - Selection.");
+            FillHQ();
+            TurnOnGameElements();
             GM.ToldSwitchTurn(true);
             GM.PhaseChange(Referee.GamePhase.HEROSelect);
-            GM.TurnOnPersonalDeckVisual();
-            FillHQ();
-            HandContainer.SetActive(true);
-            HandButton.SetActive(true);
-            ReserveButtonParentObject.SetActive(true);
         }
         else
         {
-            //GM.SetTurnGauge(8);
             Debug.Log("Setting second player to wait.");
-            GM.ToldSwitchTurn(true);
-            GM.PhaseChange(Referee.GamePhase.Wait);
             GM.SetDeckNumberAmounts();
-            GM.TurnOnPersonalDeckVisual();
-            HandContainer.SetActive(true);
-            HandButton.SetActive(true);
-            ReserveButtonParentObject.SetActive(true);
+            TurnOnGameElements();
+            GM.ToldSwitchTurn(false);
+            GM.PhaseChange(Referee.GamePhase.Wait);
         }
+    }
+
+    private void TurnOnGameElements()
+    {
+        GM.TurnOnPersonalDeckVisual();
+        HandContainer.SetActive(true);
+        HandButton.SetActive(true);
+        ReserveButtonParentObject.SetActive(true);
     }
     #endregion
 

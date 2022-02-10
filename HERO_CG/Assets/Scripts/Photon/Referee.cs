@@ -199,17 +199,25 @@ public class Referee : MonoBehaviour
         
     }
 
-    public void EndTurn()
+    public void EndTurnFromButton()
     {
-        GenericTurnChangables();
         bEndTurn = true;
+
         if (myPhase == GamePhase.Recruit)
         {
             CB.FillHQ();
         }
-        //StartCoroutine(EndturnDelay());
-        //TurnActionIndicator.text = "0";
+
+        abilityPlaySilenceTurnTimer--;
+        if (abilityPlaySilenceTurnTimer <= 0)
+        {
+            canPlayAbilityToField = true;
+        }
+
+        myTurn = false;
+        GenericTurnChangables();
         PhaseChange(GamePhase.Wait);
+        HandleTurnDeclaration(true);
     }
 
     private void GenericTurnChangables()
@@ -367,8 +375,7 @@ public class Referee : MonoBehaviour
                 PhaseChange(GamePhase.Wait);
                 break;
             case GamePhase.Wait:
-                if (iTurnGauge >= 9)
-                    PhaseChange(GamePhase.HEROSelect);
+                PhaseChange(GamePhase.HEROSelect);
                 break;
         }
     }
