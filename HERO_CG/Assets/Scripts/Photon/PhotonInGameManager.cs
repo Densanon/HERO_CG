@@ -96,12 +96,14 @@ public class PhotonInGameManager : MonoBehaviourPunCallbacks
     [PunRPC]
     private void HandlePlayerAction(bool responseNeeded, string showCard)
     {
+        Debug.Log($"Received a card to display: {showCard}");
         if (responseNeeded)
         {
             Debug.Log("We need to set up some sort of response.");
             GameManager.PhaseChange(Referee.GamePhase.TurnResponse);
         }
-        DataBase.HandleShowOpponentcard(showCard);
+        if (showCard != "") ;
+        DataBase.HandleShowOpponentCard(showCard);
     }
 
     [PunRPC]

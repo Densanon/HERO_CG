@@ -1493,17 +1493,17 @@ public class CardDataBase : MonoBehaviour
                     return;
 
                 }*/
-                myManager.RPCRequest("HandlePlayerAction", RpcTarget.Others, false, card.Name);
+                myManager.RPCRequest("HandlePlayerAction", RpcTarget.Others, false, "");
+
                 OnTargeting?.Invoke(card, true);
                 bTargeting = true;
                 break;
             case Card.Type.Character:
                 //Place Character on the field
                 //Spawn a Character on the field
-                myManager.RPCRequest("HandlePlayerAction", RpcTarget.Others, true, card.Name);
-                GM.AwatePlayerResponse(true);
                 SpawnCharacterToMyField(card);
                 myManager.RPCRequest("SpawnCharacterToOpponentField", RpcTarget.OthersBuffered, card.Name);
+                myManager.RPCRequest("HandlePlayerAction", RpcTarget.Others, false, card.Name);
                 //GM.TurnCounterDecrement();
                 break;
             case Card.Type.Enhancement:
@@ -1521,19 +1521,6 @@ public class CardDataBase : MonoBehaviour
                 break;
         }
         RemoveCardFromHand(card);
-    }
-    
-    public void HandleShowOpponentcard(string cardName)
-    {
-        foreach(Card card in CardBase)
-        {
-            if(cardName == card.Name)
-            {
-                CardData dt = new CardData(card, CardData.FieldPlacement.Opp);
-                GM.ShowOpponentPlayedCard(dt);
-                break;
-            }
-        }
     }
 
     public void HandleCardCollected(Card card, Referee.GamePhase phase)
@@ -1581,6 +1568,20 @@ public class CardDataBase : MonoBehaviour
             lHandData[i].CardOverride(P1Hand[j], CardData.FieldPlacement.Hand);
         }
         CheckActiveCard();
+    }
+
+    public void HandleShowOpponentCard(string name)
+    {
+        Debug.Log($"CB: Recieved a card to display {name}");
+        foreach(Card c in CardBase)
+        {
+            if(c.Name == name)
+            {
+                Debug.Log("CB: Found the card, sending to Zoom in GM");
+                StartCoroutine(GM.ShowOpponentPlayedCard(c));
+                //return;
+            }
+        }
     }
     #endregion
 

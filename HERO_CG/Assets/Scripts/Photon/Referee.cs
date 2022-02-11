@@ -103,6 +103,7 @@ public class Referee : MonoBehaviour
         CardFunction.OnCardPlayed += HandlePlayCard;
         UIConfirmation.OnHEROSelection += PhaseChange;
         CardDataBase.OnAiDraftCollected += HandleCardCollected;
+        UIResponseTimer.OnTimerRunOut += HandleResponsePanelTurnOff;
         /*Ability.OnAbilityUsed += HandleAbilityEnd;
         Ability.OnFeatComplete += HandleFeatComplete;
         Ability.OnNeedCardDraw += DrawCardOption;
@@ -120,6 +121,7 @@ public class Referee : MonoBehaviour
         CardFunction.OnCardPlayed -= HandlePlayCard;
         UIConfirmation.OnHEROSelection -= PhaseChange;
         CardDataBase.OnAiDraftCollected -= HandleCardCollected;
+        UIResponseTimer.OnTimerRunOut -= HandleResponsePanelTurnOff;
         /*Ability.OnAbilityUsed -= HandleAbilityEnd;
         Ability.OnFeatComplete -= HandleFeatComplete;
         Ability.OnNeedCardDraw -= DrawCardOption;
@@ -251,6 +253,12 @@ public class Referee : MonoBehaviour
         Debug.Log("Unfreezing zoom so the player can interact again.");
         zoomed = false;
         
+    }
+
+    private void HandleResponsePanelTurnOff()
+    {
+        ResponsePanel.SetActive(false);
+        NextPhase();
     }
 
     public void TurnCounterDecrement()
@@ -554,8 +562,27 @@ public class Referee : MonoBehaviour
         GetNewAbilities(card);
     }
 
+    private void CardZoom(Card card)
+    {
+        zoomed = true;
+        gCardZoom.SetActive(true);
+        gCard.CardOverride(card, CardData.FieldPlacement.Zoom);
+        HandleCardButtons(CardData.FieldPlacement.Opp);
+        ClearAbilityPanel();
+    }
+
     public IEnumerator ShowOpponentPlayedCard(CardData card)
     {
+        Debug.Log($"ShowOpponentplayedCard(CardData): I received {card} and will zoom into it.");
+        CardZoom(card);
+        yield return new WaitForSeconds(2f);
+        HandleDeselection();
+        gCardZoom.SetActive(false);
+    }
+
+    public IEnumerator ShowOpponentPlayedCard(Card card)
+    {
+        Debug.Log($"ShowOpponentplayedCard(Card): I received {card} and will zoom into it.");
         CardZoom(card);
         yield return new WaitForSeconds(2f);
         HandleDeselection();
