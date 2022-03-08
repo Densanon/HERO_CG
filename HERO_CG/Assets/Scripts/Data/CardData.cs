@@ -206,15 +206,17 @@ public class CardData : MonoBehaviour
                     gAbilityCounters[i].color = Color.clear;
                 }
             }
-        if (amount > 0)
+        if(myPlacement != FieldPlacement.Opp)
         {
-            myAbilities.Add(ability);
+            if (amount > 0)
+            {
+                myAbilities.Add(ability);
+            }
+            else
+            {
+                myAbilities.Remove(ability);
+            }
         }
-        else
-        {
-            myAbilities.Remove(ability);
-        }
-
     }
 
     public List<Ability> GetCharacterAbilities()

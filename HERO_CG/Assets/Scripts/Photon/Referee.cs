@@ -557,7 +557,7 @@ public class Referee : MonoBehaviour
         zoomed = true;
         gCardZoom.SetActive(true);
         gCard.CardOverride(card, CardData.FieldPlacement.Zoom);
-        HandleCardButtons(card.myPlacement);
+        HandleCardButtons(card, card.myPlacement);
         ClearAbilityPanel();
         GetNewAbilities(card);
     }
@@ -567,7 +567,7 @@ public class Referee : MonoBehaviour
         zoomed = true;
         gCardZoom.SetActive(true);
         gCard.CardOverride(card, CardData.FieldPlacement.Zoom);
-        HandleCardButtons(CardData.FieldPlacement.Opp);
+        NullZoomButtons();
         ClearAbilityPanel();
     }
 
@@ -676,7 +676,7 @@ public class Referee : MonoBehaviour
     #endregion
 
     #region Button Controls
-    private void HandleCardButtons(CardData.FieldPlacement placement)
+    private void HandleCardButtons(CardData data, CardData.FieldPlacement placement)
     {
         if (myTurn)
         {
@@ -706,7 +706,22 @@ public class Referee : MonoBehaviour
                         case CardData.FieldPlacement.Hand:
                             gCardSelect.SetActive(false);
                             gCardCollect.SetActive(false);
-                            gCardPlay.SetActive(true);
+                            if((data.CardType == Card.Type.Ability || data.CardType == Card.Type.Enhancement) && CB.CheckForHerosOnField())
+                            {
+                                gCardPlay.SetActive(true);
+                            }
+                            else
+                            {
+                                gCardPlay.SetActive(false);
+                            }
+                            if(data.CardType == Card.Type.Character)
+                            {
+                                gCardPlay.SetActive(true);
+                            }
+                            if(iTurnCounter == 0)
+                            {
+                                gCardPlay.SetActive(false);
+                            }
                             break;
                         case CardData.FieldPlacement.HQ:
                             NullZoomButtons();

@@ -1620,6 +1620,18 @@ public class CardDataBase : MonoBehaviour
             return usable;
     }
 
+    public bool CheckForHerosOnField()
+    {
+        if (P2Field.Count > 0 || P1Field.Count > 0)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
     public bool CheckForHealableHeros()
     {
         bool healable = false;
