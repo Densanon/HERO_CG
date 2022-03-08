@@ -529,7 +529,6 @@ public class CardDataBase : MonoBehaviour
         }
         //RemoveCardFromHand(cardToUse);
         OnTargeting?.Invoke(cardToUse, false);
-        //GM.TurnCounterDecrement();
     }
 
     private void SetFeatToActiveAbility(Card card)
@@ -628,6 +627,7 @@ public class CardDataBase : MonoBehaviour
         }
 
         myManager.RPCRequest("PopulatedHQ", RpcTarget.Others, temp.ToArray());
+        GM.UpdateDeckCounts();
     }
 
     public void PopulatedHQ(string[] heros)
@@ -681,6 +681,8 @@ public class CardDataBase : MonoBehaviour
         {
             ReserveButton.interactable = false;
         }
+
+        GM.UpdateDeckCounts();
     }
 
     private void RemoveHQCard(Card card)
@@ -1504,7 +1506,6 @@ public class CardDataBase : MonoBehaviour
                 SpawnCharacterToMyField(card);
                 myManager.RPCRequest("SpawnCharacterToOpponentField", RpcTarget.OthersBuffered, card.Name);
                 myManager.RPCRequest("HandlePlayerAction", RpcTarget.Others, false, card.Name);
-                //GM.TurnCounterDecrement();
                 break;
             case Card.Type.Enhancement:
                 //Target a Character
@@ -1706,12 +1707,12 @@ public class CardDataBase : MonoBehaviour
         if(Referee.myTurn && Referee.myPhase == Referee.GamePhase.Recruit)
         {
             DrawRandomCard(HeroReserve);
-            /*GM.PassiveActivate(Ability.PassiveType.HeroRecruited);
             GM.TurnCounterDecrement();
             if(GM.GetTurnCounter() == 0)
             {
                 ReserveButton.interactable = false;
-            }*/
+            }
+            //GM.PassiveActivate(Ability.PassiveType.HeroRecruited);
         }
     }
     #endregion

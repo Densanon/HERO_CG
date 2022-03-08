@@ -261,6 +261,11 @@ public class Referee : MonoBehaviour
         NextPhase();
     }
 
+    public int GetTurnCounter()
+    {
+        return iTurnCounter;
+    }
+
     public void TurnCounterDecrement()
     {
         iTurnCounter--;
@@ -277,22 +282,23 @@ public class Referee : MonoBehaviour
             }
             
             //PassiveActivate(Ability.PassiveType.ActionComplete);
-            //StartCoroutine(EndturnDelay());
-            //HandleTurnDeclaration(!myTurn);///
         }
         else
         {
             tCardsToCollectReserve.text = $"{CB.CardsRemaining(CardDataBase.CardDecks.Reserve)}";
-            //btEndTurn.gameObject.SetActive(true);
             PopUpUpdater("No More Actions");
             NullZoomButtons();
         }
-
     }
 
     public void PopUpUpdater(string message)
     {
         StartCoroutine(PhaseDeclaration(message));
+    }
+
+    public void PopUpUpdater(string message, float time)
+    {
+        StartCoroutine(PhaseDeclaration(message, time));
     }
 
     #region Turn Declarations Methods
@@ -345,6 +351,14 @@ public class Referee : MonoBehaviour
         PhaseText.text = phase;
         PhaseDeclarationUI.SetActive(true);
         yield return new WaitForSeconds(2f);
+        PhaseDeclarationUI.SetActive(false);
+    }
+
+    private IEnumerator PhaseDeclaration(string phase, float time)
+    {
+        PhaseText.text = phase;
+        PhaseDeclarationUI.SetActive(true);
+        yield return new WaitForSeconds(time);
         PhaseDeclarationUI.SetActive(false);
     }
 
@@ -593,22 +607,10 @@ public class Referee : MonoBehaviour
     {
         zoomed = false;
         CB.HandleCardCollected(card, myPhase);
-        if (myPhase != GamePhase.Recruit)
+        if (myPhase == GamePhase.Recruit)
         {
+            TurnCounterDecrement();
             //PassiveActivate(Ability.PassiveType.ActionComplete);
-            //StartCoroutine(EndturnDelay());
-        }
-        else
-        {
-            /*if(iTurnCounter > 0)
-            {
-                TurnCounterDecrement();
-            }
-            else
-            {
-                PassiveActivate(Ability.PassiveType.ActionComplete);
-                            StartCoroutine(EndturnDelay());
-            }*/
         }
     }
 
@@ -828,6 +830,12 @@ public class Referee : MonoBehaviour
     public void TurnOnPersonalDeckVisual()
     {
         DrawDeckButton.SetActive(true);
+    }
+
+    public void UpdateDeckCounts()
+    {
+        tCardsToCollectReserve.text = $"{CB.CardsRemaining(CardDataBase.CardDecks.Reserve)}";
+        tCardsToDrawMyDeck.text = $"{CB.CardsRemaining(CardDataBase.CardDecks.P1Deck)}";
     }
     #endregion
 

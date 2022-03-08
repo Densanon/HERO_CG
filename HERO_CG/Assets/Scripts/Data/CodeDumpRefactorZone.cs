@@ -141,10 +141,7 @@
     #region Turn Methods
 
     #region Move Counter Methods
-    public int GetTurnCounter()
-    {
-        return iTurnCounter;
-    }
+    
 
     
     }
