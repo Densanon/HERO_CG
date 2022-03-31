@@ -28,6 +28,7 @@ public class CardData : MonoBehaviour
     int enhancementAttModifier = 0;
     int enhancementDefModifier = 0;
     bool charAbSet = false;
+    ParticleSystem myParticleSystem;
 
     public static Action<CardData> IsTarget = delegate { };
     public static Action<CardData, string, int> OnNumericAdjustment = delegate { };
@@ -71,6 +72,7 @@ public class CardData : MonoBehaviour
         CardDataBase.OnTargeting += HandleTargetting;
         Referee.OnOvercomeTime += HandleActivateOvercome;
         Referee.OnOvercomeSwitch += HandleSwitchOvercome;
+        myParticleSystem = gameObject.GetComponentInChildren<ParticleSystem>();
 
         UISetup();
     }
@@ -370,6 +372,21 @@ public class CardData : MonoBehaviour
 
         StateChange(prevState);
         
+    }
+
+    public void ParticleSetAndStart(Color color)
+    {
+        if(myParticleSystem != null)
+        {
+            var main = myParticleSystem.main;
+            main.startColor = color;
+            myParticleSystem.Play();
+        }
+    }
+
+    public void ParticleStop()
+    {
+        myParticleSystem.Stop();
     }
     #endregion
 

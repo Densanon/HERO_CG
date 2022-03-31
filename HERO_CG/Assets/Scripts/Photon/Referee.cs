@@ -368,7 +368,8 @@ public class Referee : MonoBehaviour
     }
     #endregion
 
-    #region Phase Methods
+   #region Phase Methods
+
     private void NextPhase()
     {
         switch (myPhase)
@@ -531,6 +532,144 @@ public class Referee : MonoBehaviour
         }
     }
 
+    #endregion
+
+    #region Overcome Methods
+    public void SwitchAttDef()
+    {
+        AttDef = !AttDef;
+        if (AttDef)
+        {
+            OnPassiveActivate?.Invoke(Ability.PassiveType.BattleStart);
+        }
+        if (!AttDef && !CB.CheckFieldForOpponents() && AttackingHeros.Count > 0)
+        {
+            //Target base
+            int tDmg = 0;
+            foreach (CardData data in AttackingHeros)
+            {
+                tDmg += data.Attack;
+                data.Exhaust(false);
+            }
+            AttackingHeros.Clear();
+
+            PB.Damage(tDmg);
+
+            SwitchAttDef();
+        }
+        else if (AttDef && !CB.CheckMyFieldForUsableHeros())
+        {
+            //check if all characters are exhausted, if they are, end turn
+            //StartCoroutine(EndturnDelay());
+            //PassiveActivate(Ability.PassiveType.ActionComplete);
+            //return;
+        }
+        OnOvercomeSwitch?.Invoke();
+    }
+
+    public void CalculateBattle()
+    {
+        //bAwaitingResponse = true;
+        //StartCoroutine(WaitResponse(GamePhase.Overcome));
+        ActualCalculateBattle();
+    }
+
+    private void ActualCalculateBattle()
+    {
+        Debug.Log("Battle initiated.");
+        ///////////////////////////////////////////////////////////You were trying to set up a response system, we needed to share the characters that are getting attacked and by whom
+        if (AttackingHeros.Count > 0 && DefendingHero != null)
+        {
+            PreviousAttackers.Clear();
+            PreviousDefender = null;
+
+            int tDmg = 0;
+            foreach (CardData card in AttackingHeros)
+            {
+                PreviousAttackers.Add(card);
+                Debug.Log($"{card.Name} was an attacking hero");
+                tDmg += card.Attack;
+                card.Exhaust(false);
+                card.ParticleStop();
+            }
+            PreviousDefender = DefendingHero;
+            Debug.Log($"{DefendingHero} was defending.");
+
+            Debug.Log($"{tDmg} was the given damage to take.");
+            DefendingHero.ParticleStop();
+            DefendingHero.DamageCheck(tDmg);
+            if (DefendingHero != null)
+            {
+                OpponentExhausted = DefendingHero.Exhausted;
+                Debug.Log($"Opponent exhaust status = {OpponentExhausted}");
+            }
+            else
+            {
+                OpponentExhausted = true;
+                Debug.Log($"Opponent should have been destroyed so exhaust has been set to true");
+            }
+
+            //PassiveActivate(Ability.PassiveType.BattleComplete);
+            CB.SendPreviousAttackersAndDefender(AttackingHeros, DefendingHero);
+            AttackingHeros.Clear();
+            DefendingHero = null;
+            SwitchAttDef();
+        }
+    }
+
+    private void HandleHeroSelected(CardData card)
+    {
+        ///WE NEED TO SEND OVER WHO IS GETTING SELECTED AND SHOW IT ON THE OTHER PLAYERS SCREEN SO THEY KNOW HOW THEY WANT TO RESPOND, STILL NEED TO ALLOW RESPONSE BEFORE WE CONCLUDE
+        if (CB.CheckIfMyCard(card))
+        {
+            if (!card.Exhausted)
+            {
+                if (AttackingHeros.Contains(card))
+                {
+                    Debug.Log($"Removing {card.Name} from Attacking.");
+                    //Untarget Card
+                    AttackingHeros.Remove(card);
+                    card.OvercomeTarget(false);
+                    card.ParticleStop();
+                }
+                else
+                {
+                    Debug.Log($"Adding {card.Name} to Attacking.");
+                    //Target Card
+                    AttackingHeros.Add(card);
+                    card.OvercomeTarget(true);
+                    card.ParticleSetAndStart(Color.blue);
+                }
+            }
+        }
+        else
+        {
+            if (!AttDef)
+            {
+                if (DefendingHero == card)
+                {
+                    Debug.Log($"Removing {card.Name} from Defending.");
+                    //Untarget Card
+                    DefendingHero = null;
+                    card.OvercomeTarget(false);
+                    card.ParticleStop();
+                }
+                else
+                {
+                    Debug.Log($"Adding {card.Name} to Defending.");
+                    //Target Card
+                    if (DefendingHero != null)
+                    {
+                        DefendingHero.OvercomeTarget(false);
+                    }
+                    DefendingHero = card;
+                    //turn on interactible for calculate
+                    card.OvercomeTarget(true);
+                    card.ParticleSetAndStart(Color.red);
+                }
+            }
+        }
+    }
     #endregion
 
     #endregion
@@ -891,7 +1030,7 @@ public class Referee : MonoBehaviour
                 case GamePhase.Overcome:
                     if (abilityTargetting == false)
                     {
-                        //HandleHeroSelected(card);
+                        HandleHeroSelected(card);
                         return;
                     }
                     //HandleAbilityTargetting(card);

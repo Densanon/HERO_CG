@@ -57,85 +57,22 @@
     }
     #endregion
 
+
+
+
+
+
+
+
     #region Overcome Methods
-    public void CalculateBattle()
-    {
-        bAwaitingResponse = true;
-        StartCoroutine(WaitResponse(GamePhase.Overcome));
-    }
+    
 
-    private void ActualCalculateBattle()
-    {
-        ///////////////////////////////////////////////////////////You were trying to set up a response system, we needed to share the characters that are getting attacked and by whom
-        if (AttackingHeros.Count > 0 && DefendingHero != null)
-        {
-            PreviousAttackers.Clear();
-            PreviousDefender = null;
-            foreach (CardData card in AttackingHeros)
-            {
-                PreviousAttackers.Add(card);
-            }
-            PreviousDefender = DefendingHero;
+    
 
-            int tDmg = 0;
-            foreach (CardData data in AttackingHeros)
-            {
-                Debug.Log($"{data.Name} was an attacking hero");
-                tDmg += data.Attack;
-                data.Exhaust(false);
-            }
 
-            DefendingHero.DamageCheck(tDmg);
-            if (DefendingHero != null)
-            {
-                OpponentExhausted = DefendingHero.Exhausted;
-                Debug.Log($"Opponent exhaust status = {OpponentExhausted}");
-            }
-            else
-            {
-                OpponentExhausted = true;
-                Debug.Log($"Opponent should have been destroyed so exhaust has been set to true");
-            }
 
-            PassiveActivate(Ability.PassiveType.BattleComplete);
-            CB.SendPreviousAttackersAndDefender(AttackingHeros, DefendingHero);
-            AttackingHeros.Clear();
-            DefendingHero = null;
-            SwitchAttDef();
-        }
-    }
 
-    public void SwitchAttDef()
-    {
-        AttDef = !AttDef;
-        if (AttDef)
-        {
-            OnPassiveActivate?.Invoke(Ability.PassiveType.BattleStart);
-        }
-        if (!AttDef && !CB.CheckFieldForOpponents() && AttackingHeros.Count > 0)
-        {
-            //Target base
-            int tDmg = 0;
-            foreach (CardData data in AttackingHeros)
-            {
-                tDmg += data.Attack;
-                data.Exhaust(false);
-            }
-            AttackingHeros.Clear();
 
-            PB.Damage(tDmg);
-
-            SwitchAttDef();
-        }
-        else if (AttDef && !CB.CheckMyFieldForUsableHeros())
-        {
-            //check if all characters are exhausted, if they are, end turn
-            StartCoroutine(EndturnDelay());
-            PassiveActivate(Ability.PassiveType.ActionComplete);
-            return;
-        }
-        OnOvercomeSwitch?.Invoke();
-    }
     #endregion
 
     #region Turn Methods
@@ -238,54 +175,7 @@
 
 #endregion
 
-private void HandleHeroSelected(CardData card)
-{
-    if (CB.CheckIfMyCard(card))
-    {
-        if (!card.Exhausted)
-        {
-            if (AttackingHeros.Contains(card))
-            {
-                Debug.Log($"Removing {card.Name} from Attacking.");
-                //Untarget Card
-                AttackingHeros.Remove(card);
-                card.OvercomeTarget(false);
-            }
-            else
-            {
-                Debug.Log($"Adding {card.Name} to Attacking.");
-                //Target Card
-                AttackingHeros.Add(card);
-                card.OvercomeTarget(true);
-            }
-        }
-    }
-    else
-    {
-        if (!AttDef)
-        {
-            if (DefendingHero == card)
-            {
-                Debug.Log($"Removing {card.Name} from Defending.");
-                //Untarget Card
-                DefendingHero = null;
-                card.OvercomeTarget(false);
-            }
-            else
-            {
-                Debug.Log($"Adding {card.Name} to Defending.");
-                //Target Card
-                if (DefendingHero != null)
-                {
-                    DefendingHero.OvercomeTarget(false);
-                }
-                DefendingHero = card;
-                //turn on interactible for calculate
-                card.OvercomeTarget(true);
-            }
-        }
-    }
-}
+
 
 
 #region Ability Functions + Feat
