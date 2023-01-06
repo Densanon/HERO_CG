@@ -104,13 +104,18 @@ public class Referee : MonoBehaviour
         UIConfirmation.OnHEROSelection += PhaseChange;
         CardDataBase.OnAiDraftCollected += HandleCardCollected;
         UIResponseTimer.OnTimerRunOut += HandleResponsePanelTurnOff;
+        Ability.OnNeedCardDraw += DrawCardOption;
         /*Ability.OnAbilityUsed += HandleAbilityEnd;
         Ability.OnFeatComplete += HandleFeatComplete;
-        Ability.OnNeedCardDraw += DrawCardOption;
         Ability.OnSetActive += SetActiveAbility;
         Ability.OnActivateable += HandleActivateAbilitySetup;
         Ability.OnHoldTurn += HandleHoldTurn;
         Ability.OnHoldTurnOffOppTurn += HandleHoldTurnOff;*/
+    }
+
+    private void DrawCardOption(int obj)
+    {
+        
     }
 
     private void OnDestroy()
@@ -122,9 +127,9 @@ public class Referee : MonoBehaviour
         UIConfirmation.OnHEROSelection -= PhaseChange;
         CardDataBase.OnAiDraftCollected -= HandleCardCollected;
         UIResponseTimer.OnTimerRunOut -= HandleResponsePanelTurnOff;
+        Ability.OnNeedCardDraw -= DrawCardOption;
         /*Ability.OnAbilityUsed -= HandleAbilityEnd;
         Ability.OnFeatComplete -= HandleFeatComplete;
-        Ability.OnNeedCardDraw -= DrawCardOption;
         Ability.OnSetActive -= SetActiveAbility;
         Ability.OnActivateable -= HandleActivateAbilitySetup;
         Ability.OnHoldTurn -= HandleHoldTurn;
@@ -280,8 +285,9 @@ public class Referee : MonoBehaviour
             {
                 tCardsToDrawMyDeck.text = $"{iEnhanceCardsToCollect}/{CB.CardsRemaining(CardDataBase.CardDecks.P1Deck)}";
             }
-            
+
             //PassiveActivate(Ability.PassiveType.ActionComplete);
+            OnPassiveActivate?.Invoke(Ability.PassiveType.ActionComplete);
         }
         else
         {
@@ -608,7 +614,7 @@ public class Referee : MonoBehaviour
                 OpponentExhausted = true;
                 Debug.Log($"Opponent should have been destroyed so exhaust has been set to true");
             }
-
+            OnPassiveActivate?.Invoke(Ability.PassiveType.BattleComplete);
             //PassiveActivate(Ability.PassiveType.BattleComplete);
             CB.SendPreviousAttackersAndDefender(AttackingHeros, DefendingHero);
             AttackingHeros.Clear();
@@ -760,7 +766,7 @@ public class Referee : MonoBehaviour
             iEnhanceCardsToCollect--;
             CB.DrawCard(CardDataBase.CardDecks.P1Deck);
         }
-        Debug.Log($"Enhance cards to be collected: {iEnhanceCardsToCollect}");
+        //Debug.Log($"Enhance cards to be collected: {iEnhanceCardsToCollect}");
 
         if (iEnhanceCardsToCollect > 0)
         {
@@ -768,7 +774,7 @@ public class Referee : MonoBehaviour
         }
         else
         {
-            Debug.Log("Ran out of cards to draw for the turn.");
+            //Debug.Log("Ran out of cards to draw for the turn.");
             tCardsToDrawMyDeck.text = $"{CB.CardsRemaining(CardDataBase.CardDecks.P1Deck)}";
             bDrawEnhancementCards.interactable = false;
         }

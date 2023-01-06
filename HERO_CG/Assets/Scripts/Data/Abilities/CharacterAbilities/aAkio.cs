@@ -1,4 +1,7 @@
-﻿using System.Collections;
+﻿//Created by Jordan Ezell
+//Last Editted: 1/5/23 Jordan
+
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -18,7 +21,6 @@ public class aAkio : Ability
     {
         base.PassiveCheck(type);
 
-        //this should only get fired off when Akio battles an opponent and at least exhausts them.
         if(type == PassiveType.BattleComplete && Referee.OpponentExhausted)
         {
             myHero.Heal(false);
