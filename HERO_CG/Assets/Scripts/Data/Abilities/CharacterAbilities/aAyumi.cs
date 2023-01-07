@@ -1,5 +1,6 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿//Created by Jordan Ezell
+//Last Edited: 1/6/23 Jordan
+
 using UnityEngine;
 
 public class aAyumi : Ability
@@ -21,7 +22,7 @@ public class aAyumi : Ability
         if(passiveType == PassiveType.HeroRecruited && myHero.myPlacement == CardData.FieldPlacement.Mine)
         {
             Debug.Log($"{myHero.Name} should be activating the draw passive.");
-            OnNeedCardDraw?.Invoke(1);
+            OnConfirmDrawEnhanceCard?.Invoke("Ayumi",1);
         }
     }
 }

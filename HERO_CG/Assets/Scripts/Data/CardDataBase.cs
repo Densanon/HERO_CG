@@ -1,4 +1,7 @@
-﻿using UnityEngine;
+﻿//Created by Jordan Ezell
+//Last Edited: 1/6/23 Jordan
+
+using UnityEngine;
 using UnityEngine.UI;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,7 +16,7 @@ public class CardDataBase : MonoBehaviour
 
     public CardData CurrentActiveCard;
 
-    public enum CardDecks { P1Hand, P1Deck, P1Field, P1Discard, P2Hand, P2Deck, P2Field, P2Discard, Reserve, HQ}
+    public enum CardDecks { MyHand, MyDeck, MyField, MyDiscard, OppHand, OppDeck, OppField, OppDiscard, Reserve, HQ}
 
     public static Action<bool> OnTurnDelcarationReceived = delegate { };
     public static Action<Card> OnAiDraftCollected = delegate { };
@@ -75,15 +78,15 @@ public class CardDataBase : MonoBehaviour
 
     List<Card> P1AutoAbilities = new List<Card>();
     List<Card> P2AutoAbilities = new List<Card>();
-    List<Card> P1Hand = new List<Card>();
-    List<CardData> P1Field = new List<CardData>();
-    List<Card> P1Deck = new List<Card>();
-    List<Card> P1Discard = new List<Card>();
+    List<Card> MyHand = new List<Card>();
+    List<CardData> MyField = new List<CardData>();
+    List<Card> MyDeck = new List<Card>();
+    List<Card> MyDiscard = new List<Card>();
 
-    List<Card> P2Hand = new List<Card>();
-    List<CardData> P2Field = new List<CardData>();
-    List<Card> P2Deck = new List<Card>();
-    List<Card> P2Discard = new List<Card>();
+    List<Card> OppHand = new List<Card>();
+    List<CardData> OppField = new List<CardData>();
+    List<Card> OppDeck = new List<Card>();
+    List<Card> OppDiscard = new List<Card>();
 
     List<Card> cardListToDisplay = new List<Card>();
     Component activeFeat;
@@ -109,9 +112,9 @@ public class CardDataBase : MonoBehaviour
         aUnderSiege.OnHandToBeRevealed += HandleRevealTargetHandAndRemoveNonHeros;
         Ability.OnAddAbilityToMasterList += HandleAddAbilityToList;
         Ability.OnDiscardCard += HandleCardForceDiscard;
-
         Ability.OnPreventAbilitiesToFieldForTurn += HandleAbilityToFieldSilence;
         Ability.OnOpponentAbilityActivation += AbilityHandover;
+        UIConfirmation.OnNeedDrawEnhanceCards += DrawFromEnhanceDeck;
 
         Heros[0] = new Card(Card.Type.Character, "AKIO", 20, 70, HeroImages[0], AlphaHeros[0]);
         Heros[1] = new Card(Card.Type.Character, "AYUMI", 40, 50, HeroImages[1], AlphaHeros[1]);
@@ -158,22 +161,22 @@ public class CardDataBase : MonoBehaviour
         Enhancements[0] = new Card(Card.Type.Enhancement, "ATTACK 20", 20, 0, EnhanceImages[0]);
         for(int i = 0; i<4; i++)
         {
-            P1Deck.Add(Enhancements[0]);
+            MyDeck.Add(Enhancements[0]);
         }
         Enhancements[1] = new Card(Card.Type.Enhancement, "ATTACK 30", 30, 0, EnhanceImages[1]);
         for (int i = 0; i < 3; i++)
         {
-            P1Deck.Add(Enhancements[1]);
+            MyDeck.Add(Enhancements[1]);
         }
         Enhancements[2] = new Card(Card.Type.Enhancement, "DEFENSE 30", 0, 30, EnhanceImages[2]);
         for (int i = 0; i < 2; i++)
         {
-            P1Deck.Add(Enhancements[2]);
+            MyDeck.Add(Enhancements[2]);
         }
         Enhancements[3] = new Card(Card.Type.Enhancement, "DEFENSE 20", 0, 20, EnhanceImages[3]);
         for (int i = 0; i < 3; i++)
         {
-            P1Deck.Add(Enhancements[3]);
+            MyDeck.Add(Enhancements[3]);
         }
 
 
@@ -249,9 +252,9 @@ public class CardDataBase : MonoBehaviour
         aUnderSiege.OnHandToBeRevealed -= HandleRevealTargetHandAndRemoveNonHeros;
         Ability.OnAddAbilityToMasterList -= HandleAddAbilityToList;
         Ability.OnDiscardCard -= HandleCardForceDiscard;
-
         Ability.OnPreventAbilitiesToFieldForTurn -= HandleAbilityToFieldSilence;
         Ability.OnOpponentAbilityActivation -= AbilityHandover;
+        UIConfirmation.OnNeedDrawEnhanceCards += DrawFromEnhanceDeck;
     }
 
     #endregion
@@ -282,16 +285,16 @@ public class CardDataBase : MonoBehaviour
 
     public void StartDrawSpecificCard()
     {
-        DisplayDraft(P1Deck);
+        DisplayDraft(MyDeck);
         SpecificDraw = true;
     }
 
     public void DrawSpecificCard(Card card)
     {
         DraftArea.gameObject.SetActive(false);
-        P1Hand.Add(card);
+        MyHand.Add(card);
         AddCardToHand(card);
-        P1Deck.Remove(card);
+        MyDeck.Remove(card);
     }
     #endregion
 
@@ -326,7 +329,7 @@ public class CardDataBase : MonoBehaviour
         {
             GameObject obj = Instantiate(CardDraftPrefab, DraftArea);
             CardData cd = obj.GetComponent<CardData>();
-            if(whichDeck != P1Hand)
+            if(whichDeck != MyHand)
             {
                 cd.CardOverride(card, CardData.FieldPlacement.Draft);
             }
@@ -351,7 +354,7 @@ public class CardDataBase : MonoBehaviour
         {
             foreach(Card card in P1AutoAbilities)
             {
-                P1Deck.Add(card);
+                MyDeck.Add(card);
             }
             if (Referee.myTurn)
             {
@@ -365,7 +368,7 @@ public class CardDataBase : MonoBehaviour
         {
             foreach (Card card in P2AutoAbilities)
             {
-                P1Deck.Add(card);
+                MyDeck.Add(card);
             }
             /*if (Referee.myTurn)
             {
@@ -445,29 +448,29 @@ public class CardDataBase : MonoBehaviour
 
                 DisplayDraft(HeroReserve);
                 break;
-            case "P2Hand":
-                P2Hand.Clear();
+            case "OppHand":
+                OppHand.Clear();
                 foreach (string cardName in listToShare)
                 {
                     foreach (Card card in CardBase)
                     {
                         if (card.Name == cardName)
                         {
-                            P2Hand.Add(card);
+                            OppHand.Add(card);
                             break;
                         }
                     }
                 }
-                GM.SetOpponentHandCount(CardsRemaining(CardDecks.P2Hand));
+                GM.SetOpponentHandCount(CardsRemaining(CardDecks.OppHand));
                 break;
-            case "P2Discard":
+            case "OppDiscard":
                 foreach (string cardName in listToShare)
                 {
                     foreach (Card card in CardBase)
                     {
                         if (card.Name == cardName)
                         {
-                            P2Discard.Add(card);
+                            OppDiscard.Add(card);
                             break;
                         }
                     }
@@ -736,7 +739,7 @@ public class CardDataBase : MonoBehaviour
 
     private void CheckActiveCard()
     {
-        int i = P1Hand.Count;
+        int i = MyHand.Count;
         switch (i)
         {
             case 0:
@@ -768,17 +771,17 @@ public class CardDataBase : MonoBehaviour
     private void GetHandToShare()
     {
         List<string> names = new List<string>();
-        foreach(Card card in P1Hand)
+        foreach(Card card in MyHand)
         {
             names.Add(card.Name);
         }
-        myManager.RPCRequest("ShareCardList", RpcTarget.Others, "P2Hand" ,names.ToArray());
+        myManager.RPCRequest("ShareCardList", RpcTarget.Others, "OppHand" ,names.ToArray());
     }
 
     private CardData FindCardOnField(string name)
     {
 
-        foreach(CardData cd in P1Field)
+        foreach(CardData cd in MyField)
         {
             if(cd.Name == name)
             {
@@ -786,7 +789,7 @@ public class CardDataBase : MonoBehaviour
             }
         }
 
-        foreach(CardData cd in P2Field)
+        foreach(CardData cd in OppField)
         {
             if(cd.Name == name)
             {
@@ -795,7 +798,7 @@ public class CardDataBase : MonoBehaviour
         }
 
         Debug.Log($"Didn't find {name}");
-        return P1Field[0];
+        return MyField[0];
     }
 
     #region Drawing and Removing Cards
@@ -803,7 +806,7 @@ public class CardDataBase : MonoBehaviour
     {
         var picker = UnityEngine.Random.Range(0, whatDeck.Count - 1);
         Card pickedCard = whatDeck[picker];
-        P1Hand.Add(pickedCard);
+        MyHand.Add(pickedCard);
         whatDeck.Remove(whatDeck[picker]);
         AddCardToHand(pickedCard);
 
@@ -819,10 +822,10 @@ public class CardDataBase : MonoBehaviour
 
     private void AddCardToHand(Card cardToAdd)
     {
-        if(P1Hand.Count < 8)
+        if(MyHand.Count < 8)
         {
-            //Debug.Log($"Adding a card to hand(hand): {P1Hand.Count}");
-            GameObject obj = Instantiate(CardHandPrefab, Hand[P1Hand.Count - 1].transform);
+            //Debug.Log($"Adding a card to hand(hand): {MyHand.Count}");
+            GameObject obj = Instantiate(CardHandPrefab, Hand[MyHand.Count - 1].transform);
             CardData data = obj.GetComponent<CardData>();
             data.CardOverride(cardToAdd, CardData.FieldPlacement.Hand);
             lHandData.Add(data);
@@ -830,20 +833,20 @@ public class CardDataBase : MonoBehaviour
             CheckActiveCard();
         }
         GetHandToShare();
-        handSize = P1Hand.Count;
+        handSize = MyHand.Count;
         //GM.PassiveActivate(Ability.PassiveType.HandCardAdjustment);
     }
 
     private void RemoveCardFromHand(Card cardToRemove)
     {
-        //Debug.Log($"Removing a card from hand(hand) before removed: {P1Hand.Count}");
-        if(P1Hand.Count <= 7)
+        //Debug.Log($"Removing a card from hand(hand) before removed: {MyHand.Count}");
+        if(MyHand.Count <= 7)
         {
             //Debug.Log($"Hand visual: {lHandData.Count}");
-            if(lHandData.Count == P1Hand.Count)
+            if(lHandData.Count == MyHand.Count)
             {
-                GameObject obj = lHandData[P1Hand.Count-1].gameObject;
-                lHandData.Remove(lHandData[P1Hand.Count-1]);
+                GameObject obj = lHandData[MyHand.Count-1].gameObject;
+                lHandData.Remove(lHandData[MyHand.Count-1]);
                 Destroy(obj);
             }
             else
@@ -854,11 +857,11 @@ public class CardDataBase : MonoBehaviour
 
         }
         //Debug.Log($"Removing {cardToRemove.Name}");
-        P1Hand.Remove(cardToRemove);
-        //Debug.Log($"Removing a card from hand(hand) after removed: {P1Hand.Count}");
+        MyHand.Remove(cardToRemove);
+        //Debug.Log($"Removing a card from hand(hand) after removed: {MyHand.Count}");
         HandCardOffset(0);
         GetHandToShare();
-        handSize = P1Hand.Count;
+        handSize = MyHand.Count;
         //GM.PassiveActivate(Ability.PassiveType.HandCardAdjustment);
     }
     #endregion
@@ -884,7 +887,7 @@ public class CardDataBase : MonoBehaviour
             case "Random":
                 for(int i = amount; i>0; i--)
                 {
-                    RemoveCardFromHand(P1Hand[UnityEngine.Random.Range(0, P1Hand.Count)]);
+                    RemoveCardFromHand(MyHand[UnityEngine.Random.Range(0, MyHand.Count)]);
                 }
                 break;
             case "Hero":
@@ -908,9 +911,9 @@ public class CardDataBase : MonoBehaviour
 
     public void CardAdjustment(string name, string category, int newValue)
     {
-        //P2Field could be set to a specified player
+        //OppField could be set to a specified player
         bool found = false;
-        foreach(CardData data in P2Field)
+        foreach(CardData data in OppField)
         {
             if(data.Name == name)
             {
@@ -929,7 +932,7 @@ public class CardDataBase : MonoBehaviour
         }
         if (!found)
         {
-            foreach(CardData data in P1Field)
+            foreach(CardData data in MyField)
             {
                 if (data.Name == name)
                 {
@@ -963,16 +966,16 @@ public class CardDataBase : MonoBehaviour
         }
 
         string loc = "";
-        if (P2Field.Contains(card))
+        if (OppField.Contains(card))
         {
-            P2Field.Remove(card);
+            OppField.Remove(card);
             Destroy(card.gameObject);
-            loc = "P2Field";
-        }else if (P1Field.Contains(card))
+            loc = "OppField";
+        }else if (MyField.Contains(card))
         {
-            P1Field.Remove(card);
+            MyField.Remove(card);
             Destroy(card.gameObject);
-            loc = "P1Field";
+            loc = "MyField";
         }
 
         herosFatigued--;
@@ -984,26 +987,26 @@ public class CardDataBase : MonoBehaviour
     {
         switch (location)
         {
-            case "P1Field":
-                foreach(CardData card in P2Field)
+            case "MyField":
+                foreach(CardData card in OppField)
                 {
                     if(card.Name == name)
                     {
-                        P2Field.Remove(card);
-                        P2Discard.Add(card.myCard);
+                        OppField.Remove(card);
+                        OppDiscard.Add(card.myCard);
                         card.gameObject.SetActive(false);//delaying card destroy to carry abilities
                         Destroy(card.gameObject, 10f);
                         break;
                     }
                 }
                 break;
-            case "P2Field":
-                foreach (CardData card in P1Field)
+            case "OppField":
+                foreach (CardData card in MyField)
                 {
                     if (card.Name == name)
                     {
-                        P1Field.Remove(card);
-                        P1Discard.Add(card.myCard);
+                        MyField.Remove(card);
+                        MyDiscard.Add(card.myCard);
                         card.gameObject.SetActive(false);//delaying card destroy to carry abilities
                         Destroy(card.gameObject, 10f);
                         break;
@@ -1019,12 +1022,12 @@ public class CardDataBase : MonoBehaviour
     private void HandleCardExhaustState(CardData card, bool exhaust)
     {
         string loc = "";
-        if (P1Field.Contains(card))
+        if (MyField.Contains(card))
         {
-            loc = "P1Field";
-        }else if (P2Field.Contains(card))
+            loc = "MyField";
+        }else if (OppField.Contains(card))
         {
-            loc = "P2Field";
+            loc = "OppField";
         }
 
 
@@ -1042,8 +1045,8 @@ public class CardDataBase : MonoBehaviour
     {
         switch (location)
         {
-            case "P1Field":
-                foreach(CardData card in P2Field)
+            case "MyField":
+                foreach(CardData card in OppField)
                 {
                     if(card.Name == name)
                     {
@@ -1060,8 +1063,8 @@ public class CardDataBase : MonoBehaviour
                     }
                 }
                 break;
-            case "P2Field":
-                foreach (CardData card in P1Field)
+            case "OppField":
+                foreach (CardData card in MyField)
                 {
                     if (card.Name == name)
                     {
@@ -1086,16 +1089,16 @@ public class CardDataBase : MonoBehaviour
     private void HandleRevealTargetHandAndRemoveNonHeros()
     {
         ClearDraft();
-        cardListToDisplay = P2Hand;
+        cardListToDisplay = OppHand;
         StartCoroutine(DisplayExtraDraft());
-        myManager.RPCRequest("RemoveAllNonHerosFromHand", RpcTarget.Others, "P1Hand");
+        myManager.RPCRequest("RemoveAllNonHerosFromHand", RpcTarget.Others, "MyHand");
     }
 
     public void RemoveAllNonHerosFromHand(string hand)
     {
         List<Card> removeList = new List<Card>();
 
-        foreach(Card card in P1Hand)
+        foreach(Card card in MyHand)
         {
             if(card.CardType != Card.Type.Character)
             {
@@ -1125,7 +1128,7 @@ public class CardDataBase : MonoBehaviour
                 GameObject obj = Instantiate(CardOppFieldPrefab, OppHeroArea);
                 CardData data = obj.GetComponent<CardData>();
                 data.CardOverride(card, CardData.FieldPlacement.Opp);
-                P2Field.Add(data);
+                OppField.Add(data);
                 break;
             }
         }
@@ -1136,7 +1139,7 @@ public class CardDataBase : MonoBehaviour
         GameObject obj = Instantiate(CardMyFieldPrefab, MyHeroArea);
         CardData data = obj.GetComponent<CardData>();
         data.CardOverride(card, CardData.FieldPlacement.Mine);
-        P1Field.Add(data);
+        MyField.Add(data);
     }
     #endregion
 
@@ -1274,9 +1277,9 @@ public class CardDataBase : MonoBehaviour
     #region Strip Enhancements
     private void StripAllEnhancementsOnSideOfField(string side)
     {
-        if(side == "P2Field")
+        if(side == "OppField")
         {
-            foreach(CardData card in P2Field)
+            foreach(CardData card in OppField)
             {
                 card.StripAbilities(false);
                 card.StripEnhancements(false);
@@ -1284,7 +1287,7 @@ public class CardDataBase : MonoBehaviour
             return;
         }
 
-        foreach(CardData card in P1Field)
+        foreach(CardData card in MyField)
         {
             card.StripAbilities(false);
             card.StripEnhancements(false);
@@ -1376,7 +1379,7 @@ public class CardDataBase : MonoBehaviour
     public void SetUpHandCardsToBeViewed()
     {
         ClearDraft();
-        DisplayDraft(P1Hand);
+        DisplayDraft(MyHand);
         DraftAreaOffButton.SetActive(true);
     }
 
@@ -1529,7 +1532,7 @@ public class CardDataBase : MonoBehaviour
         switch (phase)
         {
             case Referee.GamePhase.HeroDraft:
-                P1Hand.Add(card);
+                MyHand.Add(card);
                 AddCardToHand(card);
                 HeroReserve.Remove(card);
                 myManager.RPCRequest("RemoveDraftOption", RpcTarget.All, card.Name);
@@ -1537,7 +1540,7 @@ public class CardDataBase : MonoBehaviour
                 GM.ToldSwitchTurn(false);
                 break;
             case Referee.GamePhase.AbilityDraft:
-                P1Deck.Add(card);
+                MyDeck.Add(card);
                 AbilityDraft.Remove(card);
                 myManager.RPCRequest("RemoveDraftOption", RpcTarget.All, card.Name);
                 if (Draft.Count != 0)
@@ -1548,10 +1551,10 @@ public class CardDataBase : MonoBehaviour
                 }
                 break;
             case Referee.GamePhase.Recruit:
-                P1Hand.Add(card);
+                MyHand.Add(card);
                 AddCardToHand(card);
                 RemoveHQCard(card);
-                //GM.PassiveActivate(Ability.PassiveType.HeroRecruited);
+                GM.ActivatePassive(Ability.PassiveType.HeroRecruited);
                 break;
         }
     }
@@ -1562,11 +1565,11 @@ public class CardDataBase : MonoBehaviour
         for(int i = 0; i < lHandData.Count; i++)
         {
             int j = o+i;
-            if(j >= P1Hand.Count)
+            if(j >= MyHand.Count)
             {
-                j -= P1Hand.Count;
+                j -= MyHand.Count;
             }
-            lHandData[i].CardOverride(P1Hand[j], CardData.FieldPlacement.Hand);
+            lHandData[i].CardOverride(MyHand[j], CardData.FieldPlacement.Hand);
         }
         CheckActiveCard();
     }
@@ -1589,14 +1592,14 @@ public class CardDataBase : MonoBehaviour
     #region Card Checks
     public bool CheckIfMyCard(CardData card)
     {
-        bool isMyCard = P1Field.Contains(card);
+        bool isMyCard = MyField.Contains(card);
 
         return isMyCard;
     }
 
     public bool CheckFieldForOpponents()
     {
-        if(P2Field.Count > 0)
+        if(OppField.Count > 0)
         {
             return true;
         }
@@ -1609,7 +1612,7 @@ public class CardDataBase : MonoBehaviour
     public bool CheckMyFieldForUsableHeros()
     {
         bool usable = false;
-        foreach (CardData card in P1Field)
+        foreach (CardData card in MyField)
         {
             if (!card.Exhausted)
             {
@@ -1623,7 +1626,7 @@ public class CardDataBase : MonoBehaviour
 
     public bool CheckForHerosOnField()
     {
-        if (P2Field.Count > 0 || P1Field.Count > 0)
+        if (OppField.Count > 0 || MyField.Count > 0)
         {
             return true;
         }
@@ -1637,7 +1640,7 @@ public class CardDataBase : MonoBehaviour
     {
         bool healable = false;
 
-        foreach(CardData card in P1Field)
+        foreach(CardData card in MyField)
         {
             if (card.Exhausted)
             {
@@ -1652,7 +1655,7 @@ public class CardDataBase : MonoBehaviour
     {
         bool haveCard = false;
 
-        foreach(Card card in P1Hand)
+        foreach(Card card in MyHand)
         {
             if(card.CardType == Card.Type.Feat)
             {
@@ -1671,17 +1674,17 @@ public class CardDataBase : MonoBehaviour
             case CardDecks.HQ:
                 i = HeroReserve.Count;
                 break;
-            case CardDecks.P1Deck:
-                i = P1Deck.Count;
+            case CardDecks.MyDeck:
+                i = MyDeck.Count;
                 break;
-            case CardDecks.P1Hand:
-                i = P1Hand.Count;
+            case CardDecks.MyHand:
+                i = MyHand.Count;
                 break;
-            case CardDecks.P1Discard:
-                i = P1Discard.Count;
+            case CardDecks.MyDiscard:
+                i = MyDiscard.Count;
                 break;
-            case CardDecks.P2Hand:
-                i = P2Hand.Count;
+            case CardDecks.OppHand:
+                i = OppHand.Count;
                 break;
             case CardDecks.Reserve:
                 i = HeroReserve.Count;
@@ -1692,12 +1695,19 @@ public class CardDataBase : MonoBehaviour
     #endregion
     
     #region Drawing Cards
+    void DrawFromEnhanceDeck(int amount)
+    {
+        for(int i =0; i < amount; i++)
+        {
+            DrawCard(CardDecks.MyDeck);
+        }
+    }
     public void DrawCard(CardDecks Deck)
     {
         switch (Deck)
         {
-            case CardDecks.P1Deck:
-                DrawRandomCard(P1Deck);
+            case CardDecks.MyDeck:
+                DrawRandomCard(MyDeck);
                 break;
         }
     }
@@ -1712,7 +1722,7 @@ public class CardDataBase : MonoBehaviour
             {
                 ReserveButton.interactable = false;
             }
-            //GM.PassiveActivate(Ability.PassiveType.HeroRecruited);
+            GM.ActivatePassive(Ability.PassiveType.HeroRecruited);
         }
     }
     #endregion
@@ -1746,7 +1756,7 @@ public class CardDataBase : MonoBehaviour
         //Debug.Log("Made it into the server HandlePreviousAttackersAndDefender.");
         List<CardData> cards = new List<CardData>();
 
-        foreach(CardData data in P2Field)
+        foreach(CardData data in OppField)
         {
             if (names.Contains(data.Name))
             {
@@ -1757,7 +1767,7 @@ public class CardDataBase : MonoBehaviour
 
         if(names[names.Length-1] != "NULL")
         {
-            foreach(CardData data in P1Field)
+            foreach(CardData data in MyField)
             {
                 if(data.Name == names[names.Length - 1])
                 {

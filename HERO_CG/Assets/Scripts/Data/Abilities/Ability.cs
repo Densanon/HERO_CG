@@ -1,13 +1,16 @@
-﻿using UnityEngine;
+﻿//Created by Jordan Ezell
+//Last Edited: 1/6/23 Jordan
+
+using UnityEngine;
 using System;
 
 public class Ability : MonoBehaviour
 {
-    public enum Type { Feat, Activate, Passive, Character}
+    public enum Type { Feat, Activate, Passive, Character }
     public Type myType;
     public Type secondaryType;
 
-    public enum PassiveType { CharacterSpawn, CharacterDestroyed, BattleComplete, BattleStart, HeroRecruited, HandCardAdjustment, ActionComplete, HeroFatigued}
+    public enum PassiveType { CharacterSpawn, CharacterDestroyed, BattleComplete, BattleStart, HeroRecruited, HandCardAdjustment, ActionComplete, HeroFatigued }
 
     public string Name;
     public string Description;
@@ -19,7 +22,7 @@ public class Ability : MonoBehaviour
     public static Action<Ability> OnAddAbilityToMasterList = delegate { };
     public static Action OnAbilityUsed = delegate { };
     public static Action OnFeatComplete = delegate { };
-    public static Action<int> OnNeedCardDraw = delegate { };
+    public static Action<string, int> OnConfirmDrawEnhanceCard = delegate { };
     public static Action<string, string, int> OnDiscardCard = delegate { };
     public static Action<Ability> OnSetActive = delegate { };
     public static Action<Ability> OnOpponentAbilityActivation = delegate { };

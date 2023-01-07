@@ -1,4 +1,7 @@
-﻿using UnityEngine;
+﻿//Created by Jordan Ezell
+//Last Edited: 1/6/23 Jordan
+
+using UnityEngine;
 using TMPro;
 using System;
 
@@ -6,26 +9,28 @@ public class UIConfirmation : MonoBehaviour
 {
     public GameObject confirmationUI;
     public TMP_Text confirmationText;
-    public enum Confirmation { Heal, Enhance, Recruit, Overcome, Feat, Quit, Enhancing, Ability, AtDef}
+    public enum Confirmation { Heal, Enhance, Recruit, Overcome, Feat, Quit, Enhancing, Ability, AtDef, Ayumi}
     private Confirmation typeOfConfirmation = Confirmation.Heal;
     private Card myCardToUse;
     private CardData myTargetCard;
 
     public static Action<Referee.GamePhase> OnHEROSelection = delegate { };
     public static Action<CardData, Card> OnTargetAccepted = delegate { };
+    public static Action<int> OnNeedDrawEnhanceCards = delegate { };
 
+    #region Unity Methods
     private void Awake()
     {
         CardDataBase.OnTargeting += HandleTargeting;
         CardData.IsTarget += HandleTarget;
-
+        Ability.OnConfirmDrawEnhanceCard += OnConfirmationRequest;
     }
-
     private void OnDestroy()
     {
         CardDataBase.OnTargeting -= HandleTargeting;
         CardData.IsTarget -= HandleTarget;
     }
+    #endregion
 
     private void HandleTargeting(Card cardToBePlayed, bool target)
     {
@@ -46,13 +51,11 @@ public class UIConfirmation : MonoBehaviour
             }
         }
     }
-
     private void HandleTarget(CardData card)
     {
         myTargetCard = card;
         confirmationUI.SetActive(true);
     }
-
     public void OnConfirmationRequest(string type)
     {
         confirmationUI.SetActive(true);
@@ -81,6 +84,21 @@ public class UIConfirmation : MonoBehaviour
             case "Leave":
                 confirmationText.text = "Confirm 'Quit'";
                 typeOfConfirmation = Confirmation.Quit;
+                break;
+        }
+    }
+    void OnConfirmationRequest(string type, int amount)
+    {
+        Debug.Log($"Got the {type} message.");
+        confirmationUI.SetActive(true);
+        switch (type)
+        {
+            case "Ayumi":
+                confirmationText.text = "Confirm: Ayumi's Draw an Enhance Card";
+                typeOfConfirmation = Confirmation.Ayumi;
+                break;
+            default:
+                Debug.Log($"UI Confirmation was given a request of type: {type} and doesn't use it.");
                 break;
         }
     }
@@ -116,6 +134,9 @@ public class UIConfirmation : MonoBehaviour
                 break;
             case Confirmation.AtDef:
                 OnTargetAccepted?.Invoke(myTargetCard, null);
+                break;
+            case Confirmation.Ayumi:
+                OnNeedDrawEnhanceCards(1);
                 break;
         }
         confirmationUI.SetActive(false);

@@ -1,4 +1,7 @@
-﻿using System.Collections;
+﻿//Created by Jordan Ezell
+//Last Edited: 1/6/23 Jordan
+
+using System.Collections;
 using System.Collections.Generic;
 using System;
 using UnityEngine;
@@ -104,7 +107,6 @@ public class Referee : MonoBehaviour
         UIConfirmation.OnHEROSelection += PhaseChange;
         CardDataBase.OnAiDraftCollected += HandleCardCollected;
         UIResponseTimer.OnTimerRunOut += HandleResponsePanelTurnOff;
-        Ability.OnNeedCardDraw += DrawCardOption;
         /*Ability.OnAbilityUsed += HandleAbilityEnd;
         Ability.OnFeatComplete += HandleFeatComplete;
         Ability.OnSetActive += SetActiveAbility;
@@ -112,12 +114,6 @@ public class Referee : MonoBehaviour
         Ability.OnHoldTurn += HandleHoldTurn;
         Ability.OnHoldTurnOffOppTurn += HandleHoldTurnOff;*/
     }
-
-    private void DrawCardOption(int obj)
-    {
-        
-    }
-
     private void OnDestroy()
     {
         CardFunction.OnCardSelected -= HandleCardSelecion;
@@ -127,7 +123,6 @@ public class Referee : MonoBehaviour
         UIConfirmation.OnHEROSelection -= PhaseChange;
         CardDataBase.OnAiDraftCollected -= HandleCardCollected;
         UIResponseTimer.OnTimerRunOut -= HandleResponsePanelTurnOff;
-        Ability.OnNeedCardDraw -= DrawCardOption;
         /*Ability.OnAbilityUsed -= HandleAbilityEnd;
         Ability.OnFeatComplete -= HandleFeatComplete;
         Ability.OnSetActive -= SetActiveAbility;
@@ -163,6 +158,13 @@ public class Referee : MonoBehaviour
                 CB.HandleBuildHeroDraft();
             }
         }
+    }
+    #endregion
+
+    #region Ability Methods
+    public void ActivatePassive(Ability.PassiveType type)
+    {
+        OnPassiveActivate?.Invoke(type);
     }
     #endregion
 
@@ -283,11 +285,10 @@ public class Referee : MonoBehaviour
             }
             if (myPhase == GamePhase.Enhance)
             {
-                tCardsToDrawMyDeck.text = $"{iEnhanceCardsToCollect}/{CB.CardsRemaining(CardDataBase.CardDecks.P1Deck)}";
+                tCardsToDrawMyDeck.text = $"{iEnhanceCardsToCollect}/{CB.CardsRemaining(CardDataBase.CardDecks.MyDeck)}";
             }
 
-            //PassiveActivate(Ability.PassiveType.ActionComplete);
-            OnPassiveActivate?.Invoke(Ability.PassiveType.ActionComplete);
+            ActivatePassive(Ability.PassiveType.ActionComplete);
         }
         else
         {
@@ -443,7 +444,7 @@ public class Referee : MonoBehaviour
                 //DrawCardOption(3);
                 iTurnCounter = 3;
                 iEnhanceCardsToCollect = 3;
-                int temp = CB.CardsRemaining(CardDataBase.CardDecks.P1Deck);
+                int temp = CB.CardsRemaining(CardDataBase.CardDecks.MyDeck);
                 switch (temp)
                 {
                     case 0:
@@ -521,7 +522,7 @@ public class Referee : MonoBehaviour
                 //check for heros that can be healed
                 bHEROSelectHeal.interactable = CB.CheckForHealableHeros();
                 //check for cards in enhancement deck or hand
-                bHEROSelectEnhance.interactable = (CB.CardsRemaining(CardDataBase.CardDecks.P1Deck) + CB.CardsRemaining(CardDataBase.CardDecks.P1Hand) > 0);
+                bHEROSelectEnhance.interactable = (CB.CardsRemaining(CardDataBase.CardDecks.MyDeck) + CB.CardsRemaining(CardDataBase.CardDecks.MyHand) > 0);
                 //check for heros that are recruitable
                 bHEROSelectRectruit.interactable = (CB.CardsRemaining(CardDataBase.CardDecks.HQ) + CB.CardsRemaining(CardDataBase.CardDecks.Reserve) > 0);
                 //Check for usable hero cards
@@ -546,7 +547,7 @@ public class Referee : MonoBehaviour
         AttDef = !AttDef;
         if (AttDef)
         {
-            OnPassiveActivate?.Invoke(Ability.PassiveType.BattleStart);
+            ActivatePassive(Ability.PassiveType.BattleComplete);
         }
         if (!AttDef && !CB.CheckFieldForOpponents() && AttackingHeros.Count > 0)
         {
@@ -614,8 +615,7 @@ public class Referee : MonoBehaviour
                 OpponentExhausted = true;
                 Debug.Log($"Opponent should have been destroyed so exhaust has been set to true");
             }
-            OnPassiveActivate?.Invoke(Ability.PassiveType.BattleComplete);
-            //PassiveActivate(Ability.PassiveType.BattleComplete);
+            ActivatePassive(Ability.PassiveType.BattleComplete);
             CB.SendPreviousAttackersAndDefender(AttackingHeros, DefendingHero);
             AttackingHeros.Clear();
             DefendingHero = null;
@@ -692,7 +692,7 @@ public class Referee : MonoBehaviour
         if (myPhase == GamePhase.Enhance)
         {
             iEnhanceCardsToCollect = 0;
-            tCardsToDrawMyDeck.text = $"{CB.CardsRemaining(CardDataBase.CardDecks.P1Deck)}";
+            tCardsToDrawMyDeck.text = $"{CB.CardsRemaining(CardDataBase.CardDecks.MyDeck)}";
             bDrawEnhancementCards.interactable = false;
             TurnCounterDecrement();
             
@@ -708,7 +708,7 @@ public class Referee : MonoBehaviour
     public void SetDeckNumberAmounts()
     {
         tCardsToCollectReserve.text = $"{CB.CardsRemaining(CardDataBase.CardDecks.Reserve)}";
-        tCardsToDrawMyDeck.text = $"{CB.CardsRemaining(CardDataBase.CardDecks.P1Deck)}";
+        tCardsToDrawMyDeck.text = $"{CB.CardsRemaining(CardDataBase.CardDecks.MyDeck)}";
     }
 
     private void CardZoom(CardData card)
@@ -764,18 +764,18 @@ public class Referee : MonoBehaviour
         for (int i = amount; i > 0; i--)
         {
             iEnhanceCardsToCollect--;
-            CB.DrawCard(CardDataBase.CardDecks.P1Deck);
+            CB.DrawCard(CardDataBase.CardDecks.MyDeck);
         }
         //Debug.Log($"Enhance cards to be collected: {iEnhanceCardsToCollect}");
 
         if (iEnhanceCardsToCollect > 0)
         {
-            tCardsToDrawMyDeck.text = $"{iEnhanceCardsToCollect}/{CB.CardsRemaining(CardDataBase.CardDecks.P1Deck)}";
+            tCardsToDrawMyDeck.text = $"{iEnhanceCardsToCollect}/{CB.CardsRemaining(CardDataBase.CardDecks.MyDeck)}";
         }
         else
         {
             //Debug.Log("Ran out of cards to draw for the turn.");
-            tCardsToDrawMyDeck.text = $"{CB.CardsRemaining(CardDataBase.CardDecks.P1Deck)}";
+            tCardsToDrawMyDeck.text = $"{CB.CardsRemaining(CardDataBase.CardDecks.MyDeck)}";
             bDrawEnhancementCards.interactable = false;
         }
     }
@@ -980,7 +980,7 @@ public class Referee : MonoBehaviour
     public void UpdateDeckCounts()
     {
         tCardsToCollectReserve.text = $"{CB.CardsRemaining(CardDataBase.CardDecks.Reserve)}";
-        tCardsToDrawMyDeck.text = $"{CB.CardsRemaining(CardDataBase.CardDecks.P1Deck)}";
+        tCardsToDrawMyDeck.text = $"{CB.CardsRemaining(CardDataBase.CardDecks.MyDeck)}";
     }
     #endregion
 
