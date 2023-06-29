@@ -22,20 +22,29 @@ public class aChristoph : Ability
         {
             Debug.Log($"{Name} activating switchoff.");
             OnOpponentAbilityActivation?.Invoke(this);
-            OnHoldTurn?.Invoke(true, false);
+            OnHoldTurn?.Invoke(true);
         }
     }
 
-    public override void Target(CardData card)
+    public override void AbilityAwake()
     {
-        Debug.Log($"{Name} is targeted {card.Name}");
+        base.AbilityAwake();
+        OnRequestTargeting?.Invoke(Referee.TargetType.OppHero);
+        OnTargetedFrom?.Invoke(this);
+    }
+
+    public override void TargetOpponent(CardData card)
+    {
         base.Target(card);
+        Debug.Log($"{Name} has targeted {card.Name}");
 
         if (Referee.PreviousAttackers.Contains(card))
         {
             card.DamageCheck(1000);
-            OnAbilityUsed?.Invoke();
-            OnHoldTurnOffOppTurn?.Invoke();
+            OnHandOverControl?.Invoke();
+            return;
         }
+        Debug.Log("You didn't pick a right target.");
+        
     }
 }

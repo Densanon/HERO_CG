@@ -22,6 +22,7 @@ public class CardFunction : MonoBehaviour
 
     public void CardSelected()
     {
+        Debug.Log("Card being selected via card function.");
         OnCardSelected?.Invoke(myCard);
     }
 

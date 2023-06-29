@@ -27,9 +27,12 @@ public class Ability : MonoBehaviour
     public static Action<Ability> OnSetActive = delegate { };
     public static Action<Ability> OnOpponentAbilityActivation = delegate { };
     public static Action<Ability> OnActivateable = delegate { };
-    public static Action<bool, bool> OnHoldTurn = delegate { };
-    public static Action OnHoldTurnOffOppTurn = delegate { };
     public static Action OnPreventAbilitiesToFieldForTurn = delegate { };
+    
+    public static Action<Referee.TargetType> OnRequestTargeting = delegate { };
+    public static Action<Ability> OnTargetedFrom = delegate { };
+    public static Action<bool> OnHoldTurn = delegate { };
+    public static Action OnHandOverControl = delegate { };
 
     protected virtual void Awake()
     {
@@ -67,6 +70,11 @@ public class Ability : MonoBehaviour
     public virtual void Target(CardData card)
     {
         Debug.Log("AbilityTarget Activated");
+    }
+
+    public virtual void TargetOpponent(CardData card)
+    {
+        Debug.Log("Ability TargetOpponent Activated");
     }
 
     public virtual void PassiveCheck(PassiveType passiveType)

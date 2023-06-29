@@ -1,6 +1,5 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿//Created by Jordan Ezell
+//Last Edited: 6/29/23 Jordan
 
 public class aBoulos : Ability
 {
@@ -20,7 +19,6 @@ public class aBoulos : Ability
 
         if( passiveType == PassiveType.HandCardAdjustment)
         {
-            Debug.Log($"{myHero.Name} should be activating the defence pasive.");
             myHero.NewAbilityDefModifier(CardDataBase.handSize*10);
         }
     }

@@ -1,5 +1,5 @@
 ﻿//Created by Jordan Ezell
-//Last Edited: 1/6/23 Jordan
+//Last Edited: 6/29/23 Jordan
 
 using UnityEngine;
 using UnityEngine.UI;
@@ -53,6 +53,7 @@ public class CardDataBase : MonoBehaviour
     public bool AiDraft = false;
     public bool AutoDraft = false;
     public bool SpecificDraw = false;
+    List<Card> MasterList = new List<Card>();
     #endregion
 
     #region Card Database
@@ -114,6 +115,7 @@ public class CardDataBase : MonoBehaviour
         Ability.OnDiscardCard += HandleCardForceDiscard;
         Ability.OnPreventAbilitiesToFieldForTurn += HandleAbilityToFieldSilence;
         Ability.OnOpponentAbilityActivation += AbilityHandover;
+        Ability.OnHandOverControl += AbilityDehandover;
         UIConfirmation.OnNeedDrawEnhanceCards += DrawFromEnhanceDeck;
 
         Heros[0] = new Card(Card.Type.Character, "AKIO", 20, 70, HeroImages[0], AlphaHeros[0]);
@@ -184,14 +186,20 @@ public class CardDataBase : MonoBehaviour
         Feats[1] = new Card(Card.Type.Feat, "DRAIN", "(H) Discard all of one opponenet's Enhancement Cards from the field.", FeatImages[1]);
         Feats[2] = new Card(Card.Type.Feat, "PAY THE COST", "(H) Fatigue one hero in your play area, to remove one hero from the field.", FeatImages[2]);
         Feats[3] = new Card(Card.Type.Feat, "UNDER SEIGE", "(H) Target opponent reveals their hand, then discards all non-hero cards.", FeatImages[3]);
-
+        
+        foreach(Card item in Heros)//Debuggong only
+        {
+            MasterList.Add(item);
+        }
         foreach(Card item in Abilities)
         {
             AbilityDraft.Add(item);
+            MasterList.Add(item);
         }
         foreach(Card item in Feats)
         {
             AbilityDraft.Add(item);
+            MasterList.Add(item);
         }
 
         P1AutoAbilities.Add(Feats[0]);
@@ -237,7 +245,6 @@ public class CardDataBase : MonoBehaviour
             }
         }
     }
-
     private void OnDestroy()
     {
         UIConfirmation.OnTargetAccepted -= HandleTargetAccepted;
@@ -254,9 +261,9 @@ public class CardDataBase : MonoBehaviour
         Ability.OnDiscardCard -= HandleCardForceDiscard;
         Ability.OnPreventAbilitiesToFieldForTurn -= HandleAbilityToFieldSilence;
         Ability.OnOpponentAbilityActivation -= AbilityHandover;
+        Ability.OnHandOverControl -= AbilityDehandover;
         UIConfirmation.OnNeedDrawEnhanceCards += DrawFromEnhanceDeck;
     }
-
     #endregion
 
     #region Debugging
@@ -264,12 +271,10 @@ public class CardDataBase : MonoBehaviour
     {
         AiDraft = set;
     }
-
     public void SetAutoDraft(bool set)
     {
         AutoDraft = set;
     }
-
     public void DrawDraftCard(string draftDeck)
     {
         switch (draftDeck)
@@ -285,7 +290,7 @@ public class CardDataBase : MonoBehaviour
 
     public void StartDrawSpecificCard()
     {
-        DisplayDraft(MyDeck);
+        DisplayDraft(MasterList);
         SpecificDraw = true;
     }
 
@@ -834,7 +839,7 @@ public class CardDataBase : MonoBehaviour
         }
         GetHandToShare();
         handSize = MyHand.Count;
-        //GM.PassiveActivate(Ability.PassiveType.HandCardAdjustment);
+        GM.ActivatePassive(Ability.PassiveType.HandCardAdjustment);
     }
 
     private void RemoveCardFromHand(Card cardToRemove)
@@ -862,7 +867,7 @@ public class CardDataBase : MonoBehaviour
         HandCardOffset(0);
         GetHandToShare();
         handSize = MyHand.Count;
-        //GM.PassiveActivate(Ability.PassiveType.HandCardAdjustment);
+        GM.ActivatePassive(Ability.PassiveType.HandCardAdjustment);
     }
     #endregion
 
@@ -979,10 +984,8 @@ public class CardDataBase : MonoBehaviour
         }
 
         herosFatigued--;
-        //GM.PassiveActivate(Ability.PassiveType.CharacterDestroyed);
         myManager.RPCRequest("FieldCardDestroy", RpcTarget.Others, card.Name, loc);
     }
-
     public void FieldCardDestroy(string name, string location)
     {
         switch (location)
@@ -1395,7 +1398,6 @@ public class CardDataBase : MonoBehaviour
         GM.PhaseChange(Referee.GamePhase.Wait);
         myManager.RPCRequest("HandleAbilityHandOver", RpcTarget.Others, ability.Name);
     }
-
     public void HandleAbilityHandOver(string nameOfAbilityToGiveControl)
     {
         Ability ability = heroAbilitiesOnField[0];
@@ -1423,9 +1425,19 @@ public class CardDataBase : MonoBehaviour
             }
         }
 
-        //GM.SetActiveAbility(ability);
         GM.PhaseChange(Referee.GamePhase.TurnResponse);
+        GM.SetActiveAbility(ability);
         //GM.PopUpUpdater($"{ability.Name} ability activated.");
+    }
+    private void AbilityDehandover()
+    {
+        myManager.RPCRequest("HandleAbilityDehandover", RpcTarget.Others, true);
+    }
+    public void HandleAbilityDehandover()
+    {
+        Debug.Log("Jordan I think we got it.");
+        GM.PhaseChange(Referee.GamePhase.Overcome);
+        GM.HandleHoldTurn(false);
     }
     #endregion
     
@@ -1700,6 +1712,7 @@ public class CardDataBase : MonoBehaviour
         for(int i =0; i < amount; i++)
         {
             DrawCard(CardDecks.MyDeck);
+            GM.UpdateDeckCounts();
         }
     }
     public void DrawCard(CardDecks Deck)

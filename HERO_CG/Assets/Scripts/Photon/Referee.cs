@@ -11,11 +11,15 @@ using Photon.Pun;
 
 public class Referee : MonoBehaviour
 {
-    public enum GamePhase { HeroDraft, AbilityDraft, HEROSelect, Heal, Enhance, Recruit, Overcome, Feat, PostAction, TurnResponse, Wait }
+    public enum GamePhase { HeroDraft, AbilityDraft, HEROSelect, Heal, Enhance, Recruit, Overcome, Feat, PostAction, TurnResponse, Wait, Targeting }
     public static GamePhase myPhase = GamePhase.HeroDraft;
     public static GamePhase prevPhase = GamePhase.Wait;
     public enum PlayerNum { P1, P2, P3, P4 }
     public static PlayerNum player;
+
+    public enum TargetType { Player, OppHero, MyHero, Hero, Attackers, Defender, Cancel}
+
+    Stack<GameAction> gameActions;
 
     public CardDataBase CB;
     public PhotonInGameManager myManager;
@@ -96,6 +100,7 @@ public class Referee : MonoBehaviour
     public static Action OnTurnResetabilities = delegate { };
     public static Action<bool> OnWaitTimer = delegate { };
     public static Action OnPlayerResponded = delegate { };
+    public static Action<TargetType> OnDsiplayTargets = delegate { };
 
     #region Unity Methods
     private void Awake()
@@ -107,11 +112,12 @@ public class Referee : MonoBehaviour
         UIConfirmation.OnHEROSelection += PhaseChange;
         CardDataBase.OnAiDraftCollected += HandleCardCollected;
         UIResponseTimer.OnTimerRunOut += HandleResponsePanelTurnOff;
+        Ability.OnHoldTurn += HandleHoldTurn;
+        Ability.OnRequestTargeting += HandleTargeting;
         /*Ability.OnAbilityUsed += HandleAbilityEnd;
         Ability.OnFeatComplete += HandleFeatComplete;
         Ability.OnSetActive += SetActiveAbility;
         Ability.OnActivateable += HandleActivateAbilitySetup;
-        Ability.OnHoldTurn += HandleHoldTurn;
         Ability.OnHoldTurnOffOppTurn += HandleHoldTurnOff;*/
     }
     private void OnDestroy()
@@ -123,16 +129,17 @@ public class Referee : MonoBehaviour
         UIConfirmation.OnHEROSelection -= PhaseChange;
         CardDataBase.OnAiDraftCollected -= HandleCardCollected;
         UIResponseTimer.OnTimerRunOut -= HandleResponsePanelTurnOff;
+        Ability.OnHoldTurn -= HandleHoldTurn;
+        Ability.OnRequestTargeting -= HandleTargeting;
         /*Ability.OnAbilityUsed -= HandleAbilityEnd;
         Ability.OnFeatComplete -= HandleFeatComplete;
         Ability.OnSetActive -= SetActiveAbility;
         Ability.OnActivateable -= HandleActivateAbilitySetup;
-        Ability.OnHoldTurn -= HandleHoldTurn;
         Ability.OnHoldTurnOffOppTurn -= HandleHoldTurnOff;*/
     }
-
     private void Start()
     {
+        gameActions = new Stack<GameAction>();
         PhaseIndicator.text = "Hero Draft";
         tOpponentHandCount.text = "0";
         tCardsToCollectReserve.text = "";
@@ -161,10 +168,47 @@ public class Referee : MonoBehaviour
     }
     #endregion
 
+    #region Game Actions
+    public void AddActionToStack(GameAction act)
+    {
+        gameActions.Push(act);
+    }
+
+    public void StartStack()
+    {
+        int i = gameActions.Count;
+        for(int j = 0; j<i; j++)
+        {
+            ExecuteAction(gameActions.Pop());
+        }
+    }
+
+    void ExecuteAction(GameAction act)
+    {
+        switch (act.myType)
+        {
+            case GameAction.Type.ActivatedAbility:
+                break;
+            case GameAction.Type.Battle:
+                break;
+            case GameAction.Type.PassiveAbility:
+                break;
+            case GameAction.Type.Target:
+                break;
+        }
+    }
+    #endregion
+
     #region Ability Methods
     public void ActivatePassive(Ability.PassiveType type)
     {
+        Debug.Log($"Starting a Passive: {type}");
         OnPassiveActivate?.Invoke(type);
+    }
+    public void SetActiveAbility(Ability ability)
+    {
+        activeAbility = ability;
+        ability.AbilityAwake();
     }
     #endregion
 
@@ -182,30 +226,40 @@ public class Referee : MonoBehaviour
 
     #region Turn Methods
 
+    public void HandleHoldTurn(bool hold)
+    {
+        btEndTurn.gameObject.SetActive(!hold);
+        bEndTurn = !hold;
+    }
+
     #region Switching Turn Methods
     private void SwitchTurn()
     {
-        if (myTurn)
+        if (bEndTurn)
         {
-            abilityPlaySilenceTurnTimer--;
-            if (abilityPlaySilenceTurnTimer <= 0)
+            if (myTurn)
             {
-                canPlayAbilityToField = true;
+                abilityPlaySilenceTurnTimer--;
+                if (abilityPlaySilenceTurnTimer <= 0)
+                {
+                    canPlayAbilityToField = true;
+                }
             }
+            myTurn = !myTurn;
+            GenericTurnChangables();
+            NextPhase();
+            HandleTurnDeclaration(!myTurn);
         }
-        myTurn = !myTurn;
-        GenericTurnChangables();
-        NextPhase();
-        HandleTurnDeclaration(!myTurn);
-
     }
 
     public void ToldSwitchTurn(bool turn)
     {
-        myTurn = turn;
-        GenericTurnChangables();
-        NextPhase();
-        
+        if (bEndTurn)
+        {
+            myTurn = turn;
+            GenericTurnChangables();
+            NextPhase();
+        }      
     }
 
     public void EndTurnFromButton()
@@ -231,22 +285,20 @@ public class Referee : MonoBehaviour
 
     private void GenericTurnChangables()
     {
-        SwitchEndTurnButtonInteractible(myTurn);
+        btEndTurn.gameObject.SetActive(myTurn);
         StartCoroutine(TurnDeclaration(myTurn));
         OnTurnResetabilities?.Invoke();
     }
-
-    private void SwitchEndTurnButtonInteractible(bool interactible)
-    {
-        btEndTurn.gameObject.SetActive(interactible);
-    }
     #endregion
 
-    public void Respond(bool response)
+    public void Respond(bool response)//Activated by UI
     {
-        OnPlayerResponded?.Invoke();
-        myManager.RPCRequest("HandlePlayerResponded", RpcTarget.Others, response);
-        NextPhase();
+        if (!response)
+        {
+            OnPlayerResponded?.Invoke();
+            myManager.RPCRequest("HandlePlayerResponded", RpcTarget.Others, response);
+            NextPhase();
+        }
     }
 
     public void AwatePlayerResponse(bool wait)
@@ -508,7 +560,7 @@ public class Referee : MonoBehaviour
             case GamePhase.TurnResponse:
                 StartCoroutine(PhaseDeclaration("Player Response"));
                 PhaseIndicator.text = "Turn Response";
-                OnWaitTimer?.Invoke(true);
+                //OnWaitTimer?.Invoke(true);
                 ResponsePanel.SetActive(true);
                 break;
             case GamePhase.Wait:
@@ -601,6 +653,7 @@ public class Referee : MonoBehaviour
             }
             PreviousDefender = DefendingHero;
             Debug.Log($"{DefendingHero} was defending.");
+            CB.SendPreviousAttackersAndDefender(AttackingHeros, DefendingHero);
 
             Debug.Log($"{tDmg} was the given damage to take.");
             DefendingHero.ParticleStop();
@@ -616,7 +669,6 @@ public class Referee : MonoBehaviour
                 Debug.Log($"Opponent should have been destroyed so exhaust has been set to true");
             }
             ActivatePassive(Ability.PassiveType.BattleComplete);
-            CB.SendPreviousAttackersAndDefender(AttackingHeros, DefendingHero);
             AttackingHeros.Clear();
             DefendingHero = null;
             SwitchAttDef();
@@ -987,6 +1039,7 @@ public class Referee : MonoBehaviour
     #region Selections
     private void HandleCardSelecion(CardData card)
     {
+        Debug.Log(myPhase);
         if (!CB.SpecificDraw)
         {
             switch (myPhase)
@@ -1050,23 +1103,14 @@ public class Referee : MonoBehaviour
                         CardZoom(card);
                     }
                     break;
-                case GamePhase.TurnResponse:
-                    if (activeAbility != null)
-                    {
-                        //HandleAbilityTargetting(card);
-                        abilityTargetting = false;
-                    }
-                    else
-                    {
-                        Debug.Log($"{activeAbility}");
-                        Debug.Log("No active Ability");
-                    }
-                    break;
                 case GamePhase.Wait:
                     if (!zoomed)
                     {
                         CardZoom(card);
                     }
+                    break;
+                case GamePhase.Targeting:
+                    card.Targeted();
                     break;
             }
         }
@@ -1076,11 +1120,21 @@ public class Referee : MonoBehaviour
             CB.SpecificDraw = false;
         }
     }
-
     private void HandleDeselection()
     {
         zoomed = false;
         handZoomed = false;
     }
+    private void HandleTargeting(TargetType obj)
+    {
+        PhaseChange(GamePhase.Targeting);
+    }
     #endregion
+}
+
+public class GameAction
+{
+    public enum Type { Target, Battle, PassiveAbility, ActivatedAbility}
+    public Type myType;
+    public Card myCard;
 }

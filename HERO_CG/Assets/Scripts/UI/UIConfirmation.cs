@@ -13,6 +13,7 @@ public class UIConfirmation : MonoBehaviour
     private Confirmation typeOfConfirmation = Confirmation.Heal;
     private Card myCardToUse;
     private CardData myTargetCard;
+    private Ability activeAbility;
 
     public static Action<Referee.GamePhase> OnHEROSelection = delegate { };
     public static Action<CardData, Card> OnTargetAccepted = delegate { };
@@ -24,11 +25,14 @@ public class UIConfirmation : MonoBehaviour
         CardDataBase.OnTargeting += HandleTargeting;
         CardData.IsTarget += HandleTarget;
         Ability.OnConfirmDrawEnhanceCard += OnConfirmationRequest;
+        Ability.OnTargetedFrom += HandleTargeting;
     }
     private void OnDestroy()
     {
         CardDataBase.OnTargeting -= HandleTargeting;
         CardData.IsTarget -= HandleTarget;
+        Ability.OnConfirmDrawEnhanceCard -= OnConfirmationRequest;
+        Ability.OnTargetedFrom -= HandleTargeting;
     }
     #endregion
 
@@ -50,6 +54,13 @@ public class UIConfirmation : MonoBehaviour
                     break;
             }
         }
+    }
+    private void HandleTargeting(Ability ability)
+    {
+        activeAbility = ability;
+
+        confirmationText.text = "Confirm Ability to target.";
+        typeOfConfirmation = Confirmation.Ability;
     }
     private void HandleTarget(CardData card)
     {
@@ -127,6 +138,12 @@ public class UIConfirmation : MonoBehaviour
             case Confirmation.Quit:
                 break;
             case Confirmation.Ability:
+                if(activeAbility!= null)
+                {
+                    activeAbility.TargetOpponent(myTargetCard);
+                    activeAbility = null;
+                    break;
+                }
                 OnTargetAccepted?.Invoke(myTargetCard, myCardToUse);
                 break;
             case Confirmation.Enhancing:
@@ -141,9 +158,9 @@ public class UIConfirmation : MonoBehaviour
         }
         confirmationUI.SetActive(false);
     }
-
     public void Decline()
     {
+        activeAbility = null;
         confirmationUI.SetActive(false);
     }
 }

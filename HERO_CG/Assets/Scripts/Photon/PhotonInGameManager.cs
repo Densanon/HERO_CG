@@ -120,6 +120,12 @@ public class PhotonInGameManager : MonoBehaviourPunCallbacks
         //Do Something...
         GameManager.AwatePlayerResponse(false);
     }
+
+    [PunRPC]
+    private void HandleAbilityDehandover(bool b)
+    {
+        DataBase.HandleAbilityDehandover();
+    }
     #endregion
 
     #region Base Control

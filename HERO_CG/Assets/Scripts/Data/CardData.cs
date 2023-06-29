@@ -40,19 +40,12 @@ public class CardData : MonoBehaviour
     public static Action<List<Enhancement>, CardData> OnGivenEnhancements = delegate { };
 
     public bool Exhausted { get; private set; }
-
     public  Card myCard { get; private set; }
-
     public Sprite CardImage { get; private set; }
-
     public Card.Type CardType { get; private set; }
-
     public string Name { get; private set; }
-
     public int Attack { get; private set; }
-
     public int Defense { get; private set; }
-
     public int AbilityCounter { get; private set; }
 
     public CardData(Card card, FieldPlacement placement)
@@ -69,328 +62,27 @@ public class CardData : MonoBehaviour
     #region Unity Methods
     private void Awake()
     {
-        CardDataBase.OnTargeting += HandleTargetting;
+        Ability.OnRequestTargeting += HandleTargeting;
+        CardDataBase.OnTargeting += HandleTargeting;
         Referee.OnOvercomeTime += HandleActivateOvercome;
         Referee.OnOvercomeSwitch += HandleSwitchOvercome;
-        myParticleSystem = gameObject.GetComponentInChildren<ParticleSystem>();
+        
+       myParticleSystem = gameObject.GetComponentInChildren<ParticleSystem>();
 
         UISetup();
     }
 
     private void OnDestroy()
     {
-        CardDataBase.OnTargeting -= HandleTargetting;
+        Ability.OnRequestTargeting -= HandleTargeting;
+        CardDataBase.OnTargeting -= HandleTargeting;
         Referee.OnOvercomeTime -= HandleActivateOvercome;
         Referee.OnOvercomeSwitch -= HandleSwitchOvercome;
+
     }
     #endregion
 
-    #region Public Methods
-    public void DamageCheck(int dmg)
-    {
-        if(dmg >= Defense)
-        {
-            //Destroy
-            Debug.Log($"{Name} has been destroyed.");
-            Exhausted = true;
-            OnDestroyed?.Invoke(this);
-        }else if (dmg >= Defense/2)
-        {
-            //Exhaust
-            Exhaust(false);
-        }
-        else
-        {
-            //Block
-            Debug.Log($"{Name} has blocked.");
-        }
-    }
-
-    public void Exhaust(bool told)
-    {
-        Exhausted = true;
-        StateChange(CardState.Exhausted);
-        SetDefense(Defense / 2);
-        tDefense.color = Color.red;
-
-        if(!told)
-            OnExhausted?.Invoke(this, true);
-        Debug.Log($"{Name} has been exhausted.");
-    }
-
-    public void Heal(bool told)
-    {
-        Exhausted = false;
-        StateChange(CardState.Normal);
-        SetDefense(Defense * 2);
-        tDefense.color = Color.white;
-
-        if (!told)
-            OnExhausted?.Invoke(this, false);
-    }
-
-    public void SetAttack(int amount)
-    {
-        Attack = amount;
-        tAttack.text = Attack.ToString();
-    }
-
-    public void AdjustAttack(int amount)
-    {
-        bool sendit = (Attack != (Attack + amount));
-        HandleEnhancementAddition(amount, 'a');
-        ValuesSetup();
-        if (sendit)
-        {
-            OnNumericAdjustment?.Invoke(this, "Attack", Attack);
-        }
-    }
-
-    public void NewAbilityAttModifier(int amountAdjustment)
-    {
-        int i = abilityAttModifier - amountAdjustment;
-
-        if(i != 0)
-        {
-            abilityAttModifier = amountAdjustment;
-            ValuesSetup();
-            OnNumericAdjustment?.Invoke(this, "Attack", Attack);
-        }
-    }
-
-    public void SetDefense(int amount)
-    {
-        Defense = amount;
-        tDefense.text = Defense.ToString();
-    }
-
-    public void AdjustDefense(int amount)
-    {
-        bool sendit = (Defense != (Defense + amount));
-        HandleEnhancementAddition(amount, 'd');
-        ValuesSetup();
-        if (sendit)
-        {
-            OnNumericAdjustment?.Invoke(this, "Defense", Defense);
-        }
-    }
-
-    public void NewAbilityDefModifier(int amountAdjustment)
-    {
-
-        int i = abilityDefModifier - amountAdjustment;
-        if(abilityDefModifier == 0)
-        {
-            i = amountAdjustment;
-        }
-        //Debug.Log($"NewAbilityDefModifier: Current modifier{abilityDefModifier}/ Current Adjustment{amountAdjustment}");
-
-        if(i != 0)
-        {
-            //Debug.Log($"NewAbilityDefModifier: amount adjusted {i}");
-            abilityDefModifier = amountAdjustment;
-            ValuesSetup();
-            OnNumericAdjustment?.Invoke(this, "Defense", Defense);
-        }
-    }
-
-    public void AdjustCounter(int amount, Ability ability)
-    {
-        AbilityCounter += amount;
-            for(int i = 0; i < gAbilityCounters.Length-1; i++)
-            {
-                if(AbilityCounter-1 >= i)
-                {
-                    gAbilityCounters[i].color = Color.yellow;
-                }
-                else
-                {
-                    gAbilityCounters[i].color = Color.clear;
-                }
-            }
-        if(myPlacement != FieldPlacement.Opp)
-        {
-            if (amount > 0)
-            {
-                myAbilities.Add(ability);
-            }
-            else
-            {
-                myAbilities.Remove(ability);
-            }
-        }
-    }
-
-    public List<Ability> GetCharacterAbilities()
-    {
-        return myAbilities;
-    }
-
-    public List<Enhancement> GetCharacterEnhancements()
-    {
-        Debug.Log($"Giving {myEnhancements.Count} enhancements");
-        return myEnhancements;
-    }
-
-    public void StripAbilities(bool told)
-    {
-        foreach(Image im in gAbilityCounters)
-        {
-            im.color = Color.clear;
-        }
-
-        if(myAbilities != null)
-            myAbilities.Clear();
-
-        if (!told)
-        {
-            OnAbilitiesStripped?.Invoke(this);
-        }
-        GetCharacterAbilities();
-    }
-
-    public void StripEnhancements(bool told)
-    {
-        if(myEnhancements != null)
-            myEnhancements.Clear();
-        
-        CardOverride(myCard, myPlacement);
-        if (!told)
-        {
-            OnEnhancementsStripped?.Invoke(this);
-        }
-    }
-
-    public void GainAbilities(List<Ability> abilities, bool told)
-    {
-        //need to add all the abilities to the card and update its info
-        Debug.Log($"GainingAbilities: {abilities.Count}");
-        foreach(Ability a in abilities)
-        {
-            Debug.Log($"Ability to be gained: {a.Name}");
-            AdjustCounter(1, a);
-        }
-
-        if(!told)
-        OnGivenAbilities?.Invoke(abilities, this);
-        Debug.Log("GainAbilities complete.");
-    }
-
-    public void GainEnhancements(List<Enhancement> enhancements, bool told)
-    {
-        //need to add all the enhancements to the card and update its info
-        Debug.Log("GainingEnhancements");
-        foreach (Enhancement e in enhancements)
-        {
-            Debug.Log($"Adding {e.attack}:{e.attack}");
-            if (myEnhancements == null)
-            {
-                Debug.Log("myEnhancements were null");
-                myEnhancements = new List<Enhancement>();
-            }
-
-
-            if (e.attack > 0)
-            {
-                Debug.Log("Attack addition.");
-                AdjustAttack(e.attack);
-                continue;
-            }
-
-            Debug.Log("Defense Addition.");
-            AdjustDefense(e.defense);
-        }
-
-        if (!told)
-            OnGivenEnhancements?.Invoke(enhancements, this);
-        Debug.Log("Enhancement Gain complete.");
-    }
-
-    public void CardOverride(Card card, FieldPlacement placement)
-    {
-        myPlacement = placement;
-        myCard = card;
-        CardType = card.CardType;
-        Name = card.Name;
-        Attack = card.Attack;
-        Defense = card.Defense;
-        if(myPlacement == FieldPlacement.Mine || myPlacement == FieldPlacement.Opp || myPlacement == FieldPlacement.HQ)
-        {
-            CardImage = card.alphaImage;
-        }
-        else
-        {
-            CardImage = card.image;
-        }
-
-        if(CardType == Card.Type.Character)
-        {
-            SetCharacterAbility();
-        }
-
-        UISetup();
-    }
-
-    public void CardOverride(CardData card, FieldPlacement placement)
-    {
-        myPlacement = placement;
-        myCard = card.myCard;
-        CardType = card.CardType;
-        Name = card.Name;
-        Attack = card.Attack;
-        Defense = card.Defense;
-        if (myPlacement == FieldPlacement.Mine || myPlacement == FieldPlacement.Opp || myPlacement == FieldPlacement.HQ)
-        {
-            CardImage = card.myCard.alphaImage;
-        }
-        else
-        {
-            CardImage = card.myCard.image;
-        }
-
-
-        if (CardType == Card.Type.Character)
-        {
-            SetCharacterAbility();
-        }
-
-        UISetup();
-    }
-
-    public void Targeted()
-    {
-        IsTarget?.Invoke(this);
-    }
-
-    public void OvercomeTarget(bool target)
-    {
-        if (target)
-        {
-            StateChange(CardState.Attacking);
-            return;
-        }
-
-        StateChange(prevState);
-        
-    }
-
-    public void ParticleSetAndStart(Color color)
-    {
-        if(myParticleSystem != null)
-        {
-            var main = myParticleSystem.main;
-            main.startColor = color;
-            myParticleSystem.Play();
-        }
-    }
-
-    public void ParticleStop()
-    {
-        myParticleSystem.Stop();
-    }
-    #endregion
-
-    #region Private Methods
+    #region Setup
     private void UISetup()
     {
 
@@ -441,7 +133,6 @@ public class CardData : MonoBehaviour
             }
         }
     }
-
     private void ValuesSetup()
     {
         int a = myCard.Attack;
@@ -461,148 +152,6 @@ public class CardData : MonoBehaviour
         tDefense.text = Defense.ToString();
         tAttack.text = Attack.ToString();
     }
-
-    private void StateChange(CardState StateToTransitionTo)
-    {
-        prevState = myState;
-        myState = StateToTransitionTo;
-
-        switch (StateToTransitionTo)
-        {
-            case CardState.Attacking:
-                Icon.color = Color.blue;
-                break;
-            case CardState.Defending:
-                Icon.color = Color.cyan;
-                break;
-            case CardState.Exhausted:
-                Icon.color = Color.grey;
-                break;
-            case CardState.Normal:
-                Icon.color = Color.white;
-                break;
-            case CardState.PotentialDefenderTarget:
-                Icon.color = Color.red;
-                break;
-            case CardState.PotentialNeutralTarget:
-                Icon.color = Color.green;
-                break;
-        }
-    }
-
-    private void HandleTargetting(Card card, bool target)
-    {
-        if(Target != null)
-        {
-            Target.gameObject.SetActive(target);
-            if (target)
-            {
-                StateChange(CardState.PotentialNeutralTarget);
-                return;
-            }
-
-            StateChange(prevState);
-        }
-    }
-
-    private void HandleActivateOvercome(bool onOff)
-    {
-        if (onOff)
-        {
-            switch (myPlacement)
-            {
-                case FieldPlacement.Mine:
-                    if (!Exhausted)
-                    {
-                        StateChange(CardState.PotentialNeutralTarget);
-                    }
-                    break;
-                case FieldPlacement.Opp:
-                    if (!Exhausted)
-                    {
-                        StateChange(CardState.Normal);
-                    }
-                    break;
-            }
-        }
-        else
-        {
-            switch (myPlacement)
-            {
-                case FieldPlacement.Mine:
-                    if (!Exhausted)
-                    {
-                        StateChange(CardState.Normal);
-                    }
-                    break;
-                case FieldPlacement.Opp:
-                    if (!Exhausted)
-                    {
-                        StateChange(CardState.Normal);
-                    }
-                    break;
-            }
-        }
-    }
-
-    private void HandleSwitchOvercome()
-    {
-        if (Referee.AttDef)
-        {
-            switch (myPlacement)
-            {
-                case FieldPlacement.Mine:
-                    if (!Exhausted)
-                    {
-                        StateChange(CardState.PotentialNeutralTarget);
-                    }
-                    break;
-                case FieldPlacement.Opp:
-                    if (!Exhausted)
-                    {
-                        StateChange(CardState.Normal);
-                    }
-                    break;
-            }
-        }
-        else
-        {
-            switch (myPlacement)
-            {
-                case FieldPlacement.Mine:
-                    if (!Exhausted)
-                    {
-                        StateChange(CardState.Normal);
-                    }
-                    break;
-                case FieldPlacement.Opp:
-                    StateChange(CardState.PotentialDefenderTarget);
-                    break;
-            }
-        }
-    }
-
-    private void HandleEnhancementAddition(int amount, char type) {
-
-        Enhancement e = new Enhancement();
-        if(type == 'a')
-        {
-            e.attack = amount;
-            enhancementAttModifier += amount;
-        }
-        else
-        {
-            e.defense = amount;
-            enhancementDefModifier += amount;
-        }
-        if(myEnhancements == null)
-        {
-            myEnhancements = new List<Enhancement>();
-        }
-        myEnhancements.Add(e);
-
-    }
-
     private void SetCharacterAbility()
     {
         if (charAbSet)
@@ -693,6 +242,494 @@ public class CardData : MonoBehaviour
                 break;
         }
         charAbSet = true;
+    }
+    public void CardOverride(Card card, FieldPlacement placement)
+    {
+        myPlacement = placement;
+        myCard = card;
+        CardType = card.CardType;
+        Name = card.Name;
+        Attack = card.Attack;
+        Defense = card.Defense;
+        if(myPlacement == FieldPlacement.Mine || myPlacement == FieldPlacement.Opp || myPlacement == FieldPlacement.HQ)
+        {
+            CardImage = card.alphaImage;
+        }
+        else
+        {
+            CardImage = card.image;
+        }
+
+        if(CardType == Card.Type.Character)
+        {
+            SetCharacterAbility();
+        }
+
+        UISetup();
+    }
+    public void CardOverride(CardData card, FieldPlacement placement)
+    {
+        myPlacement = placement;
+        myCard = card.myCard;
+        CardType = card.CardType;
+        Name = card.Name;
+        Attack = card.Attack;
+        Defense = card.Defense;
+        if (myPlacement == FieldPlacement.Mine || myPlacement == FieldPlacement.Opp || myPlacement == FieldPlacement.HQ)
+        {
+            CardImage = card.myCard.alphaImage;
+        }
+        else
+        {
+            CardImage = card.myCard.image;
+        }
+
+
+        if (CardType == Card.Type.Character)
+        {
+            SetCharacterAbility();
+        }
+
+        UISetup();
+    }
+    #endregion
+
+    #region States
+    private void StateChange(CardState StateToTransitionTo)
+    {
+        prevState = myState;
+        myState = StateToTransitionTo;
+
+        switch (StateToTransitionTo)
+        {
+            case CardState.Attacking:
+                Icon.color = Color.blue;
+                break;
+            case CardState.Defending:
+                Icon.color = Color.cyan;
+                break;
+            case CardState.Exhausted:
+                Icon.color = Color.grey;
+                break;
+            case CardState.Normal:
+                Icon.color = Color.white;
+                break;
+            case CardState.PotentialDefenderTarget:
+                Icon.color = Color.red;
+                break;
+            case CardState.PotentialNeutralTarget:
+                Icon.color = Color.green;
+                break;
+        }
+    }
+    private void HandleActivateOvercome(bool onOff)
+    {
+        if (onOff)
+        {
+            switch (myPlacement)
+            {
+                case FieldPlacement.Mine:
+                    if (!Exhausted)
+                    {
+                        StateChange(CardState.PotentialNeutralTarget);
+                    }
+                    break;
+                case FieldPlacement.Opp:
+                    if (!Exhausted)
+                    {
+                        StateChange(CardState.Normal);
+                    }
+                    break;
+            }
+        }
+        else
+        {
+            switch (myPlacement)
+            {
+                case FieldPlacement.Mine:
+                    if (!Exhausted)
+                    {
+                        StateChange(CardState.Normal);
+                    }
+                    break;
+                case FieldPlacement.Opp:
+                    if (!Exhausted)
+                    {
+                        StateChange(CardState.Normal);
+                    }
+                    break;
+            }
+        }
+    }
+    private void HandleSwitchOvercome()
+    {
+        if (Referee.AttDef)
+        {
+            switch (myPlacement)
+            {
+                case FieldPlacement.Mine:
+                    if (!Exhausted)
+                    {
+                        StateChange(CardState.PotentialNeutralTarget);
+                    }
+                    break;
+                case FieldPlacement.Opp:
+                    if (!Exhausted)
+                    {
+                        StateChange(CardState.Normal);
+                    }
+                    break;
+            }
+        }
+        else
+        {
+            switch (myPlacement)
+            {
+                case FieldPlacement.Mine:
+                    if (!Exhausted)
+                    {
+                        StateChange(CardState.Normal);
+                    }
+                    break;
+                case FieldPlacement.Opp:
+                    StateChange(CardState.PotentialDefenderTarget);
+                    break;
+            }
+        }
+    }
+    #endregion
+
+    #region Modifiers
+    public void NewAbilityDefModifier(int amountAdjustment)
+    {
+
+        int i = abilityDefModifier - amountAdjustment;
+        if(abilityDefModifier == 0)
+        {
+            i = amountAdjustment;
+        }
+        //Debug.Log($"NewAbilityDefModifier: Current modifier{abilityDefModifier}/ Current Adjustment{amountAdjustment}");
+
+        if(i != 0)
+        {
+            //Debug.Log($"NewAbilityDefModifier: amount adjusted {i}");
+            abilityDefModifier = amountAdjustment;
+            ValuesSetup();
+            OnNumericAdjustment?.Invoke(this, "Defense", Defense);
+        }
+    }
+    public void AdjustCounter(int amount, Ability ability)
+    {
+        AbilityCounter += amount;
+            for(int i = 0; i < gAbilityCounters.Length-1; i++)
+            {
+                if(AbilityCounter-1 >= i)
+                {
+                    gAbilityCounters[i].color = Color.yellow;
+                }
+                else
+                {
+                    gAbilityCounters[i].color = Color.clear;
+                }
+            }
+        if(myPlacement != FieldPlacement.Opp)
+        {
+            if (amount > 0)
+            {
+                myAbilities.Add(ability);
+            }
+            else
+            {
+                myAbilities.Remove(ability);
+            }
+        }
+    }
+    public List<Ability> GetCharacterAbilities()
+    {
+        return myAbilities;
+    }
+    public List<Enhancement> GetCharacterEnhancements()
+    {
+        Debug.Log($"Giving {myEnhancements.Count} enhancements");
+        return myEnhancements;
+    }
+    public void StripAbilities(bool told)
+    {
+        foreach(Image im in gAbilityCounters)
+        {
+            im.color = Color.clear;
+        }
+
+        if(myAbilities != null)
+            myAbilities.Clear();
+
+        if (!told)
+        {
+            OnAbilitiesStripped?.Invoke(this);
+        }
+        GetCharacterAbilities();
+    }
+    public void GainAbilities(List<Ability> abilities, bool told)
+    {
+        //need to add all the abilities to the card and update its info
+        Debug.Log($"GainingAbilities: {abilities.Count}");
+        foreach(Ability a in abilities)
+        {
+            Debug.Log($"Ability to be gained: {a.Name}");
+            AdjustCounter(1, a);
+        }
+
+        if(!told)
+        OnGivenAbilities?.Invoke(abilities, this);
+        Debug.Log("GainAbilities complete.");
+    }
+    public void StripEnhancements(bool told)
+    {
+        if(myEnhancements != null)
+            myEnhancements.Clear();
+        
+        CardOverride(myCard, myPlacement);
+        if (!told)
+        {
+            OnEnhancementsStripped?.Invoke(this);
+        }
+    }
+    public void GainEnhancements(List<Enhancement> enhancements, bool told)
+    {
+        //need to add all the enhancements to the card and update its info
+        Debug.Log("GainingEnhancements");
+        foreach (Enhancement e in enhancements)
+        {
+            Debug.Log($"Adding {e.attack}:{e.attack}");
+            if (myEnhancements == null)
+            {
+                Debug.Log("myEnhancements were null");
+                myEnhancements = new List<Enhancement>();
+            }
+
+
+            if (e.attack > 0)
+            {
+                Debug.Log("Attack addition.");
+                AdjustAttack(e.attack);
+                continue;
+            }
+
+            Debug.Log("Defense Addition.");
+            AdjustDefense(e.defense);
+        }
+
+        if (!told)
+            OnGivenEnhancements?.Invoke(enhancements, this);
+        Debug.Log("Enhancement Gain complete.");
+    }
+    private void HandleEnhancementAddition(int amount, char type) {
+
+        Enhancement e = new Enhancement();
+        if(type == 'a')
+        {
+            e.attack = amount;
+            enhancementAttModifier += amount;
+        }
+        else
+        {
+            e.defense = amount;
+            enhancementDefModifier += amount;
+        }
+        if(myEnhancements == null)
+        {
+            myEnhancements = new List<Enhancement>();
+        }
+        myEnhancements.Add(e);
+
+    }
+    #endregion
+
+    #region Combat
+    public void DamageCheck(int dmg)
+    {
+        if(dmg >= Defense)
+        {
+            //Destroy
+            Debug.Log($"{Name} has been destroyed.");
+            Exhausted = true;
+            OnDestroyed?.Invoke(this);
+        }else if (dmg >= Defense/2)
+        {
+            //Exhaust
+            Exhaust(false);
+        }
+        else
+        {
+            //Block
+            Debug.Log($"{Name} has blocked.");
+        }
+    }
+
+    public void Exhaust(bool told)
+    {
+        Exhausted = true;
+        StateChange(CardState.Exhausted);
+        SetDefense(Defense / 2);
+        tDefense.color = Color.red;
+
+        if(!told)
+            OnExhausted?.Invoke(this, true);
+        Debug.Log($"{Name} has been exhausted.");
+    }
+
+    public void Heal(bool told)
+    {
+        Exhausted = false;
+        StateChange(CardState.Normal);
+        SetDefense(Defense * 2);
+        tDefense.color = Color.white;
+
+        if (!told)
+            OnExhausted?.Invoke(this, false);
+    }
+
+    public void SetAttack(int amount)
+    {
+        Attack = amount;
+        tAttack.text = Attack.ToString();
+    }
+
+    public void AdjustAttack(int amount)
+    {
+        bool sendit = (Attack != (Attack + amount));
+        HandleEnhancementAddition(amount, 'a');
+        ValuesSetup();
+        if (sendit)
+        {
+            OnNumericAdjustment?.Invoke(this, "Attack", Attack);
+        }
+    }
+
+    public void NewAbilityAttModifier(int amountAdjustment)
+    {
+        int i = abilityAttModifier - amountAdjustment;
+
+        if(i != 0)
+        {
+            abilityAttModifier = amountAdjustment;
+            ValuesSetup();
+            OnNumericAdjustment?.Invoke(this, "Attack", Attack);
+        }
+    }
+
+    public void SetDefense(int amount)
+    {
+        Defense = amount;
+        tDefense.text = Defense.ToString();
+    }
+
+    public void AdjustDefense(int amount)
+    {
+        bool sendit = (Defense != (Defense + amount));
+        HandleEnhancementAddition(amount, 'd');
+        ValuesSetup();
+        if (sendit)
+        {
+            OnNumericAdjustment?.Invoke(this, "Defense", Defense);
+        }
+    }
+    #endregion
+
+    #region Targeting
+    public void Targeted()//Activated on UI
+    {
+        Debug.Log($"{Name}: I am being clicked on!");
+        IsTarget?.Invoke(this);
+    }
+    public void OvercomeTarget(bool target)
+    {
+        if (target)
+        {
+            StateChange(CardState.Attacking);
+            return;
+        }
+
+        StateChange(prevState);
+        
+    }
+    private void HandleTargeting(Card card, bool target)
+    {
+        if(Target != null)
+        {
+            Target.gameObject.SetActive(target);
+            if (target)
+            {
+                StateChange(CardState.PotentialNeutralTarget);
+                return;
+            }
+
+            StateChange(prevState);
+        }
+    }
+    private void HandleTargeting(Referee.TargetType type)
+    {
+        switch (type)
+        {
+            case Referee.TargetType.Cancel:
+                Debug.Log($"{Name: I am turning off my target.}");
+                StateChange(CardState.Normal);
+                //Target.gameObject.SetActive(false);
+                break;
+            case Referee.TargetType.Hero:
+                if (myPlacement == FieldPlacement.Opp || myPlacement == FieldPlacement.Mine)
+                {
+                    StateChange(CardState.PotentialNeutralTarget);
+                    //Target.gameObject.SetActive(true);
+                }
+                break;
+            case Referee.TargetType.MyHero:
+                if (myPlacement == FieldPlacement.Mine)
+                {
+                    StateChange(CardState.PotentialNeutralTarget);
+                    //Target.gameObject.SetActive(true);
+                }
+                break;
+            case Referee.TargetType.OppHero:
+                if (myPlacement == FieldPlacement.Opp)
+                {
+                    Debug.Log($"{Name}: I am a target.");
+                    StateChange(CardState.PotentialNeutralTarget);
+                    //Target.gameObject.SetActive(true);
+                }
+                break;
+            case Referee.TargetType.Attackers:
+                if (Referee.PreviousAttackers.Contains(this))
+                {
+                    StateChange(CardState.PotentialNeutralTarget);
+                    //Target.gameObject.SetActive(true);
+                }
+                break;
+            case Referee.TargetType.Defender:
+                if (Referee.PreviousDefender)
+                {
+                    StateChange(CardState.PotentialNeutralTarget);
+                    //Target.gameObject.SetActive(true);
+                }
+                break;
+        }
+        
+    }
+    #endregion
+
+    #region Particles
+    public void ParticleSetAndStart(Color color)
+    {
+        if(myParticleSystem != null)
+        {
+            var main = myParticleSystem.main;
+            main.startColor = color;
+            myParticleSystem.Play();
+        }
+    }
+    public void ParticleStop()
+    {
+        myParticleSystem.Stop();
     }
     #endregion
 }

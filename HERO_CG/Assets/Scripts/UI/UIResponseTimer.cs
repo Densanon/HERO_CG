@@ -6,7 +6,7 @@ using System;
 public class UIResponseTimer : MonoBehaviour
 {
     [SerializeField]
-    float timerTime = 10f;
+    float timerTime = 200f;
     float timer = 0f;
     public Slider mySlider;
     public TMP_Text mySliderText;
