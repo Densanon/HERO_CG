@@ -50,11 +50,7 @@
         ability.AbilityAwake();
     }
 
-    public void SilenceAbilityToField(int turns)
-    {
-        abilityPlaySilenceTurnTimer = turns;
-        canPlayAbilityToField = false;
-    }
+    
     #endregion
 
 

@@ -15,12 +15,12 @@ public class UICharacterAbility : MonoBehaviour
 
     public void Awake()
     {
-        Referee.OnTurnResetabilities += ResetAbilityInteractible;
+        Referee.OnTurnResetables += ResetAbilityInteractible;
     }
 
     public void OnDestroy()
     {
-        Referee.OnTurnResetabilities -= ResetAbilityInteractible;
+        Referee.OnTurnResetables -= ResetAbilityInteractible;
     }
 
     public void AbilityAwake(Ability ability)

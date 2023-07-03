@@ -1,5 +1,5 @@
 ﻿//Created by Jordan Ezell
-//Last Editted: 1/5/23 Jordan
+//Last Editted: 6/30/23 Jordan
 
 using System.Collections;
 using System.Collections.Generic;
@@ -21,7 +21,7 @@ public class aAkio : Ability
     {
         base.PassiveCheck(type);
 
-        if(type == PassiveType.BattleComplete && Referee.OpponentExhausted)
+        if(type == PassiveType.HeroFatigued && Referee.OpponentExhausted && Referee.AttackingHeros.Contains(myHero))
         {
             myHero.Heal(false);
         }

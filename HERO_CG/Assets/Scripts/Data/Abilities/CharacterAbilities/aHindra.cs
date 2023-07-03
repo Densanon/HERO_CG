@@ -1,4 +1,7 @@
-﻿using System.Collections;
+﻿//Created by Jordan Ezell
+//Last Edited: 6/30/23 Jordan
+
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -18,12 +21,15 @@ public class aHindra : Ability
     {
         base.AbilityAwake();
 
+        ChangeOncePerTurn(true);
         OnPreventAbilitiesToFieldForTurn?.Invoke();
     }
 
     public override void ActivateAbility()
     {
-        Debug.Log("Hindra Activated");
-        OnActivateable?.Invoke(this);
+        if (!oncePerTurnUsed)
+        {
+            OnActivateable?.Invoke(this);
+        }
     }
 }

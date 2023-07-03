@@ -1,4 +1,7 @@
-﻿using System.Collections;
+﻿//Created by Jordan Ezell
+//Last Edited: 6/30/23 Jordan
+
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -8,6 +11,7 @@ public class aIgnacia : Ability
     {
         base.Awake();
 
+        ChangeCanActivate(false);
         myType = Type.Character;
         secondaryType = Type.Activate;
         Name = "IGNACIA";
@@ -18,18 +22,35 @@ public class aIgnacia : Ability
     {
         base.AbilityAwake();
 
-        if(myHero.Exhausted)
-            OnSetActive?.Invoke(this);
+        if(myHero.Exhausted && !oncePerTurnUsed)
+        {
+            OnRequestTargeting?.Invoke(Referee.TargetType.OppHero);
+            OnTargetedFrom?.Invoke(this);
+        }
+    }
+
+    public override void PassiveCheck(PassiveType passiveType)
+    {
+        base.PassiveCheck(passiveType);
+
+        if(passiveType == PassiveType.HeroFatigued && myHero.Exhausted)
+        {
+            ChangeCanActivate(true);
+        }else if(passiveType == PassiveType.HeroFatigued && !myHero.Exhausted)
+        {
+            ChangeCanActivate(false);
+        }
     }
 
     public override void Target(CardData card)
     {
         base.Target(card);
 
-        if(card.myPlacement == CardData.FieldPlacement.Opp && !oncePerTurnUsed)
+        if(card.myPlacement == CardData.FieldPlacement.Opp)
         {
-            oncePerTurnUsed = true;
             card.DamageCheck(myHero.Attack);
+            OnAbilityUsed?.Invoke();
+            ChangeOncePerTurn(true);
         }
     }
 }

@@ -21,10 +21,10 @@ public class aGrit : Ability
 
         base.PassiveCheck(passiveType);
 
-        if(passiveType == PassiveType.HeroFatigued)
+        if (passiveType == PassiveType.HeroFatigued || passiveType == PassiveType.HeroHealed)
         {
             myHero.NewAbilityAttModifier(CardDataBase.herosFatigued * 20);
-            Debug.Log("Grit should gain attack.");
+            Debug.Log("Grit should adjust attack.");
         }
     }
 }

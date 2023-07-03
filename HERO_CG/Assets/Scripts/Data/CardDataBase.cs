@@ -1,5 +1,5 @@
 ﻿//Created by Jordan Ezell
-//Last Edited: 6/29/23 Jordan
+//Last Edited: 6/30/23 Jordan
 
 using UnityEngine;
 using UnityEngine.UI;
@@ -334,13 +334,19 @@ public class CardDataBase : MonoBehaviour
         {
             GameObject obj = Instantiate(CardDraftPrefab, DraftArea);
             CardData cd = obj.GetComponent<CardData>();
-            if(whichDeck != MyHand)
+            if(whichDeck == MyHand)
             {
-                cd.CardOverride(card, CardData.FieldPlacement.Draft);
+                cd.CardOverride(card, CardData.FieldPlacement.Hand);
+            }else if(whichDeck == MyDiscard){
+                cd.CardOverride(card, CardData.FieldPlacement.MyDiscard);
+            }
+            else if (whichDeck == OppDiscard)
+            {
+                cd.CardOverride(card, CardData.FieldPlacement.OppDiscard);
             }
             else
             {
-                cd.CardOverride(card, CardData.FieldPlacement.Hand);
+                cd.CardOverride(card, CardData.FieldPlacement.Draft);
             }
             Draft.Add(cd);
         }
@@ -783,6 +789,13 @@ public class CardDataBase : MonoBehaviour
         myManager.RPCRequest("ShareCardList", RpcTarget.Others, "OppHand" ,names.ToArray());
     }
 
+    public void GetOwnDiscardPile()//Via UI
+    {
+        Debug.Log($"Discard count: {MyDiscard.Count}");
+        ClearDraft();
+        DisplayDraft(MyDiscard);
+    }
+
     private CardData FindCardOnField(string name)
     {
 
@@ -892,6 +905,7 @@ public class CardDataBase : MonoBehaviour
             case "Random":
                 for(int i = amount; i>0; i--)
                 {
+                    if (MyHand.Count == 0) return;
                     RemoveCardFromHand(MyHand[UnityEngine.Random.Range(0, MyHand.Count)]);
                 }
                 break;
@@ -965,27 +979,62 @@ public class CardDataBase : MonoBehaviour
     private void HandleCharacterDestroyed(CardData card)
     {
         cardAbilitiesOnField.Remove(card.charAbility);
-        foreach(Ability a in card.myAbilities)
-        {
-            cardAbilitiesOnField.Remove(a);
-        }
 
         string loc = "";
         if (OppField.Contains(card))
         {
             OppField.Remove(card);
-            Destroy(card.gameObject);
+            OppDiscard.Add(card.myCard);
             loc = "OppField";
+            foreach(Ability a in card.myAbilities)
+            {
+                cardAbilitiesOnField.Remove(a);
+                AddCardToListByName("OppDiscard", a.Name);
+            }
         }else if (MyField.Contains(card))
         {
             MyField.Remove(card);
-            Destroy(card.gameObject);
             loc = "MyField";
+            foreach (Ability a in card.myAbilities)
+            {
+                cardAbilitiesOnField.Remove(a);
+                AddCardToListByName("MyDiscard", a.Name);
+            }
         }
+        card.gameObject.SetActive(false);
 
         herosFatigued--;
         myManager.RPCRequest("FieldCardDestroy", RpcTarget.Others, card.Name, loc);
     }
+
+    private void AddCardToListByName(string list, string name)
+    {
+        Debug.Log($"Adding {name} to {list}");
+        switch (list)
+        {
+            case "MyDiscard":
+                foreach(Card card in Abilities)
+                {
+                    if(card.Name == name)
+                    {
+                        MyDiscard.Add(card);
+                        return;
+                    }
+                }
+                break;
+            case "OppDiscard":
+                foreach (Card card in Abilities)
+                {
+                    if (card.Name == name)
+                    {
+                        OppDiscard.Add(card);
+                        return;
+                    }
+                }
+                break;
+        }
+    }
+
     public void FieldCardDestroy(string name, string location)
     {
         switch (location)
@@ -998,7 +1047,6 @@ public class CardDataBase : MonoBehaviour
                         OppField.Remove(card);
                         OppDiscard.Add(card.myCard);
                         card.gameObject.SetActive(false);//delaying card destroy to carry abilities
-                        Destroy(card.gameObject, 10f);
                         break;
                     }
                 }
@@ -1011,7 +1059,6 @@ public class CardDataBase : MonoBehaviour
                         MyField.Remove(card);
                         MyDiscard.Add(card.myCard);
                         card.gameObject.SetActive(false);//delaying card destroy to carry abilities
-                        Destroy(card.gameObject, 10f);
                         break;
                     }
                 }
@@ -1035,10 +1082,9 @@ public class CardDataBase : MonoBehaviour
 
 
         herosFatigued = exhaust ? herosFatigued + 1 : herosFatigued - 1;
-        if (exhaust)
-        {
-            //GM.PassiveActivate(Ability.PassiveType.HeroFatigued);
-        }
+        if (exhaust) GM.ActivatePassive(Ability.PassiveType.HeroFatigued);
+        if (!exhaust) GM.ActivatePassive(Ability.PassiveType.HeroHealed);
+
         Debug.Log($"Heros currently Fatigued: {herosFatigued}");
 
         myManager.RPCRequest("ExhaustStateAdjust", RpcTarget.Others, card.Name, loc, exhaust);
@@ -1277,6 +1323,18 @@ public class CardDataBase : MonoBehaviour
     }
     #endregion
 
+    #region Strip Abilities
+    private void HandleAbilityStripped(CardData card)
+    {
+        myManager.RPCRequest("StripAbilities", RpcTarget.Others, card.Name);
+    }
+
+    public void StripAbilities(string name)
+    {
+        FindCardOnField(name).StripAbilities(true);
+    }
+    #endregion
+
     #region Strip Enhancements
     private void StripAllEnhancementsOnSideOfField(string side)
     {
@@ -1305,18 +1363,6 @@ public class CardDataBase : MonoBehaviour
     public void StripEnhancements(string name)
     {
         FindCardOnField(name).StripEnhancements(true);
-    }
-    #endregion
-
-    #region Strip Abilities
-    private void HandleAbilityStripped(CardData card)
-    {
-        myManager.RPCRequest("StripAbilities", RpcTarget.Others, card.Name);
-    }
-
-    public void StripAbilities(string name)
-    {
-        FindCardOnField(name).StripAbilities(true);
     }
     #endregion
 
@@ -1435,7 +1481,6 @@ public class CardDataBase : MonoBehaviour
     }
     public void HandleAbilityDehandover()
     {
-        Debug.Log("Jordan I think we got it.");
         GM.PhaseChange(Referee.GamePhase.Overcome);
         GM.HandleHoldTurn(false);
     }
@@ -1444,6 +1489,7 @@ public class CardDataBase : MonoBehaviour
     #region Ability Silence
     private void HandleAbilityToFieldSilence()
     {
+
         if (Referee.player == Referee.PlayerNum.P1)
         {
             SilenceAbilityToField(Referee.PlayerNum.P2, 1);
@@ -1473,6 +1519,7 @@ public class CardDataBase : MonoBehaviour
 
     public void SilenceAbilityToFieldCall(string name, int turns)
     {
+        Debug.Log("Recieved a message to silence abilities.");
         Referee.PlayerNum num = Referee.PlayerNum.P1;
         switch (name)
         {
@@ -1491,7 +1538,7 @@ public class CardDataBase : MonoBehaviour
         }
         if(Referee.player == num)
         {
-            //GM.SilenceAbilityToField(turns);
+            GM.SilenceAbilityToField(turns);
         }
     }
     #endregion
@@ -1538,7 +1585,6 @@ public class CardDataBase : MonoBehaviour
         }
         RemoveCardFromHand(card);
     }
-
     public void HandleCardCollected(Card card, Referee.GamePhase phase)
     {
         switch (phase)
@@ -1570,7 +1616,6 @@ public class CardDataBase : MonoBehaviour
                 break;
         }
     }
-
     public void HandCardOffset(System.Single offset)
     {
         int o = (int)Math.Floor(offset);
@@ -1585,17 +1630,14 @@ public class CardDataBase : MonoBehaviour
         }
         CheckActiveCard();
     }
-
     public void HandleShowOpponentCard(string name)
     {
-        Debug.Log($"CB: Recieved a card to display {name}");
         foreach(Card c in CardBase)
         {
             if(c.Name == name)
             {
-                Debug.Log("CB: Found the card, sending to Zoom in GM");
                 StartCoroutine(GM.ShowOpponentPlayedCard(c));
-                //return;
+                return;
             }
         }
     }

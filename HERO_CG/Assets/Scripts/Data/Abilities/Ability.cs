@@ -1,5 +1,5 @@
 ﻿//Created by Jordan Ezell
-//Last Edited: 1/6/23 Jordan
+//Last Edited: 6/30/23 Jordan
 
 using UnityEngine;
 using System;
@@ -10,17 +10,16 @@ public class Ability : MonoBehaviour
     public Type myType;
     public Type secondaryType;
 
-    public enum PassiveType { CharacterSpawn, CharacterDestroyed, BattleComplete, BattleStart, HeroRecruited, HandCardAdjustment, ActionComplete, HeroFatigued }
+    public enum PassiveType { CharacterSpawn, CharacterDestroyed, BattleComplete, BattleStart, HeroRecruited, HandCardAdjustment, ActionComplete, HeroFatigued, HeroHealed }
 
     public string Name;
     public string Description;
     protected CardData myHero;
-    protected bool oncePerTurnUsed = false;
-    protected bool canActivate = false;
+    public bool oncePerTurnUsed { get; private set; }
+    public bool canActivate { get; private set; }
     protected bool passiveCheckable = false;
 
     public static Action<Ability> OnAddAbilityToMasterList = delegate { };
-    public static Action OnAbilityUsed = delegate { };
     public static Action OnFeatComplete = delegate { };
     public static Action<string, int> OnConfirmDrawEnhanceCard = delegate { };
     public static Action<string, string, int> OnDiscardCard = delegate { };
@@ -29,6 +28,7 @@ public class Ability : MonoBehaviour
     public static Action<Ability> OnActivateable = delegate { };
     public static Action OnPreventAbilitiesToFieldForTurn = delegate { };
     
+    public static Action OnAbilityUsed = delegate { };
     public static Action<Referee.TargetType> OnRequestTargeting = delegate { };
     public static Action<Ability> OnTargetedFrom = delegate { };
     public static Action<bool> OnHoldTurn = delegate { };
@@ -36,12 +36,14 @@ public class Ability : MonoBehaviour
 
     protected virtual void Awake()
     {
+        canActivate = true;
+        oncePerTurnUsed = false;
         myHero = this.gameObject.GetComponent<CardData>();
         passiveCheckable = myHero.myPlacement == CardData.FieldPlacement.Mine || myHero.myPlacement == CardData.FieldPlacement.Opp;
         if (passiveCheckable)
         {
             Referee.OnPassiveActivate += PassiveCheck;
-            Referee.OnTurnResetabilities += ResetOncePerTurn;
+            Referee.OnTurnResetables += ResetOncePerTurn;
         }
     }
 
@@ -54,12 +56,21 @@ public class Ability : MonoBehaviour
     protected virtual void OnDestroy()
     {
         Referee.OnPassiveActivate -= PassiveCheck;
-        Referee.OnTurnResetabilities -= ResetOncePerTurn;
+        Referee.OnTurnResetables -= ResetOncePerTurn;
     }
 
     private void ResetOncePerTurn()
     {
         oncePerTurnUsed = false;
+    }
+
+    protected void ChangeOncePerTurn(bool change)
+    {
+        oncePerTurnUsed = change;
+    }
+    protected void ChangeCanActivate(bool change)
+    {
+        canActivate = change;
     }
 
     public virtual void AbilityAwake()
@@ -70,11 +81,6 @@ public class Ability : MonoBehaviour
     public virtual void Target(CardData card)
     {
         Debug.Log("AbilityTarget Activated");
-    }
-
-    public virtual void TargetOpponent(CardData card)
-    {
-        Debug.Log("Ability TargetOpponent Activated");
     }
 
     public virtual void PassiveCheck(PassiveType passiveType)

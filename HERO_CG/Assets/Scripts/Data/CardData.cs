@@ -1,4 +1,7 @@
-﻿using UnityEngine;
+﻿//Created by Jordan Ezell
+//Last Edited: 6/30/23 Jordan
+
+using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
 using System;
@@ -6,7 +9,7 @@ using System.Collections.Generic;
 
 public class CardData : MonoBehaviour
 {
-    public enum FieldPlacement { Mine, Opp, Draft, HQ, Zoom, Hand}
+    public enum FieldPlacement { Mine, Opp, Draft, HQ, Zoom, Hand, MyDiscard, OppDiscard}
     public FieldPlacement myPlacement;
 
     public enum CardState { Normal, Exhausted, PotentialNeutralTarget, PotentialDefenderTarget, Attacking, Defending}
@@ -66,18 +69,20 @@ public class CardData : MonoBehaviour
         CardDataBase.OnTargeting += HandleTargeting;
         Referee.OnOvercomeTime += HandleActivateOvercome;
         Referee.OnOvercomeSwitch += HandleSwitchOvercome;
+        Referee.OnTurnResetables += HandleResetForTurn;
+        Referee.OnRemoveTargeting += HandleResetForTurn;
         
        myParticleSystem = gameObject.GetComponentInChildren<ParticleSystem>();
 
         UISetup();
     }
-
     private void OnDestroy()
     {
         Ability.OnRequestTargeting -= HandleTargeting;
         CardDataBase.OnTargeting -= HandleTargeting;
         Referee.OnOvercomeTime -= HandleActivateOvercome;
         Referee.OnOvercomeSwitch -= HandleSwitchOvercome;
+        Referee.OnRemoveTargeting -= HandleResetForTurn;
 
     }
     #endregion
@@ -397,6 +402,18 @@ public class CardData : MonoBehaviour
             }
         }
     }
+    private void HandleResetForTurn()
+    {
+        if(myPlacement == FieldPlacement.Mine || myPlacement == FieldPlacement.Opp)
+        {
+            if (Exhausted)
+            {
+                StateChange(CardState.Exhausted);
+                return;
+            }
+            StateChange(CardState.Normal);
+        }
+    }
     #endregion
 
     #region Modifiers
@@ -551,8 +568,8 @@ public class CardData : MonoBehaviour
         if(dmg >= Defense)
         {
             //Destroy
+            Exhaust(false);
             Debug.Log($"{Name} has been destroyed.");
-            Exhausted = true;
             OnDestroyed?.Invoke(this);
         }else if (dmg >= Defense/2)
         {
@@ -565,7 +582,6 @@ public class CardData : MonoBehaviour
             Debug.Log($"{Name} has blocked.");
         }
     }
-
     public void Exhaust(bool told)
     {
         Exhausted = true;
@@ -577,7 +593,6 @@ public class CardData : MonoBehaviour
             OnExhausted?.Invoke(this, true);
         Debug.Log($"{Name} has been exhausted.");
     }
-
     public void Heal(bool told)
     {
         Exhausted = false;
@@ -710,6 +725,12 @@ public class CardData : MonoBehaviour
                 {
                     StateChange(CardState.PotentialNeutralTarget);
                     //Target.gameObject.SetActive(true);
+                }
+                break;
+            case Referee.TargetType.MyHurt:
+                if(myPlacement == FieldPlacement.Mine && Exhausted)
+                {
+                    StateChange(CardState.PotentialNeutralTarget);
                 }
                 break;
         }

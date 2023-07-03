@@ -67,7 +67,7 @@ public class UIConfirmation : MonoBehaviour
         myTargetCard = card;
         confirmationUI.SetActive(true);
     }
-    public void OnConfirmationRequest(string type)
+    public void OnConfirmationRequest(string type)//Hero Buttons
     {
         confirmationUI.SetActive(true);
         switch (type)
@@ -140,7 +140,7 @@ public class UIConfirmation : MonoBehaviour
             case Confirmation.Ability:
                 if(activeAbility!= null)
                 {
-                    activeAbility.TargetOpponent(myTargetCard);
+                    activeAbility.Target(myTargetCard);
                     activeAbility = null;
                     break;
                 }

@@ -18,14 +18,15 @@ public class aEng : Ability
     {
         base.PassiveCheck(passiveType);
 
-        if(passiveType == PassiveType.ActionComplete)
-        {
-            if(CardDataBase.herosFatigued > 0)
-            {
-                OnActivateable?.Invoke(this);
-                OnHoldTurn?.Invoke(true);
-            }
-        }
+        if(passiveType == PassiveType.ActionComplete && CardDataBase.herosFatigued > 0) OnActivateable?.Invoke(this);
+    }
+
+    public override void AbilityAwake()
+    {
+        base.AbilityAwake();
+
+        OnRequestTargeting?.Invoke(Referee.TargetType.MyHurt);
+        OnTargetedFrom?.Invoke(this);
     }
 
     public override void Target(CardData card)
@@ -33,7 +34,6 @@ public class aEng : Ability
         base.Target(card);
         Debug.Log($"Healing {card.Name} from {myHero.Name}");
         card.Heal(false);
-        OnAbilityUsed();
-        OnHoldTurn?.Invoke(false);
+        OnAbilityUsed?.Invoke();
     }
 }

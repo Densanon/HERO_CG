@@ -33,7 +33,7 @@ public class aChristoph : Ability
         OnTargetedFrom?.Invoke(this);
     }
 
-    public override void TargetOpponent(CardData card)
+    public override void Target(CardData card)
     {
         base.Target(card);
         Debug.Log($"{Name} has targeted {card.Name}");
@@ -41,6 +41,7 @@ public class aChristoph : Ability
         if (Referee.PreviousAttackers.Contains(card))
         {
             card.DamageCheck(1000);
+            OnAbilityUsed?.Invoke();
             OnHandOverControl?.Invoke();
             return;
         }
