@@ -411,13 +411,27 @@ public class CardDataBase : MonoBehaviour
         {
             if(item.Name == card)
             {
+                CatchHeroReserveOversight(card);
                 Draft.Remove(item);
                 Destroy(item.gameObject);
                 if (Referee.myTurn)
                 {
+                    Debug.Log($"{Draft.Count} : {HeroReserve.Count}");
                     CheckDraft();
                 }
-                break;
+                return;
+            }
+        }
+    }
+
+    private void CatchHeroReserveOversight(string card)
+    {
+        foreach(Card c in HeroReserve)
+        {
+            if(c.Name == card)
+            {
+                HeroReserve.Remove(c);
+                return;
             }
         }
     }
@@ -429,9 +443,9 @@ public class CardDataBase : MonoBehaviour
             case Referee.GamePhase.HeroDraft:
                 if(Draft.Count == 12 && Referee.myTurn)
                 {
-                    
-                        HandleCardCollected(HeroReserve[UnityEngine.Random.Range(0, 13)], Referee.myPhase);
-                        myManager.RPCRequest("SetupAbilityDraft", RpcTarget.All, true);
+                    Debug.Log($"2: {Draft.Count} : {HeroReserve.Count}");
+                    HandleCardCollected(HeroReserve[UnityEngine.Random.Range(0, 13)], Referee.myPhase);
+                    myManager.RPCRequest("SetupAbilityDraft", RpcTarget.All, true);
    
                 }
                 break;

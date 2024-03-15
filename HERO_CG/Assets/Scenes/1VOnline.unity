@@ -252,8 +252,8 @@ MonoBehaviour:
   HandButton: {fileID: 1815097637}
   sHandSlider: {fileID: 1831753652}
   Draft: []
-  CardDisplayArea: {fileID: 0}
-  CardDisplayAreaOffButton: {fileID: 0}
+  CardDisplayArea: {fileID: 1451229847}
+  CardDisplayAreaOffButton: {fileID: 1321246902}
   MyHeroArea: {fileID: 718918091}
   OppHeroArea: {fileID: 694986171}
   HQArea: {fileID: 182939291}
@@ -10388,7 +10388,7 @@ GameObject:
   - component: {fileID: 1321246905}
   - component: {fileID: 1321246904}
   m_Layer: 5
-  m_Name: DraftAreaOffButton
+  m_Name: CardDisplayAreaOffButton
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -11488,7 +11488,7 @@ GameObject:
   - component: {fileID: 1451229847}
   - component: {fileID: 1451229848}
   m_Layer: 5
-  m_Name: DraftArea
+  m_Name: CardDisplayArea
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
