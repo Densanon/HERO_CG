@@ -38,8 +38,8 @@ public class CardDataBase : MonoBehaviour
     public Slider sHandSlider;
 
     public List<CardData> Draft = new List<CardData>();
-    public Transform DraftArea;
-    public GameObject DraftAreaOffButton;
+    public Transform CardDisplayArea;
+    public GameObject CardDisplayAreaOffButton;
     public Transform MyHeroArea;
     public Transform OppHeroArea;
     public Transform HQArea;
@@ -290,16 +290,21 @@ public class CardDataBase : MonoBehaviour
 
     public void StartDrawSpecificCard()
     {
-        DisplayDraft(MasterList);
+        DisplayCardList(MasterList);
         SpecificDraw = true;
     }
 
     public void DrawSpecificCard(Card card)
     {
-        DraftArea.gameObject.SetActive(false);
+        ToggleCardDisplayArea(false);
         MyHand.Add(card);
         AddCardToHand(card);
         MyDeck.Remove(card);
+    }
+
+    private void ToggleCardDisplayArea(bool toggle)
+    {
+        CardDisplayArea.gameObject.SetActive(toggle);
     }
     #endregion
 
@@ -323,16 +328,16 @@ public class CardDataBase : MonoBehaviour
             myManager.RPCRequest("ShareCardList", RpcTarget.Others, "HeroReserve", shareList.ToArray());
         }
 
-        DisplayDraft(HeroReserve);
+        DisplayCardList(HeroReserve);
     }
 
-    private void DisplayDraft(List<Card> whichDeck)
+    private void DisplayCardList(List<Card> whichDeck)
     {
-        DraftArea.gameObject.SetActive(true);
+        ToggleCardDisplayArea(true);
 
         foreach(Card card in whichDeck)
         {
-            GameObject obj = Instantiate(CardDraftPrefab, DraftArea);
+            GameObject obj = Instantiate(CardDraftPrefab, CardDisplayArea);
             CardData cd = obj.GetComponent<CardData>();
             if(whichDeck == MyHand)
             {
@@ -360,7 +365,7 @@ public class CardDataBase : MonoBehaviour
 
             GM.PhaseChange(Referee.GamePhase.AbilityDraft);
 
-            DisplayDraft(AbilityDraft);
+            DisplayCardList(AbilityDraft);
         }else if(AutoDraft && Referee.player == Referee.PlayerNum.P1)
         {
             foreach(Card card in P1AutoAbilities)
@@ -373,7 +378,7 @@ public class CardDataBase : MonoBehaviour
                 myManager.RPCRequest("EndAbilityDraft", RpcTarget.Others, false);
                 EndAbilityDraft(true);
             }
-            DraftArea.gameObject.SetActive(false);
+            ToggleCardDisplayArea(false);
         }
         else if(AutoDraft && Referee.player == Referee.PlayerNum.P2)
         {
@@ -386,7 +391,7 @@ public class CardDataBase : MonoBehaviour
                 //myManager.RPCRequest("EndAbilityDraft", RpcTarget.Others, false);
                 //EndAbilityDraft(true);
             }*/
-            DraftArea.gameObject.SetActive(false);
+            ToggleCardDisplayArea(false);
         }
     }
 
@@ -457,7 +462,7 @@ public class CardDataBase : MonoBehaviour
                     }
                 }
 
-                DisplayDraft(HeroReserve);
+                DisplayCardList(HeroReserve);
                 break;
             case "OppHand":
                 OppHand.Clear();
@@ -793,7 +798,7 @@ public class CardDataBase : MonoBehaviour
     {
         Debug.Log($"Discard count: {MyDiscard.Count}");
         ClearDraft();
-        DisplayDraft(MyDiscard);
+        DisplayCardList(MyDiscard);
     }
 
     private CardData FindCardOnField(string name)
@@ -1428,13 +1433,13 @@ public class CardDataBase : MonoBehaviour
     public void SetUpHandCardsToBeViewed()
     {
         ClearDraft();
-        DisplayDraft(MyHand);
-        DraftAreaOffButton.SetActive(true);
+        DisplayCardList(MyHand);
+        CardDisplayAreaOffButton.SetActive(true);
     }
 
     public void RemoveHandCardsDraft()
     {
-        DraftArea.gameObject.SetActive(false);
+        ToggleCardDisplayArea(false);
     }
 
     #region Ability Handover
@@ -1839,10 +1844,10 @@ public class CardDataBase : MonoBehaviour
     #region IEnumerators
     private IEnumerator DisplayExtraDraft()
     {
-        DisplayDraft(cardListToDisplay);
+        DisplayCardList(cardListToDisplay);
         Debug.Log("New Card list displayed.");
         yield return new WaitForSeconds(5f);
-        DraftArea.gameObject.SetActive(false);
+        ToggleCardDisplayArea(false);
         //GM.ToldSwitchTurn(false);
         myManager.RPCRequest("DeclaredTurn", RpcTarget.Others, true);
     }

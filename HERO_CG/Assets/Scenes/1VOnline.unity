@@ -252,8 +252,8 @@ MonoBehaviour:
   HandButton: {fileID: 1815097637}
   sHandSlider: {fileID: 1831753652}
   Draft: []
-  DraftArea: {fileID: 1451229847}
-  DraftAreaOffButton: {fileID: 1321246902}
+  CardDisplayArea: {fileID: 0}
+  CardDisplayAreaOffButton: {fileID: 0}
   MyHeroArea: {fileID: 718918091}
   OppHeroArea: {fileID: 694986171}
   HQArea: {fileID: 182939291}
@@ -18346,7 +18346,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &2022968202
 RectTransform:
   m_ObjectHideFlags: 0
