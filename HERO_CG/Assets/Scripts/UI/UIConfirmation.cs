@@ -9,7 +9,7 @@ public class UIConfirmation : MonoBehaviour
 {
     public GameObject confirmationUI;
     public TMP_Text confirmationText;
-    public enum Confirmation { Heal, Enhance, Recruit, Overcome, Feat, Quit, Enhancing, Ability, AtDef, Ayumi}
+    public enum Confirmation { Heal, Enhance, Recruit, Overcome, Feat, Quit, Enhancing, Ability, AtDef, Ayumi, Aisaac}
     private Confirmation typeOfConfirmation = Confirmation.Heal;
     private Card myCardToUse;
     private CardData myTargetCard;
@@ -18,6 +18,7 @@ public class UIConfirmation : MonoBehaviour
     public static Action<Referee.GamePhase> OnHEROSelection = delegate { };
     public static Action<CardData, Card> OnTargetAccepted = delegate { };
     public static Action<int> OnNeedDrawEnhanceCards = delegate { };
+    public static Action OnNeedDrawFromDiscard = delegate { };
 
     #region Unity Methods
     private void Awake()
@@ -26,6 +27,7 @@ public class UIConfirmation : MonoBehaviour
         CardData.IsTarget += HandleTarget;
         Ability.OnConfirmDrawEnhanceCard += OnConfirmationRequest;
         Ability.OnTargetedFrom += HandleTargeting;
+        Ability.OnNeedDrawFromDiscard += OnConfirmationRequest;
     }
     private void OnDestroy()
     {
@@ -33,6 +35,7 @@ public class UIConfirmation : MonoBehaviour
         CardData.IsTarget -= HandleTarget;
         Ability.OnConfirmDrawEnhanceCard -= OnConfirmationRequest;
         Ability.OnTargetedFrom -= HandleTargeting;
+        Ability.OnNeedDrawFromDiscard += OnConfirmationRequest;
     }
     #endregion
 
@@ -96,6 +99,10 @@ public class UIConfirmation : MonoBehaviour
                 confirmationText.text = "Confirm 'Quit'";
                 typeOfConfirmation = Confirmation.Quit;
                 break;
+            case "Discard":
+                confirmationText.text = "Confirm: Aisaac's Draw from Discard";
+                typeOfConfirmation = Confirmation.Aisaac;
+                break;
         }
     }
     void OnConfirmationRequest(string type, int amount)
@@ -154,6 +161,10 @@ public class UIConfirmation : MonoBehaviour
                 break;
             case Confirmation.Ayumi:
                 OnNeedDrawEnhanceCards(1);
+                break;
+            case Confirmation.Aisaac:
+                aIsaac.AisaacDraw = true;
+                OnNeedDrawFromDiscard?.Invoke();
                 break;
         }
         confirmationUI.SetActive(false);

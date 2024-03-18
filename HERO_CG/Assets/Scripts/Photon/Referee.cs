@@ -522,6 +522,7 @@ public class Referee : MonoBehaviour
         Debug.Log($"{player}: Changing Phase to {phaseToChangeTo} from {myPhase}");
         if (myPhase == GamePhase.Overcome && phaseToChangeTo != GamePhase.CombatAbility)
         {
+            CB.ResetDiscardRecord();
             gOvercome.SetActive(false);
             OnOvercomeTime?.Invoke(false);
         }
@@ -1146,7 +1147,13 @@ public class Referee : MonoBehaviour
                     //HandleAbilityTargetting(card);
                     break;
                 case GamePhase.Overcome:
-                    if (abilityTargetting == false)
+                    if (aIsaac.AisaacDraw)
+                    {
+                        Debug.Log($"I am drawing {card.Name} from the Discard.");
+                        CB.DrawSpecificCard(card.myCard, CB.MyDiscard);
+                        aIsaac.AisaacDraw = false;
+                    }
+                    else if (abilityTargetting == false)
                     {
                         HandleHeroSelected(card);
                         return;
@@ -1166,6 +1173,11 @@ public class Referee : MonoBehaviour
                     if (!zoomed)
                     {
                         CardZoom(card);
+                    }
+                    else if (aIsaac.AisaacDraw)
+                    {
+                        CB.DrawSpecificCard(card.myCard, CB.MyDiscard);
+                        aIsaac.AisaacDraw = false;
                     }
                     break;
                 case GamePhase.Targeting:

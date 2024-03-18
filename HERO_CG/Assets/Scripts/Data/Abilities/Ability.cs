@@ -34,6 +34,8 @@ public class Ability : MonoBehaviour
     public static Action<bool> OnHoldTurn = delegate { };
     public static Action OnHandOverControl = delegate { };
 
+    public static Action<string> OnNeedDrawFromDiscard = delegate { };
+
     protected virtual void Awake()
     {
         canActivate = true;

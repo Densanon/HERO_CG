@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class aIsaac : Ability
 {
+    public static bool AisaacDraw = false;
+
     protected override void Awake()
     {
         base.Awake();
@@ -18,8 +20,9 @@ public class aIsaac : Ability
     {
         base.PassiveCheck(passiveType);
 
-        if(passiveType == PassiveType.CharacterDestroyed)
+        if(passiveType == PassiveType.CharacterDestroyed && myHero.myPlacement == CardData.FieldPlacement.Mine)
         {
+            OnNeedDrawFromDiscard?.Invoke("Discard");
             //need to save what all cards are in discard prior to battle
             //need to populate said cards on screen to be drawn from
         }

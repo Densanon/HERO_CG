@@ -82,12 +82,16 @@ public class CardDataBase : MonoBehaviour
     List<Card> MyHand = new List<Card>();
     List<CardData> MyField = new List<CardData>();
     List<Card> MyDeck = new List<Card>();
-    List<Card> MyDiscard = new List<Card>();
+    private List<Card> myDiscard = new List<Card>();
+    public List<Card> MyDiscard { get { return myDiscard; } }
+    List<Card> DiscardedCards = new List<Card>();
 
     List<Card> OppHand = new List<Card>();
     List<CardData> OppField = new List<CardData>();
     List<Card> OppDeck = new List<Card>();
     List<Card> OppDiscard = new List<Card>();
+
+    List<string> aNames = new List<string>();
 
     List<Card> cardListToDisplay = new List<Card>();
     Component activeFeat;
@@ -117,6 +121,7 @@ public class CardDataBase : MonoBehaviour
         Ability.OnOpponentAbilityActivation += AbilityHandover;
         Ability.OnHandOverControl += AbilityDehandover;
         UIConfirmation.OnNeedDrawEnhanceCards += DrawFromEnhanceDeck;
+        UIConfirmation.OnNeedDrawFromDiscard += DrawFromDiscard;
 
         Heros[0] = new Card(Card.Type.Character, "AKIO", 20, 70, HeroImages[0], AlphaHeros[0]);
         Heros[1] = new Card(Card.Type.Character, "AYUMI", 40, 50, HeroImages[1], AlphaHeros[1]);
@@ -245,6 +250,7 @@ public class CardDataBase : MonoBehaviour
             }
         }
     }
+
     private void OnDestroy()
     {
         UIConfirmation.OnTargetAccepted -= HandleTargetAccepted;
@@ -263,6 +269,7 @@ public class CardDataBase : MonoBehaviour
         Ability.OnOpponentAbilityActivation -= AbilityHandover;
         Ability.OnHandOverControl -= AbilityDehandover;
         UIConfirmation.OnNeedDrawEnhanceCards += DrawFromEnhanceDeck;
+        UIConfirmation.OnNeedDrawFromDiscard += DrawFromDiscard;
     }
     #endregion
 
@@ -301,6 +308,13 @@ public class CardDataBase : MonoBehaviour
         AddCardToHand(card);
         MyDeck.Remove(card);
     }
+    public void DrawSpecificCard(Card card, List<Card> whichList)
+    {
+        ToggleCardDisplayArea(false);
+        MyHand.Add(card);
+        AddCardToHand(card);
+        whichList.Remove(card);
+    }
 
     private void ToggleCardDisplayArea(bool toggle)
     {
@@ -329,32 +343,6 @@ public class CardDataBase : MonoBehaviour
         }
 
         DisplayCardList(HeroReserve);
-    }
-
-    private void DisplayCardList(List<Card> whichDeck)
-    {
-        ToggleCardDisplayArea(true);
-
-        foreach(Card card in whichDeck)
-        {
-            GameObject obj = Instantiate(CardDraftPrefab, CardDisplayArea);
-            CardData cd = obj.GetComponent<CardData>();
-            if(whichDeck == MyHand)
-            {
-                cd.CardOverride(card, CardData.FieldPlacement.Hand);
-            }else if(whichDeck == MyDiscard){
-                cd.CardOverride(card, CardData.FieldPlacement.MyDiscard);
-            }
-            else if (whichDeck == OppDiscard)
-            {
-                cd.CardOverride(card, CardData.FieldPlacement.OppDiscard);
-            }
-            else
-            {
-                cd.CardOverride(card, CardData.FieldPlacement.Draft);
-            }
-            Draft.Add(cd);
-        }
     }
 
     public void SetupAbilityDraft()
@@ -416,7 +404,6 @@ public class CardDataBase : MonoBehaviour
                 Destroy(item.gameObject);
                 if (Referee.myTurn)
                 {
-                    Debug.Log($"{Draft.Count} : {HeroReserve.Count}");
                     CheckDraft();
                 }
                 return;
@@ -538,6 +525,69 @@ public class CardDataBase : MonoBehaviour
         ReserveButtonParentObject.SetActive(true);
     }
     #endregion
+
+    private void DrawFromDiscard()
+    {
+        ClearDraft();
+        DisplayCardList(myDiscard, true);
+        CardDisplayAreaOffButton.SetActive(true);
+    }
+
+    private void DisplayCardList(List<Card> whichDeck)
+    {
+        ToggleCardDisplayArea(true);
+
+        foreach(Card card in whichDeck)
+        {
+            GameObject obj = Instantiate(CardDraftPrefab, CardDisplayArea);
+            CardData cd = obj.GetComponent<CardData>();
+            if(whichDeck == MyHand)
+            {
+                cd.CardOverride(card, CardData.FieldPlacement.Hand);
+            }else if(whichDeck == myDiscard){
+                cd.CardOverride(card, CardData.FieldPlacement.MyDiscard);
+            }
+            else if (whichDeck == OppDiscard)
+            {
+                cd.CardOverride(card, CardData.FieldPlacement.OppDiscard);
+            }
+            else
+            {
+                cd.CardOverride(card, CardData.FieldPlacement.Draft);
+            }
+            Draft.Add(cd);
+        }
+    }
+
+    private void DisplayCardList(List<Card> whichDeck, bool drawable)
+    {
+        ToggleCardDisplayArea(true);
+
+        foreach (Card card in whichDeck)
+        {
+            if (aNames.Contains(card.Name)) continue;
+            GameObject obj = Instantiate(CardDraftPrefab, CardDisplayArea);
+            CardData cd = obj.GetComponent<CardData>();
+            if (whichDeck == MyHand)
+            {
+                cd.CardOverride(card, CardData.FieldPlacement.Hand);
+            }
+            else if (whichDeck == myDiscard)
+            {
+                if(drawable) cd.CardOverride(card, CardData.FieldPlacement.Draft);
+                else cd.CardOverride(card, CardData.FieldPlacement.MyDiscard);
+            }
+            else if (whichDeck == OppDiscard)
+            {
+                cd.CardOverride(card, CardData.FieldPlacement.OppDiscard);
+            }
+            else
+            {
+                cd.CardOverride(card, CardData.FieldPlacement.Draft);
+            }
+            Draft.Add(cd);
+        }
+    }
 
     private void HandleTargetAccepted(CardData card, Card cardToUse)
     {
@@ -810,9 +860,9 @@ public class CardDataBase : MonoBehaviour
 
     public void GetOwnDiscardPile()//Via UI
     {
-        Debug.Log($"Discard count: {MyDiscard.Count}");
+        Debug.Log($"Discard count: {myDiscard.Count}");
         ClearDraft();
-        DisplayCardList(MyDiscard);
+        DisplayCardList(myDiscard);
     }
 
     private CardData FindCardOnField(string name)
@@ -900,6 +950,16 @@ public class CardDataBase : MonoBehaviour
         GetHandToShare();
         handSize = MyHand.Count;
         GM.ActivatePassive(Ability.PassiveType.HandCardAdjustment);
+    }
+
+    public void ResetDiscardRecord()
+    {
+        DiscardedCards.Clear();
+    }
+
+    public void AddDiscardedCard(Card cardToAdd)
+    {
+        DiscardedCards.Add(cardToAdd);
     }
     #endregion
 
@@ -997,6 +1057,7 @@ public class CardDataBase : MonoBehaviour
     #region Card Destroyed
     private void HandleCharacterDestroyed(CardData card)
     {
+        GM.ActivatePassive(Ability.PassiveType.CharacterDestroyed);
         cardAbilitiesOnField.Remove(card.charAbility);
 
         string loc = "";
@@ -1018,6 +1079,8 @@ public class CardDataBase : MonoBehaviour
             {
                 cardAbilitiesOnField.Remove(a);
                 AddCardToListByName("MyDiscard", a.Name);
+                AddDiscardedCard(card.myCard);
+                AddCardToListByName("DiscardRecord", a.Name);
             }
         }
         card.gameObject.SetActive(false);
@@ -1032,25 +1095,26 @@ public class CardDataBase : MonoBehaviour
         switch (list)
         {
             case "MyDiscard":
-                foreach(Card card in Abilities)
-                {
-                    if(card.Name == name)
-                    {
-                        MyDiscard.Add(card);
-                        return;
-                    }
-                }
+                AddCardToListByNameFromArray(name, myDiscard, Abilities);
+                break;
+            case "DiscardRecord":
+                AddCardToListByNameFromArray(name, DiscardedCards, Abilities);
                 break;
             case "OppDiscard":
-                foreach (Card card in Abilities)
-                {
-                    if (card.Name == name)
-                    {
-                        OppDiscard.Add(card);
-                        return;
-                    }
-                }
+                AddCardToListByNameFromArray(name, OppDiscard, Abilities);
                 break;
+        }
+    }
+
+    private void AddCardToListByNameFromArray(string name, List<Card> theList, Card[] theArray)
+    {
+        foreach (Card card in theArray)
+        {
+            if (card.Name == name)
+            {
+                theList.Add(card);
+                return;
+            }
         }
     }
 
@@ -1066,6 +1130,7 @@ public class CardDataBase : MonoBehaviour
                         OppField.Remove(card);
                         OppDiscard.Add(card.myCard);
                         card.gameObject.SetActive(false);//delaying card destroy to carry abilities
+                        GM.ActivatePassive(Ability.PassiveType.CharacterDestroyed);
                         break;
                     }
                 }
@@ -1076,8 +1141,9 @@ public class CardDataBase : MonoBehaviour
                     if (card.Name == name)
                     {
                         MyField.Remove(card);
-                        MyDiscard.Add(card.myCard);
+                        myDiscard.Add(card.myCard);
                         card.gameObject.SetActive(false);//delaying card destroy to carry abilities
+                        GM.ActivatePassive(Ability.PassiveType.CharacterDestroyed);
                         break;
                     }
                 }
@@ -1754,7 +1820,7 @@ public class CardDataBase : MonoBehaviour
                 i = MyHand.Count;
                 break;
             case CardDecks.MyDiscard:
-                i = MyDiscard.Count;
+                i = myDiscard.Count;
                 break;
             case CardDecks.OppHand:
                 i = OppHand.Count;
@@ -1804,7 +1870,7 @@ public class CardDataBase : MonoBehaviour
     #region Send Previous Attackers and Defender
     public void SendPreviousAttackersAndDefender(List<CardData> attackers, CardData defender)
     {
-        List<string> aNames = new List<string>();
+        aNames.Clear();
 
         foreach(CardData card in attackers)
         {
@@ -1829,6 +1895,8 @@ public class CardDataBase : MonoBehaviour
     {
         //Debug.Log("Made it into the server HandlePreviousAttackersAndDefender.");
         List<CardData> cards = new List<CardData>();
+
+        aNames = names.ToList();
 
         foreach(CardData data in OppField)
         {
