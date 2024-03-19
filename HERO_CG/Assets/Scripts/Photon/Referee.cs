@@ -1149,7 +1149,6 @@ public class Referee : MonoBehaviour
                 case GamePhase.Overcome:
                     if (aIsaac.AisaacDraw)
                     {
-                        Debug.Log($"I am drawing {card.Name} from the Discard.");
                         CB.DrawSpecificCard(card.myCard, CB.MyDiscard);
                         aIsaac.AisaacDraw = false;
                     }

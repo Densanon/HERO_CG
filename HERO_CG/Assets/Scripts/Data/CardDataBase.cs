@@ -314,6 +314,7 @@ public class CardDataBase : MonoBehaviour
         MyHand.Add(card);
         AddCardToHand(card);
         whichList.Remove(card);
+        CardDisplayAreaOffButton.SetActive(false);
     }
 
     private void ToggleCardDisplayArea(bool toggle)
@@ -587,6 +588,7 @@ public class CardDataBase : MonoBehaviour
             }
             Draft.Add(cd);
         }
+        if (Draft.Count == 0) aIsaac.AisaacDraw = false;
     }
 
     private void HandleTargetAccepted(CardData card, Card cardToUse)
