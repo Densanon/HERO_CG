@@ -38,7 +38,7 @@ public class UIConfirmation : MonoBehaviour
         CardDataBase.OnTargeting += HandleTargeting;
         CardData.IsTarget += HandleTarget;
         Ability.OnConfirmAyumiDrawEnhanceCard += onConfirmationRequest;
-        Ability.OnTargetedFrom += HandleTargeting;
+        Ability.OnTargetedFrom += HandleActiveHero;
         Ability.OnNeedDrawFromDiscard += onConfirmationRequest;
         OnActionConfirmation += Accept;
     }
@@ -47,7 +47,7 @@ public class UIConfirmation : MonoBehaviour
         CardDataBase.OnTargeting -= HandleTargeting;
         CardData.IsTarget -= HandleTarget;
         Ability.OnConfirmAyumiDrawEnhanceCard -= onConfirmationRequest;
-        Ability.OnTargetedFrom -= HandleTargeting;
+        Ability.OnTargetedFrom -= HandleActiveHero;
         Ability.OnNeedDrawFromDiscard -= onConfirmationRequest;
         OnActionConfirmation -= Accept;
     }
@@ -213,23 +213,28 @@ public class UIConfirmation : MonoBehaviour
             myCardToUse = cardToBePlayed;          
         }
     }
-    private void HandleTargeting(Ability ability)
+    private void HandleActiveHero(Ability ability)
     {
         activeAbility = ability;
-
-        queueConfirmation(new ConfirmationAction("Confirm Ability to target.", ConfirmationAction.ConfirmationType.Ability));
     }
     private void HandleTarget(CardData card)
     {
         myTargetCard = card;
-        switch (myCardToUse.CardType)
+        if (myCardToUse != null)
         {
-            case Card.Type.Ability:
-                queueConfirmation(new ConfirmationAction("Confirm Ability to target.", ConfirmationAction.ConfirmationType.Ability));
-                break;
-            case Card.Type.Enhancement:
-                queueConfirmation(new ConfirmationAction("Confirm Enhancement to target.", ConfirmationAction.ConfirmationType.Enhancing));
-                break;
+            switch (myCardToUse.CardType)
+            {
+                case Card.Type.Ability:
+                    queueConfirmation(new ConfirmationAction("Confirm Ability to target.", ConfirmationAction.ConfirmationType.Ability));
+                    break;
+                case Card.Type.Enhancement:
+                    queueConfirmation(new ConfirmationAction("Confirm Enhancement to target.", ConfirmationAction.ConfirmationType.Enhancing));
+                    break;
+            }
+        }
+        else
+        {
+            queueConfirmation(new ConfirmationAction($"Confirm target for {activeAbility.Name}'s Ability", ConfirmationAction.ConfirmationType.Ability));
         }
     }
     #endregion

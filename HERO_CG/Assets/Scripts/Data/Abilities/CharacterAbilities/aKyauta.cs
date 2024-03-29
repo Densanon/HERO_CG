@@ -19,18 +19,29 @@ public class aKyauta : Ability
     {
         base.AbilityAwake();
 
-        if (canActivate)
-        {
-            OnSetActive?.Invoke(this);
-        }
+        OnRequestTargeting?.Invoke(Referee.TargetType.MyHero);
+        OnTargetedFrom?.Invoke(this);
+    }
+
+    public override void Target(CardData card)
+    {
+        base.Target(card);
+        card.Exhaust(false);
+        OnNeedPlayFromReserve?.Invoke();
+        OnAbilityUsed?.Invoke();
     }
 
     public override void PassiveCheck(PassiveType passiveType)
     {
-        base.PassiveCheck(passiveType);
-
+        if(passiveType == PassiveType.TurnStart)
+        {
+            ChangeOncePerTurn(true);
+            ChangeCanActivate(false);
+        }
         if(passiveType == PassiveType.ActionComplete)
         {
+            ChangeOncePerTurn(false);
+            ChangeCanActivate(true);
             //need to have heros to fatigue
             //recruit a hero to play area
                 //target hero

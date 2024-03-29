@@ -125,6 +125,7 @@ public class CardDataBase : MonoBehaviour
         Ability.OnHandOverControl += AbilityDehandover;
         UIConfirmation.OnNeedDrawEnhanceCards += DrawFromEnhanceDeck;
         UIConfirmation.OnNeedDrawFromDiscard += DrawFromDiscard;
+        Ability.OnNeedPlayFromReserve += HandlePlayCardFromReserve;
 
         Heros[0] = new Card(Card.Type.Character, "AKIO", 20, 70, HeroImages[0], AlphaHeros[0]);
         Heros[1] = new Card(Card.Type.Character, "AYUMI", 40, 50, HeroImages[1], AlphaHeros[1]);
@@ -275,6 +276,7 @@ public class CardDataBase : MonoBehaviour
         Ability.OnHandOverControl -= AbilityDehandover;
         UIConfirmation.OnNeedDrawEnhanceCards -= DrawFromEnhanceDeck;
         UIConfirmation.OnNeedDrawFromDiscard -= DrawFromDiscard;
+        Ability.OnNeedPlayFromReserve += HandlePlayCardFromReserve;
     }
     #endregion
 
@@ -818,6 +820,13 @@ public class CardDataBase : MonoBehaviour
         {
             ReserveButton.interactable = false;
         }
+    }
+
+    private void HandlePlayCardFromReserve()
+    {
+        Card card = HeroReserve[UnityEngine.Random.Range(0, HeroReserve.Count)];
+        HeroReserve.Remove(card);
+        PlayCard(card);
     }
     #endregion
 
@@ -1702,7 +1711,7 @@ public class CardDataBase : MonoBehaviour
                 //HandleTurnDeclaration(true);
                 break;
         }
-        RemoveCardFromHand(card);
+        if(MyHand.Contains(card))RemoveCardFromHand(card);
     }
     public void HandleCardCollected(Card card, Referee.GamePhase phase)
     {

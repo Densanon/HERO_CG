@@ -37,6 +37,7 @@ public class Ability : MonoBehaviour
     public static Action<string> OnNeedDrawFromDiscard = delegate { };
     public static Action OnToggleIzumi = delegate { };
     public static Action OnActivateKayAbility = delegate {};
+    public static Action OnNeedPlayFromReserve = delegate { };
     //public static Action<string> OnToggleIzumiConfirmationRequest = delegate { };
 
     protected virtual void Awake()
