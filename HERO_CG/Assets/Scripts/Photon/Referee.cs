@@ -126,6 +126,7 @@ public class Referee : MonoBehaviour
         /*Ability.OnFeatComplete += HandleFeatComplete;
         Ability.OnSetActive += SetActiveAbility;
         Ability.OnHoldTurnOffOppTurn += HandleHoldTurnOff;*/
+        Ability.OnActivateKayAbility += HandleKayPlayCardAbility;
     }
     private void OnDestroy()
     {
@@ -144,6 +145,7 @@ public class Referee : MonoBehaviour
         /*Ability.OnFeatComplete -= HandleFeatComplete;
         Ability.OnSetActive -= SetActiveAbility;
         Ability.OnHoldTurnOffOppTurn -= HandleHoldTurnOff;*/
+        Ability.OnActivateKayAbility -= HandleKayPlayCardAbility;
     }
     private void Start()
     {
@@ -551,7 +553,6 @@ public class Referee : MonoBehaviour
                 PhaseIndicator.text = "Enhance";
                 gHEROSelect.SetActive(false);
                 bDrawEnhancementCards.interactable = true;
-                //DrawCardOption(3);
                 iTurnCounter = 3;
                 iEnhanceCardsToCollect = 3;
                 int temp = CB.CardsRemaining(CardDataBase.CardDecks.MyDeck);
@@ -570,7 +571,6 @@ public class Referee : MonoBehaviour
                         tCardsToDrawMyDeck.text = $"3/{temp}";
                         break;
                 }
-                //TurnActionIndicator.text = $"Actions Remaining: {iTurnCounter}";
                 break;
             case GamePhase.Recruit:
                 if (prevPhase == GamePhase.HEROSelect) ProgressGameState();
@@ -633,6 +633,7 @@ public class Referee : MonoBehaviour
             case GamePhase.HEROSelect:
                 if (prevPhase == GamePhase.Wait) ProgressGameState();
                 PhaseIndicator.text = "Hero Selection";
+                ActivatePassive(Ability.PassiveType.TurnStart);
                 SetDeckNumberAmounts();
                 gHEROSelect.SetActive(true);
                 //check for heros that can be healed
@@ -793,7 +794,7 @@ public class Referee : MonoBehaviour
     #region Card Methods
     private void HandlePlayCard(Card card)
     {
-        if (iTurnCounter <= 0)
+        if (iTurnCounter <= 0 && !AbilityPlayable())//!(aKay.canPlayCard && aKay.abilityActivated))
         {
             zoomed = false;
             Debug.Log("You are trying to play a card while having no moves.");
@@ -804,8 +805,7 @@ public class Referee : MonoBehaviour
             iEnhanceCardsToCollect = 0;
             tCardsToDrawMyDeck.text = $"{CB.CardsRemaining(CardDataBase.CardDecks.MyDeck)}";
             bDrawEnhancementCards.interactable = false;
-            TurnCounterDecrement();
-            
+            TurnCounterDecrement();         
         }
         else
         {
@@ -813,6 +813,13 @@ public class Referee : MonoBehaviour
         }
         zoomed = false;
         CB.PlayCard(card);
+        if (AbilityPlayable()) activeAbility.ActivateAbility();
+    }
+
+    private bool AbilityPlayable()
+    {
+        if (activeAbility != null && activeAbility.Name == "KAY" && activeAbility.oncePerTurnUsed == false) return true;
+        return false;
     }
 
     public void SetDeckNumberAmounts()
@@ -940,7 +947,12 @@ public class Referee : MonoBehaviour
             switch (myPhase)
             {
                 case GamePhase.HEROSelect:
-                    NullZoomButtons();
+                    if (AbilityPlayable() && placement == CardData.FieldPlacement.Hand)
+                    {
+                        gCardPlay.SetActive(true);
+                        return;
+                    }
+                        NullZoomButtons();
                     break;
                 case GamePhase.AbilityDraft:
                     gCardSelect.SetActive(false);
@@ -1065,7 +1077,12 @@ public class Referee : MonoBehaviour
                     }
                     break;
                 case GamePhase.PostAction:
-                    NullZoomButtons();
+                    if (AbilityPlayable() && placement == CardData.FieldPlacement.Hand)
+                    {
+                        gCardPlay.SetActive(true);
+                        return;
+                    }
+                        NullZoomButtons();
                     break;
                 case GamePhase.CombatAbility:
                     NullZoomButtons();
@@ -1076,6 +1093,11 @@ public class Referee : MonoBehaviour
         {
             NullZoomButtons();
         }
+    }
+
+    private void HandleKayPlayCardAbility()
+    {
+        gCardPlay.SetActive(true); 
     }
 
     private void NullZoomButtons()

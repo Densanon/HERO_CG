@@ -10,7 +10,7 @@ public class Ability : MonoBehaviour
     public Type myType;
     public Type secondaryType;
 
-    public enum PassiveType { CharacterSpawn, CharacterDestroyed, BattleComplete, BattleStart, HeroRecruited, HandCardAdjustment, ActionComplete, HeroFatigued, HeroHealed }
+    public enum PassiveType { TurnStart, CharacterSpawn, CharacterDestroyed, BattleComplete, BattleStart, HeroRecruited, HandCardAdjustment, ActionComplete, HeroFatigued, HeroHealed }
 
     public string Name;
     public string Description;
@@ -27,7 +27,7 @@ public class Ability : MonoBehaviour
     public static Action<Ability> OnOpponentAbilityActivation = delegate { };
     public static Action<Ability> OnActivateable = delegate { };
     public static Action OnPreventAbilitiesToFieldForTurn = delegate { };
-    
+
     public static Action OnAbilityUsed = delegate { };
     public static Action<Referee.TargetType> OnRequestTargeting = delegate { };
     public static Action<Ability> OnTargetedFrom = delegate { };
@@ -36,6 +36,7 @@ public class Ability : MonoBehaviour
 
     public static Action<string> OnNeedDrawFromDiscard = delegate { };
     public static Action OnToggleIzumi = delegate { };
+    public static Action OnActivateKayAbility = delegate {};
     //public static Action<string> OnToggleIzumiConfirmationRequest = delegate { };
 
     protected virtual void Awake()
@@ -72,7 +73,7 @@ public class Ability : MonoBehaviour
     {
         oncePerTurnUsed = change;
     }
-    protected void ChangeCanActivate(bool change)
+    public void ChangeCanActivate(bool change)
     {
         canActivate = change;
     }
@@ -94,6 +95,6 @@ public class Ability : MonoBehaviour
 
     public virtual void ActivateAbility()
     {
-
+        ChangeOncePerTurn(true);
     }
 }

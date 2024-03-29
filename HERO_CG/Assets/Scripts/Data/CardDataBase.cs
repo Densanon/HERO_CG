@@ -436,7 +436,7 @@ public class CardDataBase : MonoBehaviour
             case Referee.GamePhase.HeroDraft:
                 if(Draft.Count == 12 && Referee.myTurn)
                 {
-                    HandleCardCollected(HeroReserve[UnityEngine.Random.Range(0, 13)], Referee.myPhase);
+                    HandleCardCollected(HeroReserve[UnityEngine.Random.Range(0, 12)], Referee.myPhase);
                     myManager.RPCRequest("SetupAbilityDraft", RpcTarget.All, true);
    
                 }
@@ -1048,7 +1048,6 @@ public class CardDataBase : MonoBehaviour
     public void CardAdjustment(string name, string category, int newValue)
     {
         //OppField could be set to a specified player
-        Debug.Log("Here?");
         bool found = false;
         foreach(CardData data in OppField)
         {
