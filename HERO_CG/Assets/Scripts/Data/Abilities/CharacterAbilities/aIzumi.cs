@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class aIzumi : Ability
 {
+    public static bool IzumiDefBoost = false;
+
     protected override void Awake()
     {
         base.Awake();
@@ -11,14 +13,24 @@ public class aIzumi : Ability
         myType = Type.Character;
         secondaryType = Type.Passive;
         Name = "IZUMI";
-        Description = "(P) Allied heroes may gain +20 defense while Izumi is in play. Fatigued heroes gain this after their defense is halved.";
+        Description = "(P) Allied heroes gain +20 defense while Izumi is in play. Fatigued heroes gain this after their defense is halved.";
+
+        if (myHero.myPlacement == CardData.FieldPlacement.Mine) { IzumiDefBoost = true; OnToggleIzumi?.Invoke(); }
+    }
+
+    protected override void OnDestroy()
+    {
+        if (myHero.myPlacement == CardData.FieldPlacement.Mine) { IzumiDefBoost = false; OnToggleIzumi?.Invoke(); }
+        base.OnDestroy();
     }
 
     public override void PassiveCheck(PassiveType passiveType)
     {
         base.PassiveCheck(passiveType);
 
-        //adjust other people defense
-        //seperate value from overall defense
+        if (myHero.myPlacement == CardData.FieldPlacement.Mine)
+        {
+            //OnToggleIzumiConfirmationRequest?.Invoke("Izumi");
+        }
     }
 }

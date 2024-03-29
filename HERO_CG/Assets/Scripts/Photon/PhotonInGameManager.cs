@@ -263,6 +263,18 @@ public class PhotonInGameManager : MonoBehaviourPunCallbacks
         DataBase.RemoveAllNonHerosFromHand(hand);
 
     }
+
+    [PunRPC]
+    private void HeroStats(bool need)
+    {
+        DataBase.SendRequestedHeroStats();
+    }
+
+    [PunRPC]
+    private void UpdateHeroStats(string name, int attack, int defense)
+    {
+        DataBase.UpdateHeroFromOpp(name, attack, defense);
+    }
     #endregion
 
     #region Battle Functions

@@ -21,7 +21,7 @@ public class Ability : MonoBehaviour
 
     public static Action<Ability> OnAddAbilityToMasterList = delegate { };
     public static Action OnFeatComplete = delegate { };
-    public static Action<string, int> OnConfirmDrawEnhanceCard = delegate { };
+    public static Action<string> OnConfirmAyumiDrawEnhanceCard = delegate { };
     public static Action<string, string, int> OnDiscardCard = delegate { };
     public static Action<Ability> OnSetActive = delegate { };
     public static Action<Ability> OnOpponentAbilityActivation = delegate { };
@@ -35,6 +35,8 @@ public class Ability : MonoBehaviour
     public static Action OnHandOverControl = delegate { };
 
     public static Action<string> OnNeedDrawFromDiscard = delegate { };
+    public static Action OnToggleIzumi = delegate { };
+    //public static Action<string> OnToggleIzumiConfirmationRequest = delegate { };
 
     protected virtual void Awake()
     {

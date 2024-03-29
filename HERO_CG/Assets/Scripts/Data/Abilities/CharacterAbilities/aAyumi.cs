@@ -22,7 +22,7 @@ public class aAyumi : Ability
         if(passiveType == PassiveType.HeroRecruited && myHero.myPlacement == CardData.FieldPlacement.Mine)
         {
             Debug.Log($"{myHero.Name} should be activating the draw passive.");
-            OnConfirmDrawEnhanceCard?.Invoke("Ayumi",1);
+            OnConfirmAyumiDrawEnhanceCard?.Invoke("Ayumi");
         }
     }
 }

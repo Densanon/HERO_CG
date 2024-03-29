@@ -21,6 +21,7 @@ public class CardDataBase : MonoBehaviour
     public static Action<bool> OnTurnDelcarationReceived = delegate { };
     public static Action<Card> OnAiDraftCollected = delegate { };
     public static Action<Card, bool> OnTargeting = delegate { };
+    public static Action OnSendHeroStats = delegate { };
 
     public GameObject CardHandPrefab;
     public GameObject CardDraftPrefab;
@@ -113,6 +114,8 @@ public class CardDataBase : MonoBehaviour
         CardData.OnEnhancementsStripped += HandleEnhancementsStripped;
         CardData.OnGivenAbilities += HandleAbilitiesGiven;
         CardData.OnGivenEnhancements += HandleEnhancementsGiven;
+        CardData.OnRequestStats += HandleRequestOppHeroStats;
+        CardData.OnSendStats += HandleStatsSend;
         aDrain.OnStripAllEnhancementsFromSideOfField += StripAllEnhancementsOnSideOfField;
         aUnderSiege.OnHandToBeRevealed += HandleRevealTargetHandAndRemoveNonHeros;
         Ability.OnAddAbilityToMasterList += HandleAddAbilityToList;
@@ -261,6 +264,8 @@ public class CardDataBase : MonoBehaviour
         CardData.OnEnhancementsStripped -= HandleEnhancementsStripped;
         CardData.OnGivenAbilities -= HandleAbilitiesGiven;
         CardData.OnGivenEnhancements -= HandleEnhancementsGiven;
+        CardData.OnRequestStats -= HandleRequestOppHeroStats;
+        CardData.OnSendStats -= HandleStatsSend;
         aDrain.OnStripAllEnhancementsFromSideOfField -= StripAllEnhancementsOnSideOfField;
         aUnderSiege.OnHandToBeRevealed -= HandleRevealTargetHandAndRemoveNonHeros;
         Ability.OnAddAbilityToMasterList -= HandleAddAbilityToList;
@@ -268,8 +273,8 @@ public class CardDataBase : MonoBehaviour
         Ability.OnPreventAbilitiesToFieldForTurn -= HandleAbilityToFieldSilence;
         Ability.OnOpponentAbilityActivation -= AbilityHandover;
         Ability.OnHandOverControl -= AbilityDehandover;
-        UIConfirmation.OnNeedDrawEnhanceCards += DrawFromEnhanceDeck;
-        UIConfirmation.OnNeedDrawFromDiscard += DrawFromDiscard;
+        UIConfirmation.OnNeedDrawEnhanceCards -= DrawFromEnhanceDeck;
+        UIConfirmation.OnNeedDrawFromDiscard -= DrawFromDiscard;
     }
     #endregion
 
@@ -431,7 +436,6 @@ public class CardDataBase : MonoBehaviour
             case Referee.GamePhase.HeroDraft:
                 if(Draft.Count == 12 && Referee.myTurn)
                 {
-                    Debug.Log($"2: {Draft.Count} : {HeroReserve.Count}");
                     HandleCardCollected(HeroReserve[UnityEngine.Random.Range(0, 13)], Referee.myPhase);
                     myManager.RPCRequest("SetupAbilityDraft", RpcTarget.All, true);
    
@@ -588,7 +592,7 @@ public class CardDataBase : MonoBehaviour
             }
             Draft.Add(cd);
         }
-        if (Draft.Count == 0) aIsaac.AisaacDraw = false;
+        if (Draft.Count == 0) aIsaac.IsaacDraw = false;
     }
 
     private void HandleTargetAccepted(CardData card, Card cardToUse)
@@ -1003,15 +1007,48 @@ public class CardDataBase : MonoBehaviour
     #endregion
 
     #region Card Adjustment
+    int RequestCount = 0;
+    private void HandleRequestOppHeroStats()
+    {
+        if(RequestCount <= 0)
+        {
+            RequestCount++;
+            myManager.RPCRequest("HeroStats", RpcTarget.Others, true);
+        }
+    }
+    private void HandleStatsSend(string arg1, int arg2, int arg3)
+    {
+        myManager.RPCRequest("UpdateHeroStats", RpcTarget.Others, arg1, arg2, arg3);
+    }
+    public void UpdateHeroFromOpp(string name, int attack, int defense)
+    {
+        RequestCount--;
+        foreach(CardData cd in OppField)
+        {
+            if(cd.Name == name)
+            {
+                cd.SetAttack(attack);
+                cd.SetDefense(defense);
+                return;
+            }
+        }
+    }
+
+    public void SendRequestedHeroStats()
+    {
+        OnSendHeroStats?.Invoke();
+    }
+
     private void HandleCardAdjustment(CardData cardToAdjust, string category, int newValue)
     {
         //could also set it to specific player
-        myManager.RPCRequest("CardAdjustment", RpcTarget.OthersBuffered, cardToAdjust.Name, category, newValue);
+        myManager.RPCRequest("CardAdjustment", RpcTarget.Others, cardToAdjust.Name, category, newValue);
     }
 
     public void CardAdjustment(string name, string category, int newValue)
     {
         //OppField could be set to a specified player
+        Debug.Log("Here?");
         bool found = false;
         foreach(CardData data in OppField)
         {
@@ -1048,10 +1085,6 @@ public class CardDataBase : MonoBehaviour
                     break;
                 }
             }
-        }
-        else
-        {
-            //Debug.Log("I found the Hero Card and adjusted it's values.");
         }
     }
     #endregion
@@ -1653,7 +1686,7 @@ public class CardDataBase : MonoBehaviour
                 //Place Character on the field
                 //Spawn a Character on the field
                 SpawnCharacterToMyField(card);
-                myManager.RPCRequest("SpawnCharacterToOpponentField", RpcTarget.OthersBuffered, card.Name);
+                myManager.RPCRequest("SpawnCharacterToOpponentField", RpcTarget.Others, card.Name);
                 myManager.RPCRequest("HandlePlayerAction", RpcTarget.Others, false, card.Name);
                 break;
             case Card.Type.Enhancement:

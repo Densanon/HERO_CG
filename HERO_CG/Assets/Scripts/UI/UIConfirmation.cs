@@ -1,177 +1,249 @@
 ﻿//Created by Jordan Ezell
-//Last Edited: 1/6/23 Jordan
+//Last Edited: 3/29/24 Jordan
 
 using UnityEngine;
 using TMPro;
 using System;
+using System.Collections.Generic;
+using UnityEngine.UI;
 
 public class UIConfirmation : MonoBehaviour
 {
-    public GameObject confirmationUI;
-    public TMP_Text confirmationText;
-    public enum Confirmation { Heal, Enhance, Recruit, Overcome, Feat, Quit, Enhancing, Ability, AtDef, Ayumi, Aisaac}
-    private Confirmation typeOfConfirmation = Confirmation.Heal;
+    private Dictionary<ConfirmationAction.ConfirmationType, Action> confirmationActions =
+        new Dictionary<ConfirmationAction.ConfirmationType, Action>();
+
+    private Dictionary<string, Action> confirmationHandlers;
+
+    public GameObject confirmationPanelPrefab;
+    private Queue<ConfirmationAction> confirmationQueue = new Queue<ConfirmationAction>();
+
     private Card myCardToUse;
     private CardData myTargetCard;
     private Ability activeAbility;
 
+    public event Action<ConfirmationAction.ConfirmationType> OnActionConfirmation = delegate { };
     public static Action<Referee.GamePhase> OnHEROSelection = delegate { };
     public static Action<CardData, Card> OnTargetAccepted = delegate { };
     public static Action<int> OnNeedDrawEnhanceCards = delegate { };
     public static Action OnNeedDrawFromDiscard = delegate { };
+    public static Action OnConfirmIzumiToggle = delegate { };
 
     #region Unity Methods
     private void Awake()
     {
+        // Initialize the dictionaries with mappings
+        initializeConfirmationActions();
+        initializeConfirmationHandlers();
+
         CardDataBase.OnTargeting += HandleTargeting;
         CardData.IsTarget += HandleTarget;
-        Ability.OnConfirmDrawEnhanceCard += OnConfirmationRequest;
+        Ability.OnConfirmAyumiDrawEnhanceCard += onConfirmationRequest;
         Ability.OnTargetedFrom += HandleTargeting;
-        Ability.OnNeedDrawFromDiscard += OnConfirmationRequest;
+        Ability.OnNeedDrawFromDiscard += onConfirmationRequest;
+        OnActionConfirmation += Accept;
     }
     private void OnDestroy()
     {
         CardDataBase.OnTargeting -= HandleTargeting;
         CardData.IsTarget -= HandleTarget;
-        Ability.OnConfirmDrawEnhanceCard -= OnConfirmationRequest;
+        Ability.OnConfirmAyumiDrawEnhanceCard -= onConfirmationRequest;
         Ability.OnTargetedFrom -= HandleTargeting;
-        Ability.OnNeedDrawFromDiscard += OnConfirmationRequest;
+        Ability.OnNeedDrawFromDiscard -= onConfirmationRequest;
+        OnActionConfirmation -= Accept;
     }
     #endregion
 
+    #region ConfirmationQueue
+    private void initializeConfirmationActions()
+    {
+        // Mapping for each ConfirmationType
+        confirmationActions[ConfirmationAction.ConfirmationType.Heal] = () => OnHEROSelection?.Invoke(Referee.GamePhase.Heal);
+        confirmationActions[ConfirmationAction.ConfirmationType.Enhance] = () => OnHEROSelection?.Invoke(Referee.GamePhase.Enhance);
+        confirmationActions[ConfirmationAction.ConfirmationType.Recruit] = () => OnHEROSelection?.Invoke(Referee.GamePhase.Recruit);
+        confirmationActions[ConfirmationAction.ConfirmationType.Overcome] = () => OnHEROSelection?.Invoke(Referee.GamePhase.Overcome);
+        confirmationActions[ConfirmationAction.ConfirmationType.Feat] = () => OnHEROSelection?.Invoke(Referee.GamePhase.Feat);
+        confirmationActions[ConfirmationAction.ConfirmationType.Quit] = () => { /* Handle Quit action */ };
+
+        confirmationActions[ConfirmationAction.ConfirmationType.Ability] = handleAbilityConfirmation;
+        confirmationActions[ConfirmationAction.ConfirmationType.Enhancing] = handleAbilityConfirmation;
+
+        confirmationActions[ConfirmationAction.ConfirmationType.Ayumi] = () => OnNeedDrawEnhanceCards?.Invoke(1);
+        confirmationActions[ConfirmationAction.ConfirmationType.Isaac] = () => { aIsaac.IsaacDraw = true; OnNeedDrawFromDiscard?.Invoke(); };
+        confirmationActions[ConfirmationAction.ConfirmationType.Izumi] = () => OnConfirmIzumiToggle?.Invoke();
+    }
+    private void initializeConfirmationHandlers()
+    {
+        confirmationHandlers = new Dictionary<string, Action>()
+        {
+            { "Heal", onHealConfirmationRequest },
+            { "Enhance", onEnhanceConfirmationRequest },
+            {"Recruit", onRecruitConfirmationRequest },
+            {"Overcome", onOvercomeConfirmationRequest },
+            {"Feat", onFeatConfirmationRequest },
+            {"Leave", onLeaveConfirmationRequest },
+            {"Discard", onDiscardConfirmationRequest },
+            {"Ayumi", onAyumiConfirmationRequest },
+            {"Izumi", onIzumiConfirmationRequest }
+        };
+    }
+
+    private void onHealConfirmationRequest()
+    {
+        queueConfirmation(new ConfirmationAction("Confirm 'Heal'", ConfirmationAction.ConfirmationType.Heal));
+    }
+    private void onEnhanceConfirmationRequest()
+    {
+        queueConfirmation(new ConfirmationAction("Confirm 'Enhance'", ConfirmationAction.ConfirmationType.Enhance));
+    }
+    private void onRecruitConfirmationRequest()
+    {
+        queueConfirmation(new ConfirmationAction("Confirm 'Recruit'", ConfirmationAction.ConfirmationType.Recruit));
+    }
+    private void onOvercomeConfirmationRequest()
+    {
+        queueConfirmation(new ConfirmationAction("Confirm 'Overcome'", ConfirmationAction.ConfirmationType.Overcome));
+    }
+    private void onFeatConfirmationRequest()
+    {
+        queueConfirmation(new ConfirmationAction("Confirm 'Feat'", ConfirmationAction.ConfirmationType.Feat));
+    }
+    private void onLeaveConfirmationRequest()
+    {
+        queueConfirmation(new ConfirmationAction("Confirm 'Quit'", ConfirmationAction.ConfirmationType.Quit));
+    }
+    private void onDiscardConfirmationRequest()
+    {
+        queueConfirmation(new ConfirmationAction("Confirm: Isaac's Draw from Discard", ConfirmationAction.ConfirmationType.Isaac));
+    }
+    private void onAyumiConfirmationRequest()
+    {
+        queueConfirmation(new ConfirmationAction("Confirm: Ayumi's Draw an Enhance Card", ConfirmationAction.ConfirmationType.Ayumi));
+    }
+    private void onIzumiConfirmationRequest()
+    {
+        queueConfirmation(new ConfirmationAction("Toggle: Izumi's +20 Defense Buff", ConfirmationAction.ConfirmationType.Izumi));
+    }
+
+    private void displayNextConfirmation()
+    {
+        ConfirmationAction action = confirmationQueue.Peek();
+        GameObject confirmationPanel = Instantiate(confirmationPanelPrefab, transform);
+        TMP_Text descriptionText = confirmationPanel.GetComponentInChildren<TMP_Text>();
+        descriptionText.text = action.MyText;
+
+        Button confirmButton = confirmationPanel.transform.Find("ConfirmButton").GetComponent<Button>();
+        Button declineButton = confirmationPanel.transform.Find("DeclineButton").GetComponent<Button>();
+
+        confirmButton.onClick.AddListener(() =>
+        {
+            confirmationQueue.Dequeue();
+            OnActionConfirmation?.Invoke(action.MyType);
+            Destroy(confirmationPanel);
+        });
+
+        declineButton.onClick.AddListener(() =>
+        {
+            confirmationQueue.Dequeue();
+            OnActionConfirmation?.Invoke(action.MyType);
+            Destroy(confirmationPanel);
+            this.decline();
+            if (confirmationQueue.Count > 0)
+            {
+                displayNextConfirmation();
+            }
+        });
+    }
+    private void queueConfirmation(ConfirmationAction action)
+    {
+        confirmationQueue.Enqueue(action);
+        if (confirmationQueue.Count == 1) displayNextConfirmation();
+    }
+    public void onConfirmationRequest(string type)
+    {
+        // Check if the dictionary contains the specified confirmation type
+        if (confirmationHandlers.ContainsKey(type))
+        {
+            // Invoke the corresponding handler method
+            confirmationHandlers[type]?.Invoke();
+        }
+        else
+        {
+            Debug.Log($"Unhandled confirmation request: {type}");
+        }
+    }
+    public void Accept(ConfirmationAction.ConfirmationType type)
+    {
+        // Check if the dictionary contains the specified ConfirmationType
+        if (confirmationActions.ContainsKey(type))
+        {
+            // Invoke the corresponding action from the dictionary
+            confirmationActions[type]?.Invoke();
+        }
+
+        // Handle other logic after confirmation action (if needed)
+        if (confirmationQueue.Count > 0)
+        {
+            displayNextConfirmation();
+        }
+    }
+    public void decline()
+    {
+        activeAbility = null;
+        //confirmationUI.SetActive(false);
+    }
+    private void handleAbilityConfirmation()
+    {
+        if (activeAbility != null)
+        {
+            activeAbility.Target(myTargetCard);
+            activeAbility = null;
+        }
+        else
+        {
+            OnTargetAccepted?.Invoke(myTargetCard, myCardToUse);
+        }
+    }
+    #endregion
+
+    #region Targetting
     private void HandleTargeting(Card cardToBePlayed, bool target)
     {
         if (target)
         {
-            myCardToUse = cardToBePlayed;
-            Card.Type type = cardToBePlayed.CardType;
-            switch (type)
-            {
-                case Card.Type.Ability:
-                    confirmationText.text = "Confirm Ability to target.";
-                    typeOfConfirmation = Confirmation.Ability;
-                    break;
-                case Card.Type.Enhancement:
-                    confirmationText.text = "Confirm Enhancement to target.";
-                    typeOfConfirmation = Confirmation.Enhancing;
-                    break;
-            }
+            myCardToUse = cardToBePlayed;          
         }
     }
     private void HandleTargeting(Ability ability)
     {
         activeAbility = ability;
 
-        confirmationText.text = "Confirm Ability to target.";
-        typeOfConfirmation = Confirmation.Ability;
+        queueConfirmation(new ConfirmationAction("Confirm Ability to target.", ConfirmationAction.ConfirmationType.Ability));
     }
     private void HandleTarget(CardData card)
     {
         myTargetCard = card;
-        confirmationUI.SetActive(true);
-    }
-    public void OnConfirmationRequest(string type)//Hero Buttons
-    {
-        confirmationUI.SetActive(true);
-        switch (type)
+        switch (myCardToUse.CardType)
         {
-            case "Heal":
-                confirmationText.text = "Confirm 'Heal'";
-                typeOfConfirmation = Confirmation.Heal;
+            case Card.Type.Ability:
+                queueConfirmation(new ConfirmationAction("Confirm Ability to target.", ConfirmationAction.ConfirmationType.Ability));
                 break;
-            case "Enhance":
-                confirmationText.text = "Confirm 'Enhance'";
-                typeOfConfirmation = Confirmation.Enhance;
-                break;
-            case "Recruit":
-                confirmationText.text = "Confirm 'Recruit'";
-                typeOfConfirmation = Confirmation.Recruit;
-                break;
-            case "Overcome":
-                confirmationText.text = "Confirm 'Overcome'";
-                typeOfConfirmation = Confirmation.Overcome;
-                break;
-            case "Feat":
-                confirmationText.text = "Confirm 'Feat'";
-                typeOfConfirmation = Confirmation.Feat;
-                break;
-            case "Leave":
-                confirmationText.text = "Confirm 'Quit'";
-                typeOfConfirmation = Confirmation.Quit;
-                break;
-            case "Discard":
-                confirmationText.text = "Confirm: Aisaac's Draw from Discard";
-                typeOfConfirmation = Confirmation.Aisaac;
+            case Card.Type.Enhancement:
+                queueConfirmation(new ConfirmationAction("Confirm Enhancement to target.", ConfirmationAction.ConfirmationType.Enhancing));
                 break;
         }
     }
-    void OnConfirmationRequest(string type, int amount)
-    {
-        Debug.Log($"Got the {type} message.");
-        confirmationUI.SetActive(true);
-        switch (type)
-        {
-            case "Ayumi":
-                confirmationText.text = "Confirm: Ayumi's Draw an Enhance Card";
-                typeOfConfirmation = Confirmation.Ayumi;
-                break;
-            default:
-                Debug.Log($"UI Confirmation was given a request of type: {type} and doesn't use it.");
-                break;
-        }
-    }
+    #endregion
+}
 
-    public void Accept()
+public class ConfirmationAction
+{
+    public enum ConfirmationType { Heal, Enhance, Recruit, Overcome, Feat, Quit, Enhancing, Ability, AtDef, Ayumi, Isaac, Izumi }
+    public ConfirmationType MyType = ConfirmationType.Heal;
+    public string MyText;
+
+    public ConfirmationAction(string description, ConfirmationType type)
     {
-        //Debug.Log($"Accepting {typeOfConfirmation}");
-        switch (typeOfConfirmation)
-        {
-            case Confirmation.Heal:
-                OnHEROSelection?.Invoke(Referee.GamePhase.Heal);
-                break;
-            case Confirmation.Enhance:
-                //Debug.Log("Sending Enhance Action");
-                OnHEROSelection?.Invoke(Referee.GamePhase.Enhance);
-                break;
-            case Confirmation.Recruit:
-                OnHEROSelection?.Invoke(Referee.GamePhase.Recruit);
-                break;
-            case Confirmation.Overcome:
-                OnHEROSelection?.Invoke(Referee.GamePhase.Overcome);
-                break;
-            case Confirmation.Feat:
-                OnHEROSelection?.Invoke(Referee.GamePhase.Feat);
-                break;
-            case Confirmation.Quit:
-                break;
-            case Confirmation.Ability:
-                if(activeAbility!= null)
-                {
-                    activeAbility.Target(myTargetCard);
-                    activeAbility = null;
-                    break;
-                }
-                OnTargetAccepted?.Invoke(myTargetCard, myCardToUse);
-                break;
-            case Confirmation.Enhancing:
-                OnTargetAccepted?.Invoke(myTargetCard, myCardToUse);
-                break;
-            case Confirmation.AtDef:
-                OnTargetAccepted?.Invoke(myTargetCard, null);
-                break;
-            case Confirmation.Ayumi:
-                OnNeedDrawEnhanceCards(1);
-                break;
-            case Confirmation.Aisaac:
-                aIsaac.AisaacDraw = true;
-                OnNeedDrawFromDiscard?.Invoke();
-                break;
-        }
-        confirmationUI.SetActive(false);
-    }
-    public void Decline()
-    {
-        activeAbility = null;
-        confirmationUI.SetActive(false);
+        MyText = description;
+        MyType = type;
     }
 }

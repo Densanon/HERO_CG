@@ -1147,10 +1147,10 @@ public class Referee : MonoBehaviour
                     //HandleAbilityTargetting(card);
                     break;
                 case GamePhase.Overcome:
-                    if (aIsaac.AisaacDraw)
+                    if (aIsaac.IsaacDraw)
                     {
                         CB.DrawSpecificCard(card.myCard, CB.MyDiscard);
-                        aIsaac.AisaacDraw = false;
+                        aIsaac.IsaacDraw = false;
                     }
                     else if (abilityTargetting == false)
                     {
@@ -1173,10 +1173,10 @@ public class Referee : MonoBehaviour
                     {
                         CardZoom(card);
                     }
-                    else if (aIsaac.AisaacDraw)
+                    else if (aIsaac.IsaacDraw)
                     {
                         CB.DrawSpecificCard(card.myCard, CB.MyDiscard);
-                        aIsaac.AisaacDraw = false;
+                        aIsaac.IsaacDraw = false;
                     }
                     break;
                 case GamePhase.Targeting:

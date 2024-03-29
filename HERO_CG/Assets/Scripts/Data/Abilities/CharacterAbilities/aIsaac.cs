@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class aIsaac : Ability
 {
-    public static bool AisaacDraw = false;
+    public static bool IsaacDraw = false;
 
     protected override void Awake()
     {
