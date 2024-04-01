@@ -27,6 +27,7 @@ public class UIConfirmation : MonoBehaviour
     public static Action<int> OnNeedDrawEnhanceCards = delegate { };
     public static Action OnNeedDrawFromDiscard = delegate { };
     public static Action OnConfirmIzumiToggle = delegate { };
+    public static Action<string> OnAbilityComplete = delegate { };
 
     #region Unity Methods
     private void Awake()
@@ -69,6 +70,7 @@ public class UIConfirmation : MonoBehaviour
         confirmationActions[ConfirmationAction.ConfirmationType.Isaac] = () => { aIsaac.IsaacDraw = true; OnNeedDrawFromDiscard?.Invoke(); };
         confirmationActions[ConfirmationAction.ConfirmationType.Izumi] = () => OnConfirmIzumiToggle?.Invoke();
         confirmationActions[ConfirmationAction.ConfirmationType.Mace] = () => aMace.maceDoubleActive = true;
+        confirmationActions[ConfirmationAction.ConfirmationType.Michael] = () => { OnNeedDrawEnhanceCards?.Invoke(1); OnAbilityComplete?.Invoke("MICHAEL"); };
     }
     private void initializeConfirmationHandlers()
     {
@@ -83,7 +85,8 @@ public class UIConfirmation : MonoBehaviour
             {"Discard", onDiscardConfirmationRequest },
             {"Ayumi", onAyumiConfirmationRequest },
             {"Izumi", onIzumiConfirmationRequest },
-            {"Mace", onMaceConfirmationRequest }
+            {"Mace", onMaceConfirmationRequest },
+            {"Michael", onMichaelConfirmationRequest }
         };
     }
 
@@ -126,6 +129,10 @@ public class UIConfirmation : MonoBehaviour
     private void onMaceConfirmationRequest()
     {
         queueConfirmation(new ConfirmationAction("Double the Total Attack for the next attack that occurs this turn?", ConfirmationAction.ConfirmationType.Mace));
+    }
+    private void onMichaelConfirmationRequest()
+    {
+        queueConfirmation(new ConfirmationAction("Confirm: Michael's Draw an Enhance Card", ConfirmationAction.ConfirmationType.Michael));
     }
 
     private void displayNextConfirmation()
@@ -246,7 +253,7 @@ public class UIConfirmation : MonoBehaviour
 
 public class ConfirmationAction
 {
-    public enum ConfirmationType { Heal, Enhance, Recruit, Overcome, Feat, Quit, Enhancing, Ability, AtDef, Ayumi, Isaac, Izumi, Mace }
+    public enum ConfirmationType { Heal, Enhance, Recruit, Overcome, Feat, Quit, Enhancing, Ability, AtDef, Ayumi, Isaac, Izumi, Mace, Michael }
     public ConfirmationType MyType = ConfirmationType.Heal;
     public string MyText;
 

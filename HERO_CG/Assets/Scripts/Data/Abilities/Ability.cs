@@ -37,7 +37,6 @@ public class Ability : MonoBehaviour
     public static Action OnToggleIzumi = delegate { };
     public static Action OnActivateKayAbility = delegate {};
     public static Action OnNeedPlayFromReserve = delegate { };
-    //public static Action<string> OnToggleIzumiConfirmationRequest = delegate { };
 
     protected virtual void Awake()
     {
@@ -50,6 +49,7 @@ public class Ability : MonoBehaviour
             Referee.OnPassiveActivate += PassiveCheck;
             Referee.OnTurnResetables += ResetOncePerTurn;
             Referee.OnAbilityComplete += AbilityCompleteCleanup;
+            UIConfirmation.OnAbilityComplete += AbilityCompleteCleanup;
         }
     }
 
@@ -64,6 +64,7 @@ public class Ability : MonoBehaviour
         Referee.OnPassiveActivate -= PassiveCheck;
         Referee.OnTurnResetables -= ResetOncePerTurn;
         Referee.OnAbilityComplete -= AbilityCompleteCleanup;
+        UIConfirmation.OnAbilityComplete -= AbilityCompleteCleanup;
     }
 
     private void ResetOncePerTurn()
