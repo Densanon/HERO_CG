@@ -37,6 +37,7 @@ public class Ability : MonoBehaviour
     public static Action OnToggleIzumi = delegate { };
     public static Action OnActivateKayAbility = delegate {};
     public static Action OnNeedPlayFromReserve = delegate { };
+    public static Action<string> OnCheckNeedResponse = delegate { };
 
     protected virtual void Awake()
     {
@@ -67,7 +68,7 @@ public class Ability : MonoBehaviour
         UIConfirmation.OnAbilityComplete -= AbilityCompleteCleanup;
     }
 
-    private void ResetOncePerTurn()
+    protected virtual void ResetOncePerTurn()
     {
         oncePerTurnUsed = false;
     }

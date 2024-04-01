@@ -3,12 +3,15 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using Photon.Pun;
 using Photon.Realtime;
+using System;
 
 public class PhotonInGameManager : MonoBehaviourPunCallbacks
 {
     PhotonView PV;
     public CardDataBase DataBase;
     public Referee GameManager;
+
+    public static Action<string> OnOriginRequest = delegate { };
 
     private void Awake()
     {
@@ -17,6 +20,7 @@ public class PhotonInGameManager : MonoBehaviourPunCallbacks
         PlayerBase.OnExhaust += HandleBaseExhaust;
         PlayerBase.OnBaseDestroyed += HandleBaseDestroyed;
         UIResponseTimer.OnTimerRunOut += HandlePlayerResponseRunOut;
+        UIConfirmation.OnSendAbilityResponse += SendAbilityResponse;
 
     }
 
@@ -25,6 +29,12 @@ public class PhotonInGameManager : MonoBehaviourPunCallbacks
         PlayerBase.OnExhaust -= HandleBaseExhaust;
         PlayerBase.OnBaseDestroyed -= HandleBaseDestroyed;
         UIResponseTimer.OnTimerRunOut -= HandlePlayerResponseRunOut;
+        UIConfirmation.OnSendAbilityResponse -= SendAbilityResponse;
+    }
+
+    private void SendAbilityResponse(bool decide)
+    {
+        RPCRequest("HandleSendAbilityResponse", RpcTarget.Others, decide);
     }
 
     private void HandlePlayerResponseRunOut()
@@ -125,6 +135,20 @@ public class PhotonInGameManager : MonoBehaviourPunCallbacks
     private void HandleAbilityDehandover(bool b)
     {
         DataBase.HandleAbilityDehandover();
+    }
+
+    [PunRPC]
+    private void HandleOriginRequest(string name)
+    {
+        Debug.Log("Gotta do something..");
+        OnOriginRequest?.Invoke(name);
+    }
+
+    [PunRPC]
+    private void HandleSendAbilityResponse(bool decide)
+    {
+        Debug.Log("Guess there was a decision.");
+        GameManager.RecieveResponse(decide);
     }
     #endregion
 

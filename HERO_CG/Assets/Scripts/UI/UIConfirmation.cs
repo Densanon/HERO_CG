@@ -20,6 +20,7 @@ public class UIConfirmation : MonoBehaviour
     private Card myCardToUse;
     private CardData myTargetCard;
     private Ability activeAbility;
+    private bool needSendResponse = false;
 
     public event Action<ConfirmationAction.ConfirmationType> OnActionConfirmation = delegate { };
     public static Action<Referee.GamePhase> OnHEROSelection = delegate { };
@@ -28,6 +29,7 @@ public class UIConfirmation : MonoBehaviour
     public static Action OnNeedDrawFromDiscard = delegate { };
     public static Action OnConfirmIzumiToggle = delegate { };
     public static Action<string> OnAbilityComplete = delegate { };
+    public static Action<bool> OnSendAbilityResponse = delegate { };
 
     #region Unity Methods
     private void Awake()
@@ -41,6 +43,7 @@ public class UIConfirmation : MonoBehaviour
         Ability.OnTargetedFrom += HandleActiveHero;
         Ability.OnCharacterAbilityRequest += onConfirmationRequest;
         OnActionConfirmation += Accept;
+        PhotonInGameManager.OnOriginRequest += onConfirmationRequest;
     }
     private void OnDestroy()
     {
@@ -49,6 +52,7 @@ public class UIConfirmation : MonoBehaviour
         Ability.OnTargetedFrom -= HandleActiveHero;
         Ability.OnCharacterAbilityRequest -= onConfirmationRequest;
         OnActionConfirmation -= Accept;
+        PhotonInGameManager.OnOriginRequest -= onConfirmationRequest;
     }
     #endregion
 
@@ -71,6 +75,7 @@ public class UIConfirmation : MonoBehaviour
         confirmationActions[ConfirmationAction.ConfirmationType.Izumi] = () => OnConfirmIzumiToggle?.Invoke();
         confirmationActions[ConfirmationAction.ConfirmationType.Mace] = () => aMace.maceDoubleActive = true;
         confirmationActions[ConfirmationAction.ConfirmationType.Michael] = () => { OnNeedDrawEnhanceCards?.Invoke(1); OnAbilityComplete?.Invoke("MICHAEL"); };
+        confirmationActions[ConfirmationAction.ConfirmationType.Origin] = () => OnSendAbilityResponse?.Invoke(true);
     }
     private void initializeConfirmationHandlers()
     {
@@ -86,7 +91,8 @@ public class UIConfirmation : MonoBehaviour
             {"Ayumi", onAyumiConfirmationRequest },
             {"Izumi", onIzumiConfirmationRequest },
             {"Mace", onMaceConfirmationRequest },
-            {"Michael", onMichaelConfirmationRequest }
+            {"Michael", onMichaelConfirmationRequest },
+            {"Origin", onOriginConfirmationRequest }
         };
     }
 
@@ -133,6 +139,12 @@ public class UIConfirmation : MonoBehaviour
     private void onMichaelConfirmationRequest()
     {
         queueConfirmation(new ConfirmationAction("Confirm: Michael's Draw an Enhance Card", ConfirmationAction.ConfirmationType.Michael));
+    }
+    private void onOriginConfirmationRequest()
+    {
+        Debug.Log("Were we here?");
+        needSendResponse = true;
+        queueConfirmation(new ConfirmationAction("Confirm: Block incoming damage towards Origin", ConfirmationAction.ConfirmationType.Origin));
     }
 
     private void displayNextConfirmation()
@@ -200,6 +212,8 @@ public class UIConfirmation : MonoBehaviour
     public void decline()
     {
         activeAbility = null;
+        if (needSendResponse) OnSendAbilityResponse?.Invoke(false);
+        needSendResponse = false;
         //confirmationUI.SetActive(false);
     }
     private void handleAbilityConfirmation()
@@ -253,7 +267,7 @@ public class UIConfirmation : MonoBehaviour
 
 public class ConfirmationAction
 {
-    public enum ConfirmationType { Heal, Enhance, Recruit, Overcome, Feat, Quit, Enhancing, Ability, AtDef, Ayumi, Isaac, Izumi, Mace, Michael }
+    public enum ConfirmationType { Heal, Enhance, Recruit, Overcome, Feat, Quit, Enhancing, Ability, AtDef, Ayumi, Isaac, Izumi, Mace, Michael, Origin }
     public ConfirmationType MyType = ConfirmationType.Heal;
     public string MyText;
 

@@ -98,7 +98,6 @@ public class Referee : MonoBehaviour
     private Ability activeAbility;
     private bool abilityTargetting = false;
 
-    //public static Action<Card, GamePhase> OnCardCollected = delegate { };
     public static Action<bool> OnOvercomeTime = delegate { };
     public static Action OnOvercomeSwitch = delegate { };
     public static Action<Ability.PassiveType> OnPassiveActivate = delegate { };
@@ -108,6 +107,7 @@ public class Referee : MonoBehaviour
     public static Action OnTurnResetables = delegate { };
     public static Action OnRemoveTargeting = delegate { };
     public static Action<string> OnAbilityComplete = delegate { };
+    public static Action<bool> OnTurnWaitResponse = delegate { };
 
     #region Unity Methods
     private void Awake()
@@ -127,6 +127,7 @@ public class Referee : MonoBehaviour
         /*Ability.OnFeatComplete += HandleFeatComplete;
         Ability.OnHoldTurnOffOppTurn += HandleHoldTurnOff;*/
         Ability.OnActivateKayAbility += HandleKayPlayCardAbility;
+        Ability.OnCheckNeedResponse += HandleCheckNeedResponse;
     }
     private void OnDestroy()
     {
@@ -145,6 +146,7 @@ public class Referee : MonoBehaviour
         /*Ability.OnFeatComplete -= HandleFeatComplete;
         Ability.OnHoldTurnOffOppTurn -= HandleHoldTurnOff;*/
         Ability.OnActivateKayAbility -= HandleKayPlayCardAbility;
+        Ability.OnCheckNeedResponse -= HandleCheckNeedResponse;
     }
     private void Start()
     {
@@ -269,7 +271,6 @@ public class Referee : MonoBehaviour
     {
         player = playerSet;
     }
-
     public void SetOpponentHandCount(int number)
     {
         tOpponentHandCount.text = $"{number}";
@@ -345,6 +346,30 @@ public class Referee : MonoBehaviour
         btEndTurn.gameObject.SetActive(myTurn);
         StartCoroutine(TurnDeclaration(myTurn));
         OnTurnResetables?.Invoke();
+    }
+
+    private string ResponseType;
+    private void HandleCheckNeedResponse(string obj)
+    {
+        ResponseType = obj;
+        Debug.Log("CheckResponse?");
+        if (obj == "Origin" && DefendingHero.Name == "ORIGIN")
+        {
+            PopUpUpdater("Waiting on a response.");
+            gOvercome.SetActive(false);
+            OnTurnWaitResponse?.Invoke(true);
+            myManager.RPCRequest("HandleOriginRequest", RpcTarget.Others, "Origin");
+        }
+    }
+    public void RecieveResponse(bool decide)
+    {
+        if (ResponseType == "Origin")
+        {
+            gOvercome.SetActive(true);
+            Debug.Log("Set the decision?");
+            aOrigin.blockActive = decide;
+            OnAbilityComplete("ORIGIN");
+        }
     }
     #endregion
 
@@ -719,6 +744,11 @@ public class Referee : MonoBehaviour
                 Debug.Log("Mace damage was doubled.");
                 OnAbilityComplete?.Invoke("MACE");
                 DefendingHero.DamageCheck(tDmg * 2);
+            }else if (aOrigin.blockActive)
+            {
+                Debug.Log("Origin ability block");
+                DefendingHero.DamageCheck(0);
+                gOvercome.SetActive(true);
             }
             else DefendingHero.DamageCheck(tDmg);
 
@@ -778,7 +808,6 @@ public class Referee : MonoBehaviour
                 }
                 else
                 {
-                    ActivatePassive(Ability.PassiveType.BattleCalculation);
                     Debug.Log($"Adding {card.Name} to Defending.");
                     //Target Card
                     if (DefendingHero != null)
@@ -786,6 +815,7 @@ public class Referee : MonoBehaviour
                         DefendingHero.OvercomeTarget(false);
                     }
                     DefendingHero = card;
+                    ActivatePassive(Ability.PassiveType.BattleCalculation);
                     //turn on interactible for calculate
                     card.OvercomeTarget(true);
                     card.ParticleSetAndStart(Color.red);
