@@ -22,7 +22,7 @@ public class aIsaac : Ability
 
         if(passiveType == PassiveType.CharacterDestroyed && myHero.myPlacement == CardData.FieldPlacement.Mine)
         {
-            OnNeedDrawFromDiscard?.Invoke("Discard");
+            OnCharacterAbilityRequest?.Invoke("Discard");
             //need to save what all cards are in discard prior to battle
             //need to populate said cards on screen to be drawn from
         }

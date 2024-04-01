@@ -10,7 +10,7 @@ public class Ability : MonoBehaviour
     public Type myType;
     public Type secondaryType;
 
-    public enum PassiveType { TurnStart, CharacterSpawn, CharacterDestroyed, BattleComplete, BattleStart, HeroRecruited, HandCardAdjustment, ActionComplete, HeroFatigued, HeroHealed }
+    public enum PassiveType { TurnStart, CharacterSpawn, CharacterDestroyed, BattleCalculation, BattleComplete, BattleStart, HeroRecruited, HandCardAdjustment, ActionComplete, HeroFatigued, HeroHealed }
 
     public string Name;
     public string Description;
@@ -21,7 +21,7 @@ public class Ability : MonoBehaviour
 
     public static Action<Ability> OnAddAbilityToMasterList = delegate { };
     public static Action OnFeatComplete = delegate { };
-    public static Action<string> OnConfirmAyumiDrawEnhanceCard = delegate { };
+    public static Action<string> OnCharacterAbilityRequest = delegate { };
     public static Action<string, string, int> OnDiscardCard = delegate { };
     public static Action<Ability> OnSetActive = delegate { };
     public static Action<Ability> OnOpponentAbilityActivation = delegate { };
@@ -34,7 +34,6 @@ public class Ability : MonoBehaviour
     public static Action<bool> OnHoldTurn = delegate { };
     public static Action OnHandOverControl = delegate { };
 
-    public static Action<string> OnNeedDrawFromDiscard = delegate { };
     public static Action OnToggleIzumi = delegate { };
     public static Action OnActivateKayAbility = delegate {};
     public static Action OnNeedPlayFromReserve = delegate { };
@@ -50,6 +49,7 @@ public class Ability : MonoBehaviour
         {
             Referee.OnPassiveActivate += PassiveCheck;
             Referee.OnTurnResetables += ResetOncePerTurn;
+            Referee.OnAbilityComplete += AbilityCompleteCleanup;
         }
     }
 
@@ -63,6 +63,7 @@ public class Ability : MonoBehaviour
     {
         Referee.OnPassiveActivate -= PassiveCheck;
         Referee.OnTurnResetables -= ResetOncePerTurn;
+        Referee.OnAbilityComplete -= AbilityCompleteCleanup;
     }
 
     private void ResetOncePerTurn()
@@ -97,5 +98,10 @@ public class Ability : MonoBehaviour
     public virtual void ActivateAbility()
     {
         ChangeOncePerTurn(true);
+    }
+
+    public virtual void AbilityCompleteCleanup(string abilityName)
+    {
+
     }
 }

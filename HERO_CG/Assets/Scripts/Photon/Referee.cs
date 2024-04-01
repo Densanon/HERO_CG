@@ -107,6 +107,7 @@ public class Referee : MonoBehaviour
     public static Action<TargetType> OnDsiplayTargets = delegate { };
     public static Action OnTurnResetables = delegate { };
     public static Action OnRemoveTargeting = delegate { };
+    public static Action<string> OnAbilityComplete = delegate { };
 
     #region Unity Methods
     private void Awake()
@@ -662,7 +663,7 @@ public class Referee : MonoBehaviour
         AttDef = !AttDef;
         if (!AttDef && !CB.CheckFieldForOpponents() && AttackingHeros.Count > 0)
         {
-            //Target base
+            //Target the player base
             int tDmg = 0;
             foreach (CardData data in AttackingHeros)
             {
@@ -671,16 +672,15 @@ public class Referee : MonoBehaviour
             }
             AttackingHeros.Clear();
 
-            PB.Damage(tDmg);
+            if (aMace.maceDoubleActive && !aMace.used)
+            {
+                Debug.Log("Mace damage was ddoubled here.");
+                OnAbilityComplete("MACE");
+                PB.Damage(tDmg * 2);
+            }
+            else PB.Damage(tDmg);
 
             SwitchAttDef();
-        }
-        else if (AttDef && !CB.CheckMyFieldForUsableHeros())
-        {
-            //check if all characters are exhausted, if they are, end turn
-            //StartCoroutine(EndturnDelay());
-            //PassiveActivate(Ability.PassiveType.ActionComplete);
-            //return;
         }
         OnOvercomeSwitch?.Invoke();
     }
@@ -714,7 +714,14 @@ public class Referee : MonoBehaviour
 
             Debug.Log($"{tDmg} was the given damage to take.");
             DefendingHero.ParticleStop();
-            DefendingHero.DamageCheck(tDmg);
+            if (aMace.maceDoubleActive && !aMace.used)
+            {
+                Debug.Log("Mace damage was doubled.");
+                OnAbilityComplete?.Invoke("MACE");
+                DefendingHero.DamageCheck(tDmg * 2);
+            }
+            else DefendingHero.DamageCheck(tDmg);
+
             if (DefendingHero != null)
             {
                 OpponentExhausted = DefendingHero.Exhausted;
@@ -771,6 +778,7 @@ public class Referee : MonoBehaviour
                 }
                 else
                 {
+                    ActivatePassive(Ability.PassiveType.BattleCalculation);
                     Debug.Log($"Adding {card.Name} to Defending.");
                     //Target Card
                     if (DefendingHero != null)

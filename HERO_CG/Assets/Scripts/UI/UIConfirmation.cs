@@ -37,18 +37,16 @@ public class UIConfirmation : MonoBehaviour
 
         CardDataBase.OnTargeting += HandleTargeting;
         CardData.IsTarget += HandleTarget;
-        Ability.OnConfirmAyumiDrawEnhanceCard += onConfirmationRequest;
         Ability.OnTargetedFrom += HandleActiveHero;
-        Ability.OnNeedDrawFromDiscard += onConfirmationRequest;
+        Ability.OnCharacterAbilityRequest += onConfirmationRequest;
         OnActionConfirmation += Accept;
     }
     private void OnDestroy()
     {
         CardDataBase.OnTargeting -= HandleTargeting;
         CardData.IsTarget -= HandleTarget;
-        Ability.OnConfirmAyumiDrawEnhanceCard -= onConfirmationRequest;
         Ability.OnTargetedFrom -= HandleActiveHero;
-        Ability.OnNeedDrawFromDiscard -= onConfirmationRequest;
+        Ability.OnCharacterAbilityRequest -= onConfirmationRequest;
         OnActionConfirmation -= Accept;
     }
     #endregion
@@ -70,6 +68,7 @@ public class UIConfirmation : MonoBehaviour
         confirmationActions[ConfirmationAction.ConfirmationType.Ayumi] = () => OnNeedDrawEnhanceCards?.Invoke(1);
         confirmationActions[ConfirmationAction.ConfirmationType.Isaac] = () => { aIsaac.IsaacDraw = true; OnNeedDrawFromDiscard?.Invoke(); };
         confirmationActions[ConfirmationAction.ConfirmationType.Izumi] = () => OnConfirmIzumiToggle?.Invoke();
+        confirmationActions[ConfirmationAction.ConfirmationType.Mace] = () => aMace.maceDoubleActive = true;
     }
     private void initializeConfirmationHandlers()
     {
@@ -83,7 +82,8 @@ public class UIConfirmation : MonoBehaviour
             {"Leave", onLeaveConfirmationRequest },
             {"Discard", onDiscardConfirmationRequest },
             {"Ayumi", onAyumiConfirmationRequest },
-            {"Izumi", onIzumiConfirmationRequest }
+            {"Izumi", onIzumiConfirmationRequest },
+            {"Mace", onMaceConfirmationRequest }
         };
     }
 
@@ -122,6 +122,10 @@ public class UIConfirmation : MonoBehaviour
     private void onIzumiConfirmationRequest()
     {
         queueConfirmation(new ConfirmationAction("Toggle: Izumi's +20 Defense Buff", ConfirmationAction.ConfirmationType.Izumi));
+    }
+    private void onMaceConfirmationRequest()
+    {
+        queueConfirmation(new ConfirmationAction("Double the Total Attack for the next attack that occurs this turn?", ConfirmationAction.ConfirmationType.Mace));
     }
 
     private void displayNextConfirmation()
@@ -242,7 +246,7 @@ public class UIConfirmation : MonoBehaviour
 
 public class ConfirmationAction
 {
-    public enum ConfirmationType { Heal, Enhance, Recruit, Overcome, Feat, Quit, Enhancing, Ability, AtDef, Ayumi, Isaac, Izumi }
+    public enum ConfirmationType { Heal, Enhance, Recruit, Overcome, Feat, Quit, Enhancing, Ability, AtDef, Ayumi, Isaac, Izumi, Mace }
     public ConfirmationType MyType = ConfirmationType.Heal;
     public string MyText;
 

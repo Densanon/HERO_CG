@@ -591,7 +591,6 @@ public class CardData : MonoBehaviour
     private void HandleUpdateValuesFromAbilityUpdate()
     {
         if (myPlacement != FieldPlacement.Mine || myCard.Name == "IZUMI") return;
-        Debug.Log($"{myCard.Name} is getting the Izumi boost.");
         ValuesSetup();
         OnNumericAdjustment?.Invoke(this, "Defense", Defense);
     }
