@@ -315,7 +315,7 @@ public class Referee : MonoBehaviour
         if (bEndTurn)
         {
             myTurn = turn;
-            GenericTurnChangables();
+            if(myPhase != GamePhase.AbilityDraft && myPhase != GamePhase.HeroDraft)GenericTurnChangables();
             NextPhase();
         }      
     }
@@ -865,10 +865,16 @@ public class Referee : MonoBehaviour
 
     private bool AbilityPlayable()
     {
-        if (activeAbility != null && activeAbility.Name == "KAY" && activeAbility.oncePerTurnUsed == false)
+        if(activeAbility != null && !activeAbility.oncePerTurnUsed)
         {
-            if (myPhase == GamePhase.Enhance) iTurnCounter++;
-            return true;
+            if (activeAbility.Name == "KAY")
+            {
+                if (myPhase == GamePhase.Enhance) iTurnCounter++;
+                return true;
+            }else if(activeAbility.Name == "YASMINE")
+            {
+                return true;
+            }
         }
         return false;
     }
@@ -888,7 +894,6 @@ public class Referee : MonoBehaviour
         ClearAbilityPanel();
         GetNewAbilities(card);
     }
-
     private void CardZoom(Card card)
     {
         zoomed = true;
@@ -897,7 +902,6 @@ public class Referee : MonoBehaviour
         NullZoomButtons();
         ClearAbilityPanel();
     }
-
     public IEnumerator ShowOpponentPlayedCard(CardData card)
     {
         Debug.Log($"ShowOpponentplayedCard(CardData): I received {card} and will zoom into it.");
@@ -906,7 +910,6 @@ public class Referee : MonoBehaviour
         HandleDeselection();
         gCardZoom.SetActive(false);
     }
-
     public IEnumerator ShowOpponentPlayedCard(Card card)
     {
         Debug.Log($"ShowOpponentplayedCard(Card): I received {card} and will zoom into it.");
@@ -915,7 +918,6 @@ public class Referee : MonoBehaviour
         HandleDeselection();
         gCardZoom.SetActive(false);
     }
-
     private void HandleCardCollected(Card card)
     {
         zoomed = false;
@@ -926,7 +928,6 @@ public class Referee : MonoBehaviour
             //PassiveActivate(Ability.PassiveType.ActionComplete);
         }
     }
-
     public void SetCardCollectAmount(int amount)
     {
         for (int i = amount; i > 0; i--)
@@ -997,6 +998,12 @@ public class Referee : MonoBehaviour
         gCardPlay.SetActive(false);
         gCardSelect.SetActive(false);
     }
+    private void SetPlayButton()
+    {
+        gCardCollect.SetActive(false);
+        gCardPlay.SetActive(true);
+        gCardSelect.SetActive(false);
+    }
     private void HandleCardButtons(CardData data, CardData.FieldPlacement placement)
     {
         if (myTurn)
@@ -1006,7 +1013,7 @@ public class Referee : MonoBehaviour
                 case GamePhase.HEROSelect:
                     if (AbilityPlayable() && placement == CardData.FieldPlacement.Hand)
                     {
-                        gCardPlay.SetActive(true);
+                        SetPlayButton();
                         return;
                     }else if(Rohan && placement == CardData.FieldPlacement.HQ)
                     {
@@ -1028,7 +1035,7 @@ public class Referee : MonoBehaviour
                 case GamePhase.Heal:
                     if (AbilityPlayable() && placement == CardData.FieldPlacement.Hand)
                     {
-                        gCardPlay.SetActive(true);
+                        SetPlayButton();
                         return;
                     }
                     else if (Rohan && placement == CardData.FieldPlacement.HQ)
@@ -1043,7 +1050,7 @@ public class Referee : MonoBehaviour
                 case GamePhase.Enhance:
                     if (AbilityPlayable() && placement == CardData.FieldPlacement.Hand)
                     {
-                        gCardPlay.SetActive(true);
+                        SetPlayButton();
                         return;
                     }
                     else if (Rohan && placement == CardData.FieldPlacement.HQ)
@@ -1087,7 +1094,7 @@ public class Referee : MonoBehaviour
                 case GamePhase.Recruit:
                     if (AbilityPlayable() && placement == CardData.FieldPlacement.Hand)
                     {
-                        gCardPlay.SetActive(true);
+                        SetPlayButton();
                         return;
                     }
                     switch (placement)
@@ -1111,7 +1118,7 @@ public class Referee : MonoBehaviour
                 case GamePhase.Overcome:
                     if (AbilityPlayable() && placement == CardData.FieldPlacement.Hand)
                     {
-                        gCardPlay.SetActive(true);
+                        SetPlayButton();
                         return;
                     }
                     else if (Rohan && placement == CardData.FieldPlacement.HQ)
@@ -1167,15 +1174,13 @@ public class Referee : MonoBehaviour
                     }
                     else
                     {
-                        gCardSelect.SetActive(false);
-                        gCardCollect.SetActive(false);
-                        gCardPlay.SetActive(true);
+                        SetPlayButton();
                     }
                     break;
                 case GamePhase.PostAction:
                     if (AbilityPlayable() && placement == CardData.FieldPlacement.Hand)
                     {
-                        gCardPlay.SetActive(true);
+                        SetPlayButton();
                         return;
                     }
                     else if (Rohan && placement == CardData.FieldPlacement.HQ)
@@ -1188,7 +1193,7 @@ public class Referee : MonoBehaviour
                 case GamePhase.CombatAbility:
                     if (AbilityPlayable() && placement == CardData.FieldPlacement.Hand)
                     {
-                        gCardPlay.SetActive(true);
+                        SetPlayButton();
                         return;
                     }
                     NullZoomButtons();
@@ -1197,6 +1202,11 @@ public class Referee : MonoBehaviour
         }
         else
         {
+            if (AbilityPlayable() && placement == CardData.FieldPlacement.Hand)
+            {
+                SetPlayButton();
+                return;
+            }
             NullZoomButtons();
         }
     }

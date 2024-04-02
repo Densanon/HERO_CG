@@ -22,6 +22,7 @@ public class CardDataBase : MonoBehaviour
     public static Action<Card> OnAiDraftCollected = delegate { };
     public static Action<Card, bool> OnTargeting = delegate { };
     public static Action OnSendHeroStats = delegate { };
+    public static Action<string> OnSendYasmineAbilityRequest = delegate { };
 
     public GameObject CardHandPrefab;
     public GameObject CardDraftPrefab;
@@ -126,6 +127,7 @@ public class CardDataBase : MonoBehaviour
         UIConfirmation.OnNeedDrawEnhanceCards += DrawFromEnhanceDeck;
         UIConfirmation.OnNeedDrawFromDiscard += DrawFromDiscard;
         Ability.OnNeedPlayFromReserve += HandlePlayCardFromReserve;
+        UIConfirmation.OnPlayCardFromHand += HandlePlayCardFromHandSetup;
 
         Heros[0] = new Card(Card.Type.Character, "AKIO", 20, 70, HeroImages[0], AlphaHeros[0]);
         Heros[1] = new Card(Card.Type.Character, "AYUMI", 40, 50, HeroImages[1], AlphaHeros[1]);
@@ -276,7 +278,13 @@ public class CardDataBase : MonoBehaviour
         Ability.OnHandOverControl -= AbilityDehandover;
         UIConfirmation.OnNeedDrawEnhanceCards -= DrawFromEnhanceDeck;
         UIConfirmation.OnNeedDrawFromDiscard -= DrawFromDiscard;
-        Ability.OnNeedPlayFromReserve += HandlePlayCardFromReserve;
+        Ability.OnNeedPlayFromReserve -= HandlePlayCardFromReserve;
+        UIConfirmation.OnPlayCardFromHand -= HandlePlayCardFromHandSetup;
+    }
+
+    private void HandlePlayCardFromHandSetup()
+    {
+        DisplayCardList(MyHand);
     }
     #endregion
 
@@ -357,8 +365,6 @@ public class CardDataBase : MonoBehaviour
     {
         if(!AutoDraft)
         {
-            ClearDraft();
-
             GM.PhaseChange(Referee.GamePhase.AbilityDraft);
 
             DisplayCardList(AbilityDraft);
@@ -382,11 +388,6 @@ public class CardDataBase : MonoBehaviour
             {
                 MyDeck.Add(card);
             }
-            /*if (Referee.myTurn)
-            {
-                //myManager.RPCRequest("EndAbilityDraft", RpcTarget.Others, false);
-                //EndAbilityDraft(true);
-            }*/
             ToggleCardDisplayArea(false);
         }
     }
@@ -410,6 +411,7 @@ public class CardDataBase : MonoBehaviour
                 CatchHeroReserveOversight(card);
                 Draft.Remove(item);
                 Destroy(item.gameObject);
+                Debug.Log($"Draft: {Draft.Count} - Reserve: {HeroReserve.Count}");
                 if (Referee.myTurn)
                 {
                     CheckDraft();
@@ -421,14 +423,22 @@ public class CardDataBase : MonoBehaviour
 
     private void CatchHeroReserveOversight(string card)
     {
+        Debug.Log($"Oversight: {HeroReserve.Count}");
         foreach(Card c in HeroReserve)
         {
             if(c.Name == card)
             {
-                HeroReserve.Remove(c);
+                RemoveHeroReserve(c);
+                Debug.Log($"Oversight: {HeroReserve.Count}");
                 return;
             }
         }
+    }
+
+    private void RemoveHeroReserve(Card card)
+    {
+        Debug.Log($"Removed {card.Name} from Reserve");
+        HeroReserve.Remove(card);
     }
 
     private void CheckDraft()
@@ -439,7 +449,7 @@ public class CardDataBase : MonoBehaviour
                 if(Draft.Count == 12 && Referee.myTurn)
                 {
                     int i = UnityEngine.Random.Range(0, 12);
-                    Debug.Log($"Draft pick: {i}");
+                    Debug.Log($"Draft pick: {i} size: {HeroReserve.Count}");
                     HandleCardCollected(HeroReserve[i], Referee.myPhase);
                     myManager.RPCRequest("SetupAbilityDraft", RpcTarget.All, true);
    
@@ -460,6 +470,7 @@ public class CardDataBase : MonoBehaviour
         switch (list)
         {
             case "HeroReserve":
+                Debug.Log("Got a list.");
                 HeroReserve.Clear();
                 foreach (string name in listToShare)
                 {
@@ -537,13 +548,13 @@ public class CardDataBase : MonoBehaviour
 
     private void DrawFromDiscard()
     {
-        ClearDraft();
         DisplayCardList(myDiscard, true);
         CardDisplayAreaOffButton.SetActive(true);
     }
 
     private void DisplayCardList(List<Card> whichDeck)
     {
+        ClearDraft();
         ToggleCardDisplayArea(true);
 
         foreach(Card card in whichDeck)
@@ -675,7 +686,7 @@ public class CardDataBase : MonoBehaviour
                     picker = HeroReserve.Count -1;
                 }
                 HQ.Add(HeroReserve[picker]);
-                HeroReserve.Remove(HeroReserve[picker]);
+                RemoveHeroReserve(HeroReserve[picker]);
             }
 
             PopulateHQ();
@@ -766,7 +777,7 @@ public class CardDataBase : MonoBehaviour
 
             foreach (Card addCard in cardsToAdd)
             {
-                HeroReserve.Remove(addCard);
+                RemoveHeroReserve(addCard);
                 HQ.Add(addCard);
                 GameObject obj = Instantiate(CardHeroHQPrefab, HQArea);
                 CardData data = obj.GetComponent<CardData>();
@@ -791,7 +802,7 @@ public class CardDataBase : MonoBehaviour
                 HQHeros.Remove(data);
                 HQ.Remove(card);
                 Destroy(data.gameObject);
-                break;
+                return;
             }
         }
 
@@ -807,7 +818,7 @@ public class CardDataBase : MonoBehaviour
                 HQHeros.Remove(data);
                 HQ.Remove(data.myCard);
                 Destroy(data.gameObject);
-                break;
+                return;
             }
         }
     }
@@ -818,7 +829,7 @@ public class CardDataBase : MonoBehaviour
         {
             if(card.Name == hero)
             {
-                HeroReserve.Remove(card);
+                RemoveHeroReserve(card);
                 break;
             }
         }
@@ -831,7 +842,7 @@ public class CardDataBase : MonoBehaviour
     private void HandlePlayCardFromReserve()
     {
         Card card = HeroReserve[UnityEngine.Random.Range(0, HeroReserve.Count)];
-        HeroReserve.Remove(card);
+        RemoveHeroReserve(card);
         PlayCard(card);
     }
     #endregion
@@ -882,7 +893,6 @@ public class CardDataBase : MonoBehaviour
     public void GetOwnDiscardPile()//Via UI
     {
         Debug.Log($"Discard count: {myDiscard.Count}");
-        ClearDraft();
         DisplayCardList(myDiscard);
     }
 
@@ -1561,7 +1571,6 @@ public class CardDataBase : MonoBehaviour
     #region Outsource Methods
     public void SetUpHandCardsToBeViewed()
     {
-        ClearDraft();
         DisplayCardList(MyHand);
         CardDisplayAreaOffButton.SetActive(true);
     }
@@ -1726,7 +1735,7 @@ public class CardDataBase : MonoBehaviour
             case Referee.GamePhase.HeroDraft:
                 MyHand.Add(card);
                 AddCardToHand(card);
-                HeroReserve.Remove(card);
+                RemoveHeroReserve(card);
                 myManager.RPCRequest("RemoveDraftOption", RpcTarget.All, card.Name);
                 myManager.RPCRequest("DeclaredTurn", RpcTarget.Others, true);
                 GM.ToldSwitchTurn(false);
@@ -1965,6 +1974,7 @@ public class CardDataBase : MonoBehaviour
                 if(data.Name == names[names.Length - 1])
                 {
                     Referee.PreviousDefender = data;
+                    if (data.Name == "YASMINE") OnSendYasmineAbilityRequest?.Invoke("Yasmine");
                     break;
                 }
             }

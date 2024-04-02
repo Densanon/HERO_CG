@@ -31,6 +31,7 @@ public class UIConfirmation : MonoBehaviour
     public static Action<string> OnAbilityComplete = delegate { };
     public static Action<bool> OnSendAbilityResponse = delegate { };
     public static Action OnRohanRecruitment = delegate { };
+    public static Action OnPlayCardFromHand = delegate { };
 
     #region Unity Methods
     private void Awake()
@@ -40,6 +41,7 @@ public class UIConfirmation : MonoBehaviour
         initializeConfirmationHandlers();
 
         CardDataBase.OnTargeting += HandleTargeting;
+        CardDataBase.OnSendYasmineAbilityRequest += onConfirmationRequest;
         CardData.IsTarget += HandleTarget;
         Ability.OnTargetedFrom += HandleActiveHero;
         Ability.OnCharacterAbilityRequest += onConfirmationRequest;
@@ -49,6 +51,7 @@ public class UIConfirmation : MonoBehaviour
     private void OnDestroy()
     {
         CardDataBase.OnTargeting -= HandleTargeting;
+        CardDataBase.OnSendYasmineAbilityRequest -= onConfirmationRequest;
         CardData.IsTarget -= HandleTarget;
         Ability.OnTargetedFrom -= HandleActiveHero;
         Ability.OnCharacterAbilityRequest -= onConfirmationRequest;
@@ -78,6 +81,7 @@ public class UIConfirmation : MonoBehaviour
         confirmationActions[ConfirmationAction.ConfirmationType.Michael] = () => { OnNeedDrawEnhanceCards?.Invoke(1); OnAbilityComplete?.Invoke("MICHAEL"); };
         confirmationActions[ConfirmationAction.ConfirmationType.Origin] = () => OnSendAbilityResponse?.Invoke(true);
         confirmationActions[ConfirmationAction.ConfirmationType.Rohan] = () => { OnRohanRecruitment?.Invoke(); OnAbilityComplete?.Invoke("ROHAN"); };
+        confirmationActions[ConfirmationAction.ConfirmationType.Yasmine] = () => OnPlayCardFromHand?.Invoke();
     }
     private void initializeConfirmationHandlers()
     {
@@ -95,7 +99,8 @@ public class UIConfirmation : MonoBehaviour
             {"Mace", onMaceConfirmationRequest },
             {"Michael", onMichaelConfirmationRequest },
             {"Origin", onOriginConfirmationRequest },
-            {"Rohan", onRohanConfirmationRequest }
+            {"Rohan", onRohanConfirmationRequest },
+            {"Yasmine", onYasmineConfirmationRequest }
         };
     }
 
@@ -151,6 +156,10 @@ public class UIConfirmation : MonoBehaviour
     private void onRohanConfirmationRequest()
     {
         queueConfirmation(new ConfirmationAction("Confirm: Rohan's recruitment", ConfirmationAction.ConfirmationType.Rohan));
+    }
+    private void onYasmineConfirmationRequest()
+    {
+        queueConfirmation(new ConfirmationAction("Confirm: Yasmine's play card", ConfirmationAction.ConfirmationType.Yasmine));
     }
 
     private void displayNextConfirmation()
@@ -273,7 +282,7 @@ public class UIConfirmation : MonoBehaviour
 
 public class ConfirmationAction
 {
-    public enum ConfirmationType { Heal, Enhance, Recruit, Overcome, Feat, Quit, Enhancing, Ability, AtDef, Ayumi, Isaac, Izumi, Mace, Michael, Origin, Rohan }
+    public enum ConfirmationType { Heal, Enhance, Recruit, Overcome, Feat, Quit, Enhancing, Ability, AtDef, Ayumi, Isaac, Izumi, Mace, Michael, Origin, Rohan, Yasmine }
     public ConfirmationType MyType = ConfirmationType.Heal;
     public string MyText;
 
