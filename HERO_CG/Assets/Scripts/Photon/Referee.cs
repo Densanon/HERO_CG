@@ -871,10 +871,8 @@ public class Referee : MonoBehaviour
             {
                 if (myPhase == GamePhase.Enhance) iTurnCounter++;
                 return true;
-            }else if(activeAbility.Name == "YASMINE")
-            {
-                return true;
-            }
+            }else if(activeAbility.Name == "YASMINE") return true;
+            else if(activeAbility.Name == "ZHAO") return true;         
         }
         return false;
     }

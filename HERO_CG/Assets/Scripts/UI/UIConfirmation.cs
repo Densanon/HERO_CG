@@ -42,6 +42,7 @@ public class UIConfirmation : MonoBehaviour
 
         CardDataBase.OnTargeting += HandleTargeting;
         CardDataBase.OnSendYasmineAbilityRequest += onConfirmationRequest;
+        CardDataBase.OnZhaoAbilityRequest += onConfirmationRequest;
         CardData.IsTarget += HandleTarget;
         Ability.OnTargetedFrom += HandleActiveHero;
         Ability.OnCharacterAbilityRequest += onConfirmationRequest;
@@ -52,6 +53,7 @@ public class UIConfirmation : MonoBehaviour
     {
         CardDataBase.OnTargeting -= HandleTargeting;
         CardDataBase.OnSendYasmineAbilityRequest -= onConfirmationRequest;
+        CardDataBase.OnZhaoAbilityRequest -= onConfirmationRequest;
         CardData.IsTarget -= HandleTarget;
         Ability.OnTargetedFrom -= HandleActiveHero;
         Ability.OnCharacterAbilityRequest -= onConfirmationRequest;
@@ -82,6 +84,7 @@ public class UIConfirmation : MonoBehaviour
         confirmationActions[ConfirmationAction.ConfirmationType.Origin] = () => OnSendAbilityResponse?.Invoke(true);
         confirmationActions[ConfirmationAction.ConfirmationType.Rohan] = () => { OnRohanRecruitment?.Invoke(); OnAbilityComplete?.Invoke("ROHAN"); };
         confirmationActions[ConfirmationAction.ConfirmationType.Yasmine] = () => OnPlayCardFromHand?.Invoke();
+        confirmationActions[ConfirmationAction.ConfirmationType.Zhao] = () => OnPlayCardFromHand?.Invoke();
     }
     private void initializeConfirmationHandlers()
     {
@@ -100,7 +103,8 @@ public class UIConfirmation : MonoBehaviour
             {"Michael", onMichaelConfirmationRequest },
             {"Origin", onOriginConfirmationRequest },
             {"Rohan", onRohanConfirmationRequest },
-            {"Yasmine", onYasmineConfirmationRequest }
+            {"Yasmine", onYasmineConfirmationRequest },
+            {"Zhao", onZhaoConfirmationRequest }
         };
     }
 
@@ -160,6 +164,10 @@ public class UIConfirmation : MonoBehaviour
     private void onYasmineConfirmationRequest()
     {
         queueConfirmation(new ConfirmationAction("Confirm: Yasmine's play card", ConfirmationAction.ConfirmationType.Yasmine));
+    }
+    private void onZhaoConfirmationRequest()
+    {
+        queueConfirmation(new ConfirmationAction("Confirm: Zhao's play card", ConfirmationAction.ConfirmationType.Yasmine));
     }
 
     private void displayNextConfirmation()
@@ -282,7 +290,7 @@ public class UIConfirmation : MonoBehaviour
 
 public class ConfirmationAction
 {
-    public enum ConfirmationType { Heal, Enhance, Recruit, Overcome, Feat, Quit, Enhancing, Ability, AtDef, Ayumi, Isaac, Izumi, Mace, Michael, Origin, Rohan, Yasmine }
+    public enum ConfirmationType { Heal, Enhance, Recruit, Overcome, Feat, Quit, Enhancing, Ability, AtDef, Ayumi, Isaac, Izumi, Mace, Michael, Origin, Rohan, Yasmine, Zhao }
     public ConfirmationType MyType = ConfirmationType.Heal;
     public string MyText;
 

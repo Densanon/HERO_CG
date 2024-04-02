@@ -80,7 +80,7 @@ public class CardData : MonoBehaviour
         Referee.OnTurnResetables += HandleResetForTurn;
         Referee.OnRemoveTargeting += HandleResetForTurn;
         //UIConfirmation.OnConfirmIzumiToggle += HandleUpdateValuesFromAbilityUpdate;
-        Ability.OnToggleIzumi += HandleUpdateValuesFromAbilityUpdate;
+        Ability.OnModifyValues += HandleUpdateValuesFromAbilityUpdate;
 
 
        myParticleSystem = gameObject.GetComponentInChildren<ParticleSystem>();
@@ -94,7 +94,7 @@ public class CardData : MonoBehaviour
         Referee.OnOvercomeSwitch -= HandleSwitchOvercome;
         Referee.OnRemoveTargeting -= HandleResetForTurn;
         //UIConfirmation.OnConfirmIzumiToggle -= HandleUpdateValuesFromAbilityUpdate;
-        Ability.OnToggleIzumi += HandleUpdateValuesFromAbilityUpdate;
+        Ability.OnModifyValues -= HandleUpdateValuesFromAbilityUpdate;
 
     }
     #endregion
@@ -168,13 +168,12 @@ public class CardData : MonoBehaviour
         Attack = a;
         Defense = d;
         if (Exhausted) Defense = Defense / 2;
-        if (aIzumi.IzumiDefBoost && myPlacement == FieldPlacement.Mine && myCard.Name != "IZUMI")
-        {
-            Defense += 20;
-            tDefense.color = Color.green;
-            OnNumericAdjustment?.Invoke(this, "Defense", Defense);
-        }
+        if (aIzumi.IzumiDefBoost && myPlacement == FieldPlacement.Mine && myCard.Name != "IZUMI") Defense += 20;
+        if(aZhao.zhaoBoost && myPlacement == FieldPlacement.Mine && myCard.Name != "ZHAO") Attack += 10;
 
+        ColorCheck();
+
+        OnNumericAdjustment?.Invoke(this, "Defense", Defense);
         tDefense.text = Defense.ToString();
         tAttack.text = Attack.ToString();
 
@@ -590,9 +589,12 @@ public class CardData : MonoBehaviour
     }
     private void HandleUpdateValuesFromAbilityUpdate()
     {
-        if (myPlacement != FieldPlacement.Mine || myCard.Name == "IZUMI") return;
+        if (myPlacement != FieldPlacement.Mine) return;
+        Debug.Log($"{Name} is getting a value update.");
+        int tempA = Attack, tempD = Defense;
         ValuesSetup();
-        OnNumericAdjustment?.Invoke(this, "Defense", Defense);
+        if(Defense != tempD) OnNumericAdjustment?.Invoke(this, "Defense", Defense);
+        if(Attack != tempA) OnNumericAdjustment?.Invoke(this, "Attack", Attack);
     }
     #endregion
 
@@ -633,7 +635,6 @@ public class CardData : MonoBehaviour
         Exhausted = false;
         StateChange(CardState.Normal);
         ValuesSetup();
-        tDefense.color = Color.white;
 
         if (!told)
             OnExhausted?.Invoke(this, false);
@@ -642,8 +643,7 @@ public class CardData : MonoBehaviour
     {
         Attack = amount;
         tAttack.text = Attack.ToString();
-        if (Attack > myCard.Attack) tAttack.color = Color.green;
-        else if (Attack < myCard.Attack) tAttack.color = Color.red;
+        ColorCheck();
     }
     public void AdjustAttack(int amount)
     {
@@ -671,8 +671,7 @@ public class CardData : MonoBehaviour
         Debug.Log("Was told to set Defense " + amount);
         Defense = amount;
         tDefense.text = Defense.ToString();
-        if (Defense > myCard.Defense) tDefense.color = Color.green;
-        else if (Defense < myCard.Defense) tDefense.color = Color.red;
+        ColorCheck();
     }
     public void AdjustDefense(int amount)
     {
@@ -685,6 +684,17 @@ public class CardData : MonoBehaviour
         }
     }
     #endregion
+
+    private void ColorCheck()
+    {
+        if (Defense > myCard.Defense) tDefense.color = Color.green;
+        else if (Defense < myCard.Defense) tDefense.color = Color.red;
+        else tDefense.color = Color.white;
+
+        if (Attack > myCard.Attack) tAttack.color = Color.green;
+        else if (Attack < myCard.Attack) tAttack.color = Color.red;
+        else tAttack.color = Color.white;
+    }
 
     #region Targeting
     public void Targeted()//Activated on UI

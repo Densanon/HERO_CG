@@ -23,6 +23,7 @@ public class CardDataBase : MonoBehaviour
     public static Action<Card, bool> OnTargeting = delegate { };
     public static Action OnSendHeroStats = delegate { };
     public static Action<string> OnSendYasmineAbilityRequest = delegate { };
+    public static Action<string> OnZhaoAbilityRequest = delegate { };
 
     public GameObject CardHandPrefab;
     public GameObject CardDraftPrefab;
@@ -284,7 +285,8 @@ public class CardDataBase : MonoBehaviour
 
     private void HandlePlayCardFromHandSetup()
     {
-        DisplayCardList(MyHand);
+        if(MyHand.Count>0)
+            DisplayCardList(MyHand);
     }
     #endregion
 
@@ -1975,6 +1977,7 @@ public class CardDataBase : MonoBehaviour
                 {
                     Referee.PreviousDefender = data;
                     if (data.Name == "YASMINE") OnSendYasmineAbilityRequest?.Invoke("Yasmine");
+                    if (data.Name == "ZHAO") OnZhaoAbilityRequest?.Invoke("Zhao");
                     break;
                 }
             }

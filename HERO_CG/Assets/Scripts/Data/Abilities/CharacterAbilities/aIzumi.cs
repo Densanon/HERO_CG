@@ -15,12 +15,12 @@ public class aIzumi : Ability
         Name = "IZUMI";
         Description = "(P) Allied heroes gain +20 defense while Izumi is in play. Fatigued heroes gain this after their defense is halved.";
 
-        if (myHero.myPlacement == CardData.FieldPlacement.Mine) { IzumiDefBoost = true; OnToggleIzumi?.Invoke(); }
+        if (myHero.myPlacement == CardData.FieldPlacement.Mine) { IzumiDefBoost = true; OnModifyValues?.Invoke(); }
     }
 
     protected override void OnDestroy()
     {
-        if (myHero.myPlacement == CardData.FieldPlacement.Mine) { IzumiDefBoost = false; OnToggleIzumi?.Invoke(); }
+        if (myHero.myPlacement == CardData.FieldPlacement.Mine) { IzumiDefBoost = false; OnModifyValues?.Invoke(); }
         base.OnDestroy();
     }
 

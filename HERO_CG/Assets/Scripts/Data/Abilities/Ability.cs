@@ -34,7 +34,7 @@ public class Ability : MonoBehaviour
     public static Action<bool> OnHoldTurn = delegate { };
     public static Action OnHandOverControl = delegate { };
 
-    public static Action OnToggleIzumi = delegate { };
+    public static Action OnModifyValues = delegate { };
     public static Action OnActivateKayAbility = delegate {};
     public static Action OnNeedPlayFromReserve = delegate { };
     public static Action<string> OnCheckNeedResponse = delegate { };
