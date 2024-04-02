@@ -140,14 +140,12 @@ public class PhotonInGameManager : MonoBehaviourPunCallbacks
     [PunRPC]
     private void HandleOriginRequest(string name)
     {
-        Debug.Log("Gotta do something..");
         OnOriginRequest?.Invoke(name);
     }
 
     [PunRPC]
     private void HandleSendAbilityResponse(bool decide)
     {
-        Debug.Log("Guess there was a decision.");
         GameManager.RecieveResponse(decide);
     }
     #endregion

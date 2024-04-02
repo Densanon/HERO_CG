@@ -438,7 +438,9 @@ public class CardDataBase : MonoBehaviour
             case Referee.GamePhase.HeroDraft:
                 if(Draft.Count == 12 && Referee.myTurn)
                 {
-                    HandleCardCollected(HeroReserve[UnityEngine.Random.Range(0, 12)], Referee.myPhase);
+                    int i = UnityEngine.Random.Range(0, 12);
+                    Debug.Log($"Draft pick: {i}");
+                    HandleCardCollected(HeroReserve[i], Referee.myPhase);
                     myManager.RPCRequest("SetupAbilityDraft", RpcTarget.All, true);
    
                 }
@@ -647,6 +649,10 @@ public class CardDataBase : MonoBehaviour
     }
 
     #region HQ and Reserve
+    public int GetHQCount()
+    {
+        return HQ.Count();
+    }
     public void FillHQ()
     {
         if(HeroReserve.Count == 0)
@@ -1742,6 +1748,9 @@ public class CardDataBase : MonoBehaviour
                 RemoveHQCard(card);
                 GM.ActivatePassive(Ability.PassiveType.HeroRecruited);
                 break;
+            default:
+                if (GM.Rohan) goto case Referee.GamePhase.Recruit;
+                break;
         }
     }
     public void HandCardOffset(System.Single offset)
@@ -1894,10 +1903,9 @@ public class CardDataBase : MonoBehaviour
                 break;
         }
     }
-
     public void DrawReserveCard()
     {
-        if(Referee.myTurn && Referee.myPhase == Referee.GamePhase.Recruit)
+        if(Referee.myTurn && (Referee.myPhase == Referee.GamePhase.Recruit || GM.Rohan))
         {
             DrawRandomCard(HeroReserve);
             GM.TurnCounterDecrement();

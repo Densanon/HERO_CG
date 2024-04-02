@@ -38,6 +38,7 @@ public class Ability : MonoBehaviour
     public static Action OnActivateKayAbility = delegate {};
     public static Action OnNeedPlayFromReserve = delegate { };
     public static Action<string> OnCheckNeedResponse = delegate { };
+    public static Action OnRohanAbility = delegate { };
 
     protected virtual void Awake()
     {

@@ -18,7 +18,7 @@ public class aEng : Ability
     {
         base.PassiveCheck(passiveType);
 
-        if(passiveType == PassiveType.ActionComplete && CardDataBase.herosFatigued > 0) OnActivateable?.Invoke(this);
+        if(myHero.myPlacement == CardData.FieldPlacement.Mine && passiveType == PassiveType.ActionComplete && CardDataBase.herosFatigued > 0) OnActivateable?.Invoke(this);
     }
 
     public override void AbilityAwake()

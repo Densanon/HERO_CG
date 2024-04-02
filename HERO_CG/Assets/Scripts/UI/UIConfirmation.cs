@@ -30,6 +30,7 @@ public class UIConfirmation : MonoBehaviour
     public static Action OnConfirmIzumiToggle = delegate { };
     public static Action<string> OnAbilityComplete = delegate { };
     public static Action<bool> OnSendAbilityResponse = delegate { };
+    public static Action OnRohanRecruitment = delegate { };
 
     #region Unity Methods
     private void Awake()
@@ -76,6 +77,7 @@ public class UIConfirmation : MonoBehaviour
         confirmationActions[ConfirmationAction.ConfirmationType.Mace] = () => aMace.maceDoubleActive = true;
         confirmationActions[ConfirmationAction.ConfirmationType.Michael] = () => { OnNeedDrawEnhanceCards?.Invoke(1); OnAbilityComplete?.Invoke("MICHAEL"); };
         confirmationActions[ConfirmationAction.ConfirmationType.Origin] = () => OnSendAbilityResponse?.Invoke(true);
+        confirmationActions[ConfirmationAction.ConfirmationType.Rohan] = () => { OnRohanRecruitment?.Invoke(); OnAbilityComplete?.Invoke("ROHAN"); };
     }
     private void initializeConfirmationHandlers()
     {
@@ -92,7 +94,8 @@ public class UIConfirmation : MonoBehaviour
             {"Izumi", onIzumiConfirmationRequest },
             {"Mace", onMaceConfirmationRequest },
             {"Michael", onMichaelConfirmationRequest },
-            {"Origin", onOriginConfirmationRequest }
+            {"Origin", onOriginConfirmationRequest },
+            {"Rohan", onRohanConfirmationRequest }
         };
     }
 
@@ -142,9 +145,12 @@ public class UIConfirmation : MonoBehaviour
     }
     private void onOriginConfirmationRequest()
     {
-        Debug.Log("Were we here?");
         needSendResponse = true;
         queueConfirmation(new ConfirmationAction("Confirm: Block incoming damage towards Origin", ConfirmationAction.ConfirmationType.Origin));
+    }
+    private void onRohanConfirmationRequest()
+    {
+        queueConfirmation(new ConfirmationAction("Confirm: Rohan's recruitment", ConfirmationAction.ConfirmationType.Rohan));
     }
 
     private void displayNextConfirmation()
@@ -267,7 +273,7 @@ public class UIConfirmation : MonoBehaviour
 
 public class ConfirmationAction
 {
-    public enum ConfirmationType { Heal, Enhance, Recruit, Overcome, Feat, Quit, Enhancing, Ability, AtDef, Ayumi, Isaac, Izumi, Mace, Michael, Origin }
+    public enum ConfirmationType { Heal, Enhance, Recruit, Overcome, Feat, Quit, Enhancing, Ability, AtDef, Ayumi, Isaac, Izumi, Mace, Michael, Origin, Rohan }
     public ConfirmationType MyType = ConfirmationType.Heal;
     public string MyText;
 
