@@ -129,6 +129,8 @@ public class Referee : MonoBehaviour
         Ability.OnActivateKayAbility += HandleKayPlayCardAbility;
         Ability.OnCheckNeedResponse += HandleCheckNeedResponse;
         UIConfirmation.OnRohanRecruitment += HandleRohanRecruitment;
+        UIConfirmation.OnActivateTempHealState += HandleTempHealState;
+        UIOnOff.OnUpdateUI += HandleUpdateUI;
     }
     private void OnDestroy()
     {
@@ -149,7 +151,10 @@ public class Referee : MonoBehaviour
         Ability.OnActivateKayAbility -= HandleKayPlayCardAbility;
         Ability.OnCheckNeedResponse -= HandleCheckNeedResponse;
         UIConfirmation.OnRohanRecruitment -= HandleRohanRecruitment;
+        UIConfirmation.OnActivateTempHealState -= HandleTempHealState;
+        UIOnOff.OnUpdateUI -= HandleUpdateUI;
     }
+
     private void Start()
     {
         gameActions = new Stack<GameAction>();
@@ -272,6 +277,10 @@ public class Referee : MonoBehaviour
     {
         iTurnCounter = CardDataBase.herosFatigued/2;
         Rohan = true;
+    }
+    private void HandleTempHealState()
+    {
+        if (activeAbility != null) activeAbility.ActivateAbility();
     }
     #endregion
 
@@ -557,6 +566,7 @@ public class Referee : MonoBehaviour
     {
         if (phaseToChangeTo == myPhase) return;
         Debug.Log($"{player}: Changing Phase to {phaseToChangeTo} from {myPhase}");
+        if (myPhase == GamePhase.HEROSelect && aZoe.ZoeHeal) aZoe.ZoeHeal = false;
         if (myPhase == GamePhase.Overcome && phaseToChangeTo != GamePhase.CombatAbility)
         {
             CB.ResetDiscardRecord();
@@ -669,18 +679,8 @@ public class Referee : MonoBehaviour
                 if (prevPhase == GamePhase.Wait) ProgressGameState();
                 PhaseIndicator.text = "Hero Selection";
                 ActivatePassive(Ability.PassiveType.TurnStart);
-                SetDeckNumberAmounts();
                 gHEROSelect.SetActive(true);
-                //check for heros that can be healed
-                bHEROSelectHeal.interactable = CB.CheckForHealableHeros();
-                //check for cards in enhancement deck or hand
-                bHEROSelectEnhance.interactable = (CB.CardsRemaining(CardDataBase.CardDecks.MyDeck) + CB.CardsRemaining(CardDataBase.CardDecks.MyHand) > 0);
-                //check for heros that are recruitable
-                bHEROSelectRectruit.interactable = (CB.CardsRemaining(CardDataBase.CardDecks.HQ) + CB.CardsRemaining(CardDataBase.CardDecks.Reserve) > 0);
-                //Check for usable hero cards
-                bHEROSelectOvercome.interactable = CB.CheckMyFieldForUsableHeros();
-                //Check for feat cards
-                bHEROSelectFeat.interactable = CB.CheckIfFeatCards();
+                HandleUpdateUI();
                 break;
             case GamePhase.AbilityDraft:
                 PhaseIndicator.text = "Ability Draft";
@@ -1002,6 +1002,12 @@ public class Referee : MonoBehaviour
         gCardPlay.SetActive(true);
         gCardSelect.SetActive(false);
     }
+    private void NullZoomButtons()
+    {
+        gCardSelect.SetActive(false);
+        gCardCollect.SetActive(false);
+        gCardPlay.SetActive(false);
+    }
     private void HandleCardButtons(CardData data, CardData.FieldPlacement placement)
     {
         if (myTurn)
@@ -1208,28 +1214,32 @@ public class Referee : MonoBehaviour
             NullZoomButtons();
         }
     }
-
     private void HandleKayPlayCardAbility()
     {
         gCardPlay.SetActive(true); 
     }
-
-    private void NullZoomButtons()
-    {
-        gCardSelect.SetActive(false);
-        gCardCollect.SetActive(false);
-        gCardPlay.SetActive(false);
-    }
-
     public void TurnOnPersonalDeckVisual()
     {
         DrawDeckButton.SetActive(true);
     }
-
     public void UpdateDeckCounts()
     {
         tCardsToCollectReserve.text = $"{CB.CardsRemaining(CardDataBase.CardDecks.Reserve)}";
         tCardsToDrawMyDeck.text = $"{CB.CardsRemaining(CardDataBase.CardDecks.MyDeck)}";
+    }
+    private void HandleUpdateUI()
+    {
+        SetDeckNumberAmounts();
+        //check for heros that can be healed
+        bHEROSelectHeal.interactable = CB.CheckForHealableHeros();
+        //check for cards in enhancement deck or hand
+        bHEROSelectEnhance.interactable = (CB.CardsRemaining(CardDataBase.CardDecks.MyDeck) + CB.CardsRemaining(CardDataBase.CardDecks.MyHand) > 0);
+        //check for heros that are recruitable
+        bHEROSelectRectruit.interactable = (CB.CardsRemaining(CardDataBase.CardDecks.HQ) + CB.CardsRemaining(CardDataBase.CardDecks.Reserve) > 0);
+        //Check for usable hero cards
+        bHEROSelectOvercome.interactable = CB.CheckMyFieldForUsableHeros();
+        //Check for feat cards
+        bHEROSelectFeat.interactable = CB.CheckIfFeatCards();
     }
     #endregion
 
@@ -1253,6 +1263,11 @@ public class Referee : MonoBehaviour
                     }
                     break;
                 case GamePhase.HEROSelect:
+                    if(card.Exhausted && aZoe.ZoeHeal && card.myPlacement==CardData.FieldPlacement.Mine)
+                    {
+                        card.Heal(false);
+                        return;
+                    }
                     if (!zoomed)
                     {
                         CardZoom(card);

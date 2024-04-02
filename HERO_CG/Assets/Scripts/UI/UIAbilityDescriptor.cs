@@ -32,10 +32,10 @@ public class UIAbilityDescriptor : MonoBehaviour
         descriptor.SetActive(true);
         title.text = ability.Name;
         description.text = ability.Description;
-        if (Referee.myTurn && ability.secondaryType == Ability.Type.Activate  && ability.canActivate && Referee.myPhase != Referee.GamePhase.AbilityDraft && Referee.myPhase != Referee.GamePhase.HeroDraft)
+        if (Referee.myTurn && ability.secondaryType == Ability.Type.Activate  && ability.canActivate && Referee.myPhase != Referee.GamePhase.AbilityDraft && Referee.myPhase != Referee.GamePhase.HeroDraft && ability.GetPlacement() == CardData.FieldPlacement.Mine)
         {
             activateAbility.gameObject.SetActive(true);
-            activateAbility.interactable = !ability.oncePerTurnUsed;
+            activateAbility.interactable = (ability.Name == "ZOE")? (!ability.oncePerTurnUsed && Referee.myPhase == Referee.GamePhase.HEROSelect) : !ability.oncePerTurnUsed;
             return;
         }
         activateAbility.gameObject.SetActive(false);

@@ -107,4 +107,9 @@ public class Ability : MonoBehaviour
     {
 
     }
+
+    public CardData.FieldPlacement GetPlacement()
+    {
+        return myHero.myPlacement;
+    }
 }
