@@ -129,6 +129,8 @@ public class CardDataBase : MonoBehaviour
         UIConfirmation.OnNeedDrawFromDiscard += DrawFromDiscard;
         Ability.OnNeedPlayFromReserve += HandlePlayCardFromReserve;
         UIConfirmation.OnPlayCardFromHand += HandlePlayCardFromHandSetup;
+        UIConfirmation.OnAccelerate += HandleAccelerate;
+        CardFunction.OnCardDiscarded += HandleChooseDiscardCard;
 
         Heros[0] = new Card(Card.Type.Character, "AKIO", 20, 70, HeroImages[0], AlphaHeros[0]);
         Heros[1] = new Card(Card.Type.Character, "AYUMI", 40, 50, HeroImages[1], AlphaHeros[1]);
@@ -281,12 +283,8 @@ public class CardDataBase : MonoBehaviour
         UIConfirmation.OnNeedDrawFromDiscard -= DrawFromDiscard;
         Ability.OnNeedPlayFromReserve -= HandlePlayCardFromReserve;
         UIConfirmation.OnPlayCardFromHand -= HandlePlayCardFromHandSetup;
-    }
-
-    private void HandlePlayCardFromHandSetup()
-    {
-        if(MyHand.Count>0)
-            DisplayCardList(MyHand);
+        UIConfirmation.OnAccelerate -= HandleAccelerate;
+        CardFunction.OnCardDiscarded -= HandleChooseDiscardCard;
     }
     #endregion
 
@@ -336,7 +334,7 @@ public class CardDataBase : MonoBehaviour
 
     private void ToggleCardDisplayArea(bool toggle)
     {
-        CardDisplayArea.gameObject.SetActive(toggle);
+        CardDisplayArea.parent.gameObject.SetActive(toggle);
     }
     #endregion
 
@@ -378,7 +376,7 @@ public class CardDataBase : MonoBehaviour
             }
             if (Referee.myTurn)
             {
-                Debug.Log("SetUpabilityDraft: As player 1, activating EndAbilityDraft for self and others");
+                //Debug.Log("SetUpabilityDraft: As player 1, activating EndAbilityDraft for self and others");
                 myManager.RPCRequest("EndAbilityDraft", RpcTarget.Others, false);
                 EndAbilityDraft(true);
             }
@@ -413,7 +411,7 @@ public class CardDataBase : MonoBehaviour
                 CatchHeroReserveOversight(card);
                 Draft.Remove(item);
                 Destroy(item.gameObject);
-                Debug.Log($"Draft: {Draft.Count} - Reserve: {HeroReserve.Count}");
+                //Debug.Log($"Draft: {Draft.Count} - Reserve: {HeroReserve.Count}");
                 if (Referee.myTurn)
                 {
                     CheckDraft();
@@ -425,13 +423,13 @@ public class CardDataBase : MonoBehaviour
 
     private void CatchHeroReserveOversight(string card)
     {
-        Debug.Log($"Oversight: {HeroReserve.Count}");
+        //Debug.Log($"Oversight: {HeroReserve.Count}");
         foreach(Card c in HeroReserve)
         {
             if(c.Name == card)
             {
                 RemoveHeroReserve(c);
-                Debug.Log($"Oversight: {HeroReserve.Count}");
+                //Debug.Log($"Oversight: {HeroReserve.Count}");
                 return;
             }
         }
@@ -439,7 +437,7 @@ public class CardDataBase : MonoBehaviour
 
     private void RemoveHeroReserve(Card card)
     {
-        Debug.Log($"Removed {card.Name} from Reserve");
+        //Debug.Log($"Removed {card.Name} from Reserve");
         HeroReserve.Remove(card);
     }
 
@@ -472,7 +470,7 @@ public class CardDataBase : MonoBehaviour
         switch (list)
         {
             case "HeroReserve":
-                Debug.Log("Got a list.");
+                //Debug.Log("Got a list.");
                 HeroReserve.Clear();
                 foreach (string name in listToShare)
                 {
@@ -921,6 +919,12 @@ public class CardDataBase : MonoBehaviour
         return MyField[0];
     }
 
+    private void HandlePlayCardFromHandSetup()
+    {
+        if (MyHand.Count > 0)
+            DisplayCardList(MyHand);
+    }
+
     #region Drawing and Removing Cards
     private void DrawRandomCard(List<Card> whatDeck)
     {
@@ -996,6 +1000,15 @@ public class CardDataBase : MonoBehaviour
     }
     #endregion
 
+    #region Abilitys 
+    private void HandleAccelerate()
+    {
+        //Debug.Log("CB recieved Accelerate.");
+        DrawFromEnhanceDeck(3);
+        ForceDiscard("Any", 2);
+    }
+    #endregion
+
     #region Force Discard
     private void HandleCardForceDiscard(string who, string type, int amount)
     {
@@ -1010,6 +1023,7 @@ public class CardDataBase : MonoBehaviour
         }
     }
 
+    int forceCount = 0;
     public void ForceDiscard(string type, int amount)
     {
         switch (type)
@@ -1029,6 +1043,38 @@ public class CardDataBase : MonoBehaviour
                 break;
             case "Feat":
                 break;
+            case "Any":
+                Debug.Log("Setup for Force Discard");
+                forceCount = amount;
+                GM.ToggleDiscard();
+                HandButton.SetActive(false);
+                DisplayCardList(MyHand);
+                break;
+        }
+    }
+    public void ReduceForceCount()
+    {
+        forceCount--;
+        //Debug.Log($"Force count: {forceCount}");
+        if(forceCount <= 0)
+        {
+            HandButton.SetActive(true);
+            ToggleCardDisplayArea(false);
+            GM.ToggleDiscard();
+        }
+        else
+        {
+            DisplayCardList(MyHand);
+        }
+    }
+    private void HandleChooseDiscardCard(Card card)
+    {
+        if (MyHand.Contains(card))
+        {
+            //Debug.Log("Card was in hand and being removed.");
+            RemoveCardFromHand(card);
+            GM.SetCardZoom(false);
+            ReduceForceCount();
         }
     }
     #endregion

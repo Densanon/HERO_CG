@@ -9,6 +9,7 @@ public class CardFunction : MonoBehaviour
     public static Action OnCardDeselected = delegate { };
     public static Action<Card> OnCardCollected = delegate { };
     public static Action<Card> OnCardPlayed = delegate { };
+    public static Action<Card> OnCardDiscarded = delegate { };
 
     private void Awake()
     {
@@ -33,5 +34,10 @@ public class CardFunction : MonoBehaviour
     public void CardCollected()
     {
         OnCardCollected?.Invoke(myCard.myCard);
+    }
+
+    public void DiscardCard()
+    {
+        OnCardDiscarded?.Invoke(myCard.myCard);
     }
 }

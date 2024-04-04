@@ -50,8 +50,8 @@ public class PhotonRoomController : MonoBehaviourPunCallbacks
     private void HandleGameModeSelected(GameMode gameMode)
     {
         Debug.Log($"HandleGameModeSelected where Game Mode is {gameMode.name}");
-        if (!PhotonNetwork.IsConnectedAndReady) return;
-        if (PhotonNetwork.InRoom) return;
+        if (!PhotonNetwork.IsConnectedAndReady) { Debug.Log("Wasn't connected or ready."); return; }
+        if (PhotonNetwork.InRoom) { Debug.Log("Already in a room."); return; }
 
         _selectedGameMode = gameMode;
         Debug.Log($"Joining new {_selectedGameMode.Name} game");

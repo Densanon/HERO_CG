@@ -32,8 +32,10 @@ public class UIAbilityDescriptor : MonoBehaviour
         descriptor.SetActive(true);
         title.text = ability.Name;
         description.text = ability.Description;
-        if (Referee.myTurn && ability.secondaryType == Ability.Type.Activate  && ability.canActivate && Referee.myPhase != Referee.GamePhase.AbilityDraft && Referee.myPhase != Referee.GamePhase.HeroDraft && ability.GetPlacement() == CardData.FieldPlacement.Mine)
+        //Debug.Log("Getting inquery.");
+        if (Referee.myTurn && (ability.myType == Ability.Type.Activate||ability.secondaryType == Ability.Type.Activate)  && ability.canActivate && Referee.myPhase != Referee.GamePhase.AbilityDraft && Referee.myPhase != Referee.GamePhase.HeroDraft && ability.GetPlacement() == CardData.FieldPlacement.Mine)
         {
+            //Debug.Log("Should be activated.");
             activateAbility.gameObject.SetActive(true);
             activateAbility.interactable = (ability.Name == "ZOE")? (!ability.oncePerTurnUsed && Referee.myPhase == Referee.GamePhase.HEROSelect) : !ability.oncePerTurnUsed;
             return;
@@ -43,7 +45,7 @@ public class UIAbilityDescriptor : MonoBehaviour
 
     public void Activate()
     {
-        Debug.Log("Activating ability with button in IUAbilityDescriptor.");
+        //Debug.Log("Activating ability with button in IUAbilityDescriptor.");
         activateAbility.interactable = false;
         OnActivateAbility?.Invoke(myAbility);
     }

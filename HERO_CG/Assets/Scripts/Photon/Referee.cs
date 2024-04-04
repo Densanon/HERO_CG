@@ -44,6 +44,7 @@ public class Referee : MonoBehaviour
     public int iEnhanceCardsToCollect;
     public GameObject gCardSelect;
     public GameObject gCardPlay;
+    public GameObject gCardDiscard;
 
     public GameObject ResponsePanel;
     public GameObject PhaseDeclarationUI;
@@ -243,7 +244,7 @@ public class Referee : MonoBehaviour
     #region Ability Methods
     public void ActivatePassive(Ability.PassiveType type)
     {
-        Debug.Log($"Starting a Passive: {type}");
+        //Debug.Log($"Starting a Passive: {type}");
         OnPassiveActivate?.Invoke(type);
     }
     public void SetActiveAbility(Ability ability)
@@ -862,7 +863,6 @@ public class Referee : MonoBehaviour
         CB.PlayCard(card);
         if (AbilityPlayable()) activeAbility.ActivateAbility();
     }
-
     private bool AbilityPlayable()
     {
         if(activeAbility != null && !activeAbility.oncePerTurnUsed)
@@ -876,13 +876,11 @@ public class Referee : MonoBehaviour
         }
         return false;
     }
-
     public void SetDeckNumberAmounts()
     {
         tCardsToCollectReserve.text = $"{CB.CardsRemaining(CardDataBase.CardDecks.Reserve)}";
         tCardsToDrawMyDeck.text = $"{CB.CardsRemaining(CardDataBase.CardDecks.MyDeck)}";
     }
-
     private void CardZoom(CardData card)
     {
         zoomed = true;
@@ -947,8 +945,20 @@ public class Referee : MonoBehaviour
         }
     }
 
-    #region Ability Methods
+    bool forceDiscard = false;
+    public void ToggleDiscard()
+    {
+        forceDiscard = !forceDiscard;
+        if (!forceDiscard) NullZoomButtons();
+        //Debug.Log($"Setting forceDiscard in GM to: {forceDiscard}");
+        
+    }
+    public void SetCardZoom(bool value)
+    {
+        zoomed = value;
+    }
 
+    #region Ability Methods
     private void ClearAbilityPanel()
     {
         if (gAbilities != null)
@@ -961,7 +971,6 @@ public class Referee : MonoBehaviour
             }
         }
     }
-
     private void GetNewAbilities(CardData card)
     {
         if (card.charAbility != null)
@@ -985,7 +994,6 @@ public class Referee : MonoBehaviour
             }
         }
     }
-
     #endregion
     #endregion
 
@@ -995,18 +1003,29 @@ public class Referee : MonoBehaviour
         gCardCollect.SetActive(true);
         gCardPlay.SetActive(false);
         gCardSelect.SetActive(false);
+        gCardDiscard.SetActive(false);
     }
     private void SetPlayButton()
     {
         gCardCollect.SetActive(false);
         gCardPlay.SetActive(true);
         gCardSelect.SetActive(false);
+        gCardDiscard.SetActive(false);
+    }
+    private void SetDiscardButton()
+    {
+        //Debug.Log("Setting Discard Button");
+        gCardCollect.SetActive(false);
+        gCardPlay.SetActive(false);
+        gCardSelect.SetActive(false);
+        gCardDiscard.SetActive(true);
     }
     private void NullZoomButtons()
     {
         gCardSelect.SetActive(false);
         gCardCollect.SetActive(false);
         gCardPlay.SetActive(false);
+        gCardDiscard.SetActive(false);
     }
     private void HandleCardButtons(CardData data, CardData.FieldPlacement placement)
     {
@@ -1023,8 +1042,12 @@ public class Referee : MonoBehaviour
                     {
                         SetCollectButton();
                         return;
+                    }else if(forceDiscard == true && placement == CardData.FieldPlacement.Hand)
+                    {
+                        SetDiscardButton();
+                        return;
                     }
-                        NullZoomButtons();
+                    NullZoomButtons();
                     break;
                 case GamePhase.AbilityDraft:
                     gCardSelect.SetActive(false);
@@ -1047,6 +1070,11 @@ public class Referee : MonoBehaviour
                         SetCollectButton();
                         return;
                     }
+                    else if (forceDiscard == true && placement == CardData.FieldPlacement.Hand)
+                    {
+                        SetDiscardButton();
+                        return;
+                    }
                     gCardSelect.SetActive(true);
                     gCardCollect.SetActive(false);
                     gCardPlay.SetActive(false);
@@ -1060,6 +1088,11 @@ public class Referee : MonoBehaviour
                     else if (Rohan && placement == CardData.FieldPlacement.HQ)
                     {
                         SetCollectButton();
+                        return;
+                    }
+                    else if (forceDiscard == true && placement == CardData.FieldPlacement.Hand)
+                    {
+                        SetDiscardButton();
                         return;
                     }
                     switch (placement)
@@ -1101,6 +1134,11 @@ public class Referee : MonoBehaviour
                         SetPlayButton();
                         return;
                     }
+                    else if (forceDiscard == true && placement == CardData.FieldPlacement.Hand)
+                    {
+                        SetDiscardButton();
+                        return;
+                    }
                     switch (placement)
                     {
                         case CardData.FieldPlacement.Hand:
@@ -1128,6 +1166,11 @@ public class Referee : MonoBehaviour
                     else if (Rohan && placement == CardData.FieldPlacement.HQ)
                     {
                         SetCollectButton();
+                        return;
+                    }
+                    else if (forceDiscard == true && placement == CardData.FieldPlacement.Hand)
+                    {
+                        SetDiscardButton();
                         return;
                     }
                     if (AttDef)
@@ -1192,12 +1235,22 @@ public class Referee : MonoBehaviour
                         SetCollectButton();
                         return;
                     }
+                    else if (forceDiscard == true && placement == CardData.FieldPlacement.Hand)
+                    {
+                        SetDiscardButton();
+                        return;
+                    }
                     NullZoomButtons();
                     break;
                 case GamePhase.CombatAbility:
                     if (AbilityPlayable() && placement == CardData.FieldPlacement.Hand)
                     {
                         SetPlayButton();
+                        return;
+                    }
+                    else if (forceDiscard == true && placement == CardData.FieldPlacement.Hand)
+                    {
+                        SetDiscardButton();
                         return;
                     }
                     NullZoomButtons();

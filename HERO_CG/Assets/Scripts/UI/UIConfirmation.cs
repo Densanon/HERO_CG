@@ -34,6 +34,8 @@ public class UIConfirmation : MonoBehaviour
     public static Action OnPlayCardFromHand = delegate { };
     public static Action OnActivateTempHealState = delegate { };
 
+    public static Action OnAccelerate = delegate { };
+
     #region Unity Methods
     private void Awake()
     {
@@ -87,6 +89,8 @@ public class UIConfirmation : MonoBehaviour
         confirmationActions[ConfirmationAction.ConfirmationType.Yasmine] = () => OnPlayCardFromHand?.Invoke();
         confirmationActions[ConfirmationAction.ConfirmationType.Zhao] = () => OnPlayCardFromHand?.Invoke();
         confirmationActions[ConfirmationAction.ConfirmationType.Zoe] = () => OnActivateTempHealState?.Invoke();
+
+        confirmationActions[ConfirmationAction.ConfirmationType.Accelerate] = () => { OnAccelerate?.Invoke(); OnAbilityComplete?.Invoke("ACCELERATE"); };
     }
     private void initializeConfirmationHandlers()
     {
@@ -107,7 +111,8 @@ public class UIConfirmation : MonoBehaviour
             {"Rohan", onRohanConfirmationRequest },
             {"Yasmine", onYasmineConfirmationRequest },
             {"Zhao", onZhaoConfirmationRequest },
-            {"Zoe", onZoeConfirmationRequest }
+            {"Zoe", onZoeConfirmationRequest },
+            {"Accelerate", onAccelerateConfirmationRequest }
         };
     }
 
@@ -175,6 +180,11 @@ public class UIConfirmation : MonoBehaviour
     private void onZoeConfirmationRequest()
     {
         queueConfirmation(new ConfirmationAction("Confirm: Zoe's heal ability", ConfirmationAction.ConfirmationType.Zoe));
+    }
+
+    private void onAccelerateConfirmationRequest()
+    {
+        queueConfirmation(new ConfirmationAction("Confirm: Accelerate Draw and Discard", ConfirmationAction.ConfirmationType.Accelerate));
     }
 
     private void displayNextConfirmation()
@@ -297,7 +307,8 @@ public class UIConfirmation : MonoBehaviour
 
 public class ConfirmationAction
 {
-    public enum ConfirmationType { Heal, Enhance, Recruit, Overcome, Feat, Quit, Enhancing, Ability, AtDef, Ayumi, Isaac, Izumi, Mace, Michael, Origin, Rohan, Yasmine, Zhao, Zoe}
+    public enum ConfirmationType { Heal, Enhance, Recruit, Overcome, Feat, Quit, Enhancing, Ability, AtDef, Ayumi, Isaac, Izumi, Mace, Michael, Origin, Rohan, Yasmine, Zhao, Zoe
+    , Accelerate}
     public ConfirmationType MyType = ConfirmationType.Heal;
     public string MyText;
 

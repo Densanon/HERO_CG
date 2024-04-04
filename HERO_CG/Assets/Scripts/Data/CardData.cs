@@ -668,7 +668,7 @@ public class CardData : MonoBehaviour
     }
     public void SetDefense(int amount)
     {
-        Debug.Log("Was told to set Defense " + amount);
+        //Debug.Log("Was told to set Defense " + amount);
         Defense = amount;
         tDefense.text = Defense.ToString();
         ColorCheck();
@@ -699,7 +699,7 @@ public class CardData : MonoBehaviour
     #region Targeting
     public void Targeted()//Activated on UI
     {
-        Debug.Log($"{Name}: I am being clicked on!");
+        //Debug.Log($"{Name}: I am being clicked on!");
         IsTarget?.Invoke(this);
     }
     public void OvercomeTarget(bool target)
