@@ -35,6 +35,7 @@ public class UIConfirmation : MonoBehaviour
     public static Action OnActivateTempHealState = delegate { };
 
     public static Action OnAccelerate = delegate { };
+    public static Action OnBackfire = delegate { };
 
     #region Unity Methods
     private void Awake()
@@ -91,6 +92,7 @@ public class UIConfirmation : MonoBehaviour
         confirmationActions[ConfirmationAction.ConfirmationType.Zoe] = () => OnActivateTempHealState?.Invoke();
 
         confirmationActions[ConfirmationAction.ConfirmationType.Accelerate] = () => { OnAccelerate?.Invoke(); OnAbilityComplete?.Invoke("ACCELERATE"); };
+        confirmationActions[ConfirmationAction.ConfirmationType.Backfire] = () => { OnBackfire?.Invoke(); OnAbilityComplete?.Invoke("BACKFIRE"); };
     }
     private void initializeConfirmationHandlers()
     {
@@ -112,7 +114,8 @@ public class UIConfirmation : MonoBehaviour
             {"Yasmine", onYasmineConfirmationRequest },
             {"Zhao", onZhaoConfirmationRequest },
             {"Zoe", onZoeConfirmationRequest },
-            {"Accelerate", onAccelerateConfirmationRequest }
+            {"Accelerate", onAccelerateConfirmationRequest },
+            {"Backfire", onBackfireConfirmationRequest }
         };
     }
 
@@ -185,6 +188,10 @@ public class UIConfirmation : MonoBehaviour
     private void onAccelerateConfirmationRequest()
     {
         queueConfirmation(new ConfirmationAction("Confirm: Accelerate Draw and Discard", ConfirmationAction.ConfirmationType.Accelerate));
+    }
+    private void onBackfireConfirmationRequest()
+    {
+        queueConfirmation(new ConfirmationAction("Activate Backfire", ConfirmationAction.ConfirmationType.Backfire));
     }
 
     private void displayNextConfirmation()
@@ -308,7 +315,7 @@ public class UIConfirmation : MonoBehaviour
 public class ConfirmationAction
 {
     public enum ConfirmationType { Heal, Enhance, Recruit, Overcome, Feat, Quit, Enhancing, Ability, AtDef, Ayumi, Isaac, Izumi, Mace, Michael, Origin, Rohan, Yasmine, Zhao, Zoe
-    , Accelerate}
+    , Accelerate, Backfire}
     public ConfirmationType MyType = ConfirmationType.Heal;
     public string MyText;
 

@@ -131,6 +131,7 @@ public class CardDataBase : MonoBehaviour
         UIConfirmation.OnPlayCardFromHand += HandlePlayCardFromHandSetup;
         UIConfirmation.OnAccelerate += HandleAccelerate;
         CardFunction.OnCardDiscarded += HandleChooseDiscardCard;
+        UIConfirmation.OnBackfire += HandleAbilityListRequest;
 
         Heros[0] = new Card(Card.Type.Character, "AKIO", 20, 70, HeroImages[0], AlphaHeros[0]);
         Heros[1] = new Card(Card.Type.Character, "AYUMI", 40, 50, HeroImages[1], AlphaHeros[1]);
@@ -285,6 +286,38 @@ public class CardDataBase : MonoBehaviour
         UIConfirmation.OnPlayCardFromHand -= HandlePlayCardFromHandSetup;
         UIConfirmation.OnAccelerate -= HandleAccelerate;
         CardFunction.OnCardDiscarded -= HandleChooseDiscardCard;
+        UIConfirmation.OnBackfire -= HandleAbilityListRequest;
+    }
+
+    private void HandleAbilityListRequest()
+    {
+        ShowAbilityList(Ability.Type.Activate);
+    }
+
+    private void ShowAbilityList(Ability.Type t)
+    {
+        List<Ability> list = new List<Ability>();
+        switch (t)
+        {
+            case Ability.Type.Activate:
+                foreach(Ability a in heroAbilitiesOnField)
+                {
+                    if (a.GetPlacement() == CardData.FieldPlacement.Opp && a.secondaryType == Ability.Type.Activate) list.Add(a);
+                }
+                foreach (Ability a in cardAbilitiesOnField)
+                {
+                    if (a.GetPlacement() == CardData.FieldPlacement.Opp && a.myType == Ability.Type.Activate) list.Add(a);
+                }
+                break;
+            case Ability.Type.Character:
+                break;
+            case Ability.Type.Feat:
+                break;
+            case Ability.Type.Passive:
+                break;
+        }
+        GM.ShowAbilityList(list);
+        list = null;
     }
     #endregion
 
@@ -993,7 +1026,7 @@ public class CardDataBase : MonoBehaviour
     {
         DiscardedCards.Clear();
     }
-
+    
     public void AddDiscardedCard(Card cardToAdd)
     {
         DiscardedCards.Add(cardToAdd);
@@ -1388,92 +1421,74 @@ public class CardDataBase : MonoBehaviour
     private void SpawnAbility(string AbilityName, CardData cardToAttachTo, bool told)
     {
         Debug.Log($"Spawning {AbilityName} on {cardToAttachTo}.");
+        Ability a = new Ability();
         switch (AbilityName)
         {
             case "ACCELERATE":
-                Ability a = cardToAttachTo.gameObject.AddComponent<aAccelerate>();
-                cardToAttachTo.AdjustCounter(1, a);
+                a = cardToAttachTo.gameObject.AddComponent<aAccelerate>();
                 break;
             case "BACKFIRE":
-                Ability b = cardToAttachTo.gameObject.AddComponent<aBackfire>();
-                cardToAttachTo.AdjustCounter(1, b);
+                a = cardToAttachTo.gameObject.AddComponent<aBackfire>();
                 break;
             case "BOLSTER":
-                Ability c = cardToAttachTo.gameObject.AddComponent<aBolster>();
-                cardToAttachTo.AdjustCounter(1, c);
+                a = cardToAttachTo.gameObject.AddComponent<aBolster>();
                 break;
             case "BOOST":
-                Ability d = cardToAttachTo.gameObject.AddComponent<aBoost>();
-                cardToAttachTo.AdjustCounter(1, d);
+                a = cardToAttachTo.gameObject.AddComponent<aBoost>();
                 break;
-            case "COLLATERAL DAMAGE":
-                Ability e = cardToAttachTo.gameObject.AddComponent<aCollateralDamage>();
-                cardToAttachTo.AdjustCounter(1, e);
+            case "COLLATERALDAMAGE":
+                a = cardToAttachTo.gameObject.AddComponent<aCollateralDamage>();
                 break;
             case "CONVERT":
-                Ability f = cardToAttachTo.gameObject.AddComponent<aConvert>();
-                cardToAttachTo.AdjustCounter(1, f);
+                a = cardToAttachTo.gameObject.AddComponent<aConvert>();
                 break;
-            case "COUNTER-MEASURES":
-                Ability g = cardToAttachTo.gameObject.AddComponent<aCounterMeasures>();
-                cardToAttachTo.AdjustCounter(1, g);
+            case "COUNTERMEASURES":
+                a = cardToAttachTo.gameObject.AddComponent<aCounterMeasures>();
                 break;
             case "DROUGHT":
-                Ability h = cardToAttachTo.gameObject.AddComponent<aDrought>();
-                cardToAttachTo.AdjustCounter(1, h);
+                a = cardToAttachTo.gameObject.AddComponent<aDrought>();
                 break;
             case "FORTIFICATION":
-                Ability i = cardToAttachTo.gameObject.AddComponent<aFortification>();
-                cardToAttachTo.AdjustCounter(1, i);
+                a = cardToAttachTo.gameObject.AddComponent<aFortification>();
                 break;
-            case "GOING NUCLEAR":
-                Ability j = cardToAttachTo.gameObject.AddComponent<aGoingNuclear>();
-                cardToAttachTo.AdjustCounter(1, j);
+            case "GOINGNUCLEAR":
+                a = cardToAttachTo.gameObject.AddComponent<aGoingNuclear>();
                 break;
             case "HARDENED":
-                Ability k = cardToAttachTo.gameObject.AddComponent<aHardened>();
-                cardToAttachTo.AdjustCounter(1, k);
+                a = cardToAttachTo.gameObject.AddComponent<aHardened>();
                 break;
             case "IMPEDE":
-                Ability l = cardToAttachTo.gameObject.AddComponent<aImpede>();
-                cardToAttachTo.AdjustCounter(1, l);
+                a = cardToAttachTo.gameObject.AddComponent<aImpede>();
                 break;
             case "KAIROS":
-                Ability m = cardToAttachTo.gameObject.AddComponent<aKairos>();
-                cardToAttachTo.AdjustCounter(1, m);
+                a = cardToAttachTo.gameObject.AddComponent<aKairos>();
                 break;
             case "PREVENTION":
-                Ability n = cardToAttachTo.gameObject.AddComponent<aPrevention>();
-                cardToAttachTo.AdjustCounter(1, n);
+                a = cardToAttachTo.gameObject.AddComponent<aPrevention>();
                 break;
             case "PROTECT":
-                Ability o = cardToAttachTo.gameObject.AddComponent<aProtect>();
-                cardToAttachTo.AdjustCounter(1, o);
+                a = cardToAttachTo.gameObject.AddComponent<aProtect>();
                 break;
             case "REDUCTION":
-                Ability p = cardToAttachTo.gameObject.AddComponent<aAccelerate>();
-                cardToAttachTo.AdjustCounter(1, p);
+                a = cardToAttachTo.gameObject.AddComponent<aReduction>();
                 break;
             case "REINFORCEMENT":
-                Ability q = cardToAttachTo.gameObject.AddComponent<aReinforcement>();
-                cardToAttachTo.AdjustCounter(1, q);
+                a = cardToAttachTo.gameObject.AddComponent<aReinforcement>();
                 break;
             case "RESURRECT":
-                Ability r = cardToAttachTo.gameObject.AddComponent<aResurrect>();
-                cardToAttachTo.AdjustCounter(1, r);
+                a = cardToAttachTo.gameObject.AddComponent<aResurrect>();
                 break;
             case "REVELATION":
-                Ability s = cardToAttachTo.gameObject.AddComponent<aRevelation>();
-                cardToAttachTo.AdjustCounter(1, s);
+                a = cardToAttachTo.gameObject.AddComponent<aRevelation>();
                 break;
-            case "SHEILDING":
-                Ability t = cardToAttachTo.gameObject.AddComponent<aShielding>();
-                cardToAttachTo.AdjustCounter(1, t);
+            case "SHIELDING":
+                a = cardToAttachTo.gameObject.AddComponent<aShielding>();
                 break;
             default:
                 Debug.Log($"An ability was requested that doesn't exist. {AbilityName}");
                 break;
         }
+        cardToAttachTo.AdjustCounter(1, a);
         if (!told)
         {
             myManager.RPCRequest("AttachAbility", RpcTarget.OthersBuffered, AbilityName, cardToAttachTo.Name);
@@ -1511,6 +1526,131 @@ public class CardDataBase : MonoBehaviour
             cardAbilitiesOnField.Add(ability);
             //Debug.Log($"{ability.Name} added to master list.");
 
+        }
+    }
+
+    private void HandleNeedCopyOfAbility(string Name)
+    {
+        Ability a = new Ability();
+        switch (Name)
+        {
+            case "AKIO":
+                a = new aAkio();
+                break;
+            case "AYUMI":
+                a = new aAyumi();
+                break;
+            case "BOULOS":
+                a = new aBoulos();
+                break;
+            case "CHRISTOPH":
+                a = new aChristoph();
+                break;
+            case "ENG":
+                a = new aEng();
+                break;
+            case "GAMBITO":
+                a = new aGambito();
+                break;
+            case "GRIT":
+                a = new aGrit();
+                break;
+            case "HINDRA":
+                a = new aHindra();
+                break;
+            case "IGNACIA":
+                a = new aIgnacia();
+                break;
+            case "ISAAC":
+                a = new aIsaac();
+                break;
+            case "IZUMI":
+                a = new aIzumi();
+                break;
+            case "KAY":
+                a = new aKay();
+                break;
+            case "KYAUTA":
+                a = new aKyauta();
+                break;
+            case "MACE":
+                a = new aMace();
+                break;
+            case "MICHAEL":
+                a = new aMichael();
+                break;
+            case "ORIGIN":
+                a = new aOrigin();
+                break;
+            case "ROHAN":
+                a = new aRohan();
+                break;
+            case "YASMINE":
+                a = new aYasmine();
+                break;
+            case "ZHAO":
+                a = new aZhao();
+                break;
+            case "ZOE":
+                a = new aZoe();
+                break;
+            case "ACCELERATE":
+                a = new aAccelerate();
+                break;
+            case "BACKFIRE":
+                a = new aBackfire();
+                break;
+            case "BOLSTER":
+                a = new aBolster();
+                break;
+            case "COLLATERALDAMAGE":
+                a = new aCollateralDamage();
+                break;
+            case "CONVERT":
+                a = new aConvert();
+                break;
+            case "COUNTERMEASURES":
+                a = new aCounterMeasures();
+                break;
+            case "DROUGHT":
+                a = new aDrought();
+                break;
+            case "FORTIFICATION":
+                a = new aFortification();
+                break;
+            case "GOINGNUCLEAR":
+                a = new aGoingNuclear();
+                break;
+            case "HARDENED":
+                a = new aHardened();
+                break;
+            case "IMPEDE":
+                a = new aImpede();
+                break;
+            case "KAIROS":
+                a = new aKairos();
+                break;
+            case "PREVENTION":
+                a = new aPrevention();
+                break;
+            case "PROTECT":
+                a = new aProtect();
+                break;
+            case "REDUCTION":
+                a = new aReduction();
+                break;
+            case "REINFORCEMENT":
+                a = new aReinforcement();
+                break;
+            case "RESURRECTION":
+                a = new aResurrect();
+                break;
+            case "REVELATION":
+                a = new aRevelation();
+                break;
+            case "SHIELDING":
+                a = new aShielding();
+                break;
         }
     }
     #endregion

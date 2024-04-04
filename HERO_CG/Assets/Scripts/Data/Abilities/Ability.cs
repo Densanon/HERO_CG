@@ -18,6 +18,7 @@ public class Ability : MonoBehaviour
     public bool oncePerTurnUsed { get; private set; }
     public bool canActivate { get; private set; }
     protected bool passiveCheckable = false;
+    protected bool copy = false;
 
     public static Action<Ability> OnAddAbilityToMasterList = delegate { };
     public static Action OnFeatComplete = delegate { };
@@ -42,6 +43,8 @@ public class Ability : MonoBehaviour
 
     protected virtual void Awake()
     {
+        if (this.gameObject.GetComponent<CardData>() == null) return;
+
         canActivate = true;
         oncePerTurnUsed = false;
         myHero = this.gameObject.GetComponent<CardData>();
@@ -57,7 +60,9 @@ public class Ability : MonoBehaviour
 
     private void Start()
     {
-        if(passiveCheckable)
+        if (this.gameObject.GetComponent<CardData>() == null) return;
+
+        if (passiveCheckable)
             OnAddAbilityToMasterList?.Invoke(this);
     }
 
@@ -67,6 +72,11 @@ public class Ability : MonoBehaviour
         Referee.OnTurnResetables -= ResetOncePerTurn;
         Referee.OnAbilityComplete -= AbilityCompleteCleanup;
         UIConfirmation.OnAbilityComplete -= AbilityCompleteCleanup;
+    }
+
+    public void Setcopy()
+    {
+        copy = true;
     }
 
     protected virtual void ResetOncePerTurn()
@@ -101,11 +111,12 @@ public class Ability : MonoBehaviour
     public virtual void ActivateAbility()
     {
         ChangeOncePerTurn(true);
+        if (copy) Destroy(this,1f);
     }
 
     public virtual void AbilityCompleteCleanup(string abilityName)
     {
-
+        
     }
 
     public CardData.FieldPlacement GetPlacement()

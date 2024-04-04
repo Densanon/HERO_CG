@@ -11,7 +11,7 @@ public class UICharacterAbility : MonoBehaviour
     public Image abilityIcon;
     public Button activateButton;
 
-    public static Action<Ability> OnAbilityDescriptionPressed = delegate { };
+    public static Action<Ability,bool> OnAbilityDescriptionPressed = delegate { };
 
     public void Awake()
     {
@@ -23,17 +23,19 @@ public class UICharacterAbility : MonoBehaviour
         Referee.OnTurnResetables -= ResetAbilityInteractible;
     }
 
-    public void AbilityAwake(Ability ability)
+    bool Copy = false;
+    public void AbilityAwake(Ability ability,bool copy)
     {
         myAbility = ability;
         nameText.text = myAbility.Name;
         AssignAbilityIcon();
         activateButton = abilityIcon.gameObject.GetComponent<Button>();
+        Copy = copy;
     }
 
     public void PressDescription()
     {
-        OnAbilityDescriptionPressed?.Invoke(myAbility);
+        OnAbilityDescriptionPressed?.Invoke(myAbility,Copy);
     }
 
     public void PressedActivateAbility()

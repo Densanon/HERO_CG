@@ -37,6 +37,8 @@ public class Referee : MonoBehaviour
     public GameObject pAbilityPrefab;
     public Transform tAbilityContainer;
     List<GameObject> gAbilities = new List<GameObject>();
+    public Transform tAbilityDisplay;
+    List<GameObject> gCopyAbilities = new List<GameObject>();
     public GameObject gCardCollect;
     public TMP_Text tCardsToCollectReserve;
     public TMP_Text tCardsToDrawMyDeck;
@@ -977,7 +979,7 @@ public class Referee : MonoBehaviour
         {
             GameObject obj = Instantiate(pAbilityPrefab, tAbilityContainer);
             UICharacterAbility ca = obj.GetComponent<UICharacterAbility>();
-            ca.AbilityAwake(card.charAbility);
+            ca.AbilityAwake(card.charAbility, false);
 
             gAbilities.Add(obj);
         }
@@ -988,10 +990,33 @@ public class Referee : MonoBehaviour
             {
                 GameObject o = Instantiate(pAbilityPrefab, tAbilityContainer);
                 UICharacterAbility uica = o.GetComponent<UICharacterAbility>();
-                uica.AbilityAwake(a);
+                uica.AbilityAwake(a,false);
 
                 gAbilities.Add(o);
             }
+        }
+    }
+    private void ClearAbilityCopyPanel()
+    {
+        for (int i = gCopyAbilities.Count - 1; i > -1; i--)
+        {
+            GameObject obj = gCopyAbilities[i];
+            gCopyAbilities.Remove(obj);
+            Destroy(obj);
+        }
+    }
+    public void ShowAbilityList(List<Ability> abilities)
+    {
+        tAbilityDisplay.parent.gameObject.SetActive(true);
+        ClearAbilityCopyPanel();
+        foreach(Ability a in abilities)
+        {
+            Debug.Log($"Adding: {a.Name}");
+            GameObject o = Instantiate(pAbilityPrefab, tAbilityDisplay);
+            UICharacterAbility uica = o.GetComponent<UICharacterAbility>();
+            uica.AbilityAwake(a,true);
+
+            gCopyAbilities.Add(o);
         }
     }
     #endregion
