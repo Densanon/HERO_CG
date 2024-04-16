@@ -24,6 +24,7 @@ public class CardDataBase : MonoBehaviour
     public static Action OnSendHeroStats = delegate { };
     public static Action<string> OnSendYasmineAbilityRequest = delegate { };
     public static Action<string> OnZhaoAbilityRequest = delegate { };
+    public static Action OnRequestHeroModified = delegate { };
 
     public GameObject CardHandPrefab;
     public GameObject CardDraftPrefab;
@@ -51,6 +52,7 @@ public class CardDataBase : MonoBehaviour
     public static bool bTargeting = false;
     public static int handSize = 0;
     public static int herosFatigued = 0;
+    public static int herosModified = 0;
 
     #region Debuging
     public bool AiDraft = false;
@@ -132,6 +134,7 @@ public class CardDataBase : MonoBehaviour
         UIConfirmation.OnAccelerate += HandleAccelerate;
         CardFunction.OnCardDiscarded += HandleChooseDiscardCard;
         UIConfirmation.OnBackfire += HandleAbilityListRequest;
+        CardData.OnSendModifiedStatus += HandleHeroModifiedCensus;
 
         Heros[0] = new Card(Card.Type.Character, "AKIO", 20, 70, HeroImages[0], AlphaHeros[0]);
         Heros[1] = new Card(Card.Type.Character, "AYUMI", 40, 50, HeroImages[1], AlphaHeros[1]);
@@ -287,7 +290,8 @@ public class CardDataBase : MonoBehaviour
         UIConfirmation.OnAccelerate -= HandleAccelerate;
         CardFunction.OnCardDiscarded -= HandleChooseDiscardCard;
         UIConfirmation.OnBackfire -= HandleAbilityListRequest;
-    }
+        CardData.OnSendModifiedStatus -= HandleHeroModifiedCensus;
+    }   
 
     private void HandleAbilityListRequest()
     {
@@ -2170,6 +2174,17 @@ public class CardDataBase : MonoBehaviour
         }
     }
     #endregion
+
+    public void GetHeroModifiedCount()
+    {
+        herosModified = 0;
+        OnRequestHeroModified?.Invoke();
+    }
+    private void HandleHeroModifiedCensus(bool value)
+    {
+        if (value) herosModified++;
+        Debug.Log($"Census: {herosModified}");
+    }
 
     #endregion
 

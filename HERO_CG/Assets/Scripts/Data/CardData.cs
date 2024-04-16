@@ -44,6 +44,8 @@ public class CardData : MonoBehaviour
     public static Action<List<Enhancement>, CardData> OnGivenEnhancements = delegate { };
     public static Action OnRequestStats = delegate { };
     public static Action<string, int, int> OnSendStats = delegate { };
+    public static Action OnValueAdjusted = delegate { };
+    public static Action<bool> OnSendModifiedStatus = delegate { };
 
     public bool Exhausted { get; private set; }
     public  Card myCard { get; private set; }
@@ -81,6 +83,7 @@ public class CardData : MonoBehaviour
         Referee.OnRemoveTargeting += HandleResetForTurn;
         //UIConfirmation.OnConfirmIzumiToggle += HandleUpdateValuesFromAbilityUpdate;
         Ability.OnModifyValues += HandleUpdateValuesFromAbilityUpdate;
+        CardDataBase.OnRequestHeroModified += HandleModifiedCount;
 
 
        myParticleSystem = gameObject.GetComponentInChildren<ParticleSystem>();
@@ -95,6 +98,7 @@ public class CardData : MonoBehaviour
         Referee.OnRemoveTargeting -= HandleResetForTurn;
         //UIConfirmation.OnConfirmIzumiToggle -= HandleUpdateValuesFromAbilityUpdate;
         Ability.OnModifyValues -= HandleUpdateValuesFromAbilityUpdate;
+        CardDataBase.OnRequestHeroModified -= HandleModifiedCount;
 
     }
     #endregion
@@ -165,6 +169,8 @@ public class CardData : MonoBehaviour
         a += abilityAttModifier;
         d += abilityDefModifier;
 
+        bool at = Attack != a, def = Defense != d;
+
         Attack = a;
         Defense = d;
         if (Exhausted) Defense = Defense / 2;
@@ -173,7 +179,8 @@ public class CardData : MonoBehaviour
 
         ColorCheck();
 
-        OnNumericAdjustment?.Invoke(this, "Defense", Defense);
+        if(at) OnNumericAdjustment?.Invoke(this, "Attack", Attack);
+        if(def) OnNumericAdjustment?.Invoke(this, "Defense", Defense);
         tDefense.text = Defense.ToString();
         tAttack.text = Attack.ToString();
 
@@ -324,6 +331,7 @@ public class CardData : MonoBehaviour
         if (myPlacement == FieldPlacement.Mine) OnSendStats?.Invoke(myCard.Name, Attack, Defense);
     }
     #endregion
+
     #region States
     private void StateChange(CardState StateToTransitionTo)
     {
@@ -459,7 +467,6 @@ public class CardData : MonoBehaviour
         {
             abilityDefModifier = amountAdjustment;
             ValuesSetup();
-            OnNumericAdjustment?.Invoke(this, "Defense", Defense);
         }
     }
     public void AdjustCounter(int amount, Ability ability)
@@ -486,6 +493,7 @@ public class CardData : MonoBehaviour
             {
                 myAbilities.Remove(ability);
             }
+            OnValueAdjusted?.Invoke();
         }
     }
     public List<Ability> GetCharacterAbilities()
@@ -591,10 +599,18 @@ public class CardData : MonoBehaviour
     {
         if (myPlacement != FieldPlacement.Mine) return;
         Debug.Log($"{Name} is getting a value update.");
-        int tempA = Attack, tempD = Defense;
         ValuesSetup();
-        if(Defense != tempD) OnNumericAdjustment?.Invoke(this, "Defense", Defense);
-        if(Attack != tempA) OnNumericAdjustment?.Invoke(this, "Attack", Attack);
+    }
+    public bool CheckIsModified()
+    {
+        return enhancementDefModifier> 0 ? true : enhancementAttModifier > 0 ? true : Attack > myCard.Attack?true:Defense > myCard.Defense?true:(Exhausted&&(Defense > myCard.Defense/2))?true:false;
+    }
+    private void HandleModifiedCount()
+    {
+        if(myPlacement == FieldPlacement.Mine || myPlacement == FieldPlacement.Opp)
+        {
+            OnSendModifiedStatus?.Invoke(CheckIsModified());
+        }
     }
     #endregion
 
@@ -647,13 +663,8 @@ public class CardData : MonoBehaviour
     }
     public void AdjustAttack(int amount)
     {
-        bool sendit = (Attack != (Attack + amount));
         HandleEnhancementAddition(amount, 'a');
         ValuesSetup();
-        if (sendit)
-        {
-            OnNumericAdjustment?.Invoke(this, "Attack", Attack);
-        }
     }
     public void NewAbilityAttModifier(int amountAdjustment)
     {
@@ -663,7 +674,6 @@ public class CardData : MonoBehaviour
         {
             abilityAttModifier = amountAdjustment;
             ValuesSetup();
-            OnNumericAdjustment?.Invoke(this, "Attack", Attack);
         }
     }
     public void SetDefense(int amount)
@@ -675,13 +685,8 @@ public class CardData : MonoBehaviour
     }
     public void AdjustDefense(int amount)
     {
-        bool sendit = (Defense != (Defense + amount));
         HandleEnhancementAddition(amount, 'd');
         ValuesSetup();
-        if (sendit)
-        {
-            OnNumericAdjustment?.Invoke(this, "Defense", Defense);
-        }
     }
     #endregion
 
@@ -694,6 +699,8 @@ public class CardData : MonoBehaviour
         if (Attack > myCard.Attack) tAttack.color = Color.green;
         else if (Attack < myCard.Attack) tAttack.color = Color.red;
         else tAttack.color = Color.white;
+
+        OnValueAdjusted?.Invoke();
     }
 
     #region Targeting

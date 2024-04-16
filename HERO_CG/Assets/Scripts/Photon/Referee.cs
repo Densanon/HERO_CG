@@ -134,6 +134,7 @@ public class Referee : MonoBehaviour
         UIConfirmation.OnRohanRecruitment += HandleRohanRecruitment;
         UIConfirmation.OnActivateTempHealState += HandleTempHealState;
         UIOnOff.OnUpdateUI += HandleUpdateUI;
+        CardData.OnValueAdjusted += HandleValueAdjusted;
     }
     private void OnDestroy()
     {
@@ -156,8 +157,8 @@ public class Referee : MonoBehaviour
         UIConfirmation.OnRohanRecruitment -= HandleRohanRecruitment;
         UIConfirmation.OnActivateTempHealState -= HandleTempHealState;
         UIOnOff.OnUpdateUI -= HandleUpdateUI;
+        CardData.OnValueAdjusted -= HandleValueAdjusted;
     }
-
     private void Start()
     {
         gameActions = new Stack<GameAction>();
@@ -284,6 +285,12 @@ public class Referee : MonoBehaviour
     private void HandleTempHealState()
     {
         if (activeAbility != null) activeAbility.ActivateAbility();
+    }
+
+    private void HandleValueAdjusted()
+    {
+        CB.GetHeroModifiedCount();
+        ActivatePassive(Ability.PassiveType.ValueSet);
     }
     #endregion
 
