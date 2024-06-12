@@ -297,6 +297,15 @@ public class PhotonInGameManager : MonoBehaviourPunCallbacks
     {
         DataBase.UpdateHeroFromOpp(name, attack, defense);
     }
+
+    [PunRPC]
+    private void DrawXCards(int amount)
+    {
+        for (int i = 0; i < amount; i++)
+        {
+            DataBase.DrawCard(CardDataBase.CardDecks.MyDeck);
+        }
+    }
     #endregion
 
     #region Battle Functions

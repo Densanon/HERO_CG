@@ -978,6 +978,7 @@ public class CardDataBase : MonoBehaviour
             if(who == "Opp")
             {
                 Debug.Log("Not implemented.");
+                myManager.RPCRequest("DrawXCards", RpcTarget.Others, heroCount);
             }
             else
             {
@@ -2234,7 +2235,6 @@ public class CardDataBase : MonoBehaviour
     private void HandleHeroModifiedCensus(bool value)
     {
         if (value) herosModified++;
-        Debug.Log($"Census: {herosModified}");
     }
 
     #endregion
