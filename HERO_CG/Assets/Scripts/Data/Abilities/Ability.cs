@@ -22,7 +22,7 @@ public class Ability : MonoBehaviour
 
     public static Action<Ability> OnAddAbilityToMasterList = delegate { };
     public static Action OnFeatComplete = delegate { };
-    public static Action<string> OnCharacterAbilityRequest = delegate { };
+    public static Action<string> OnCharacterAbilityRequest = delegate { }; //Actually does all generic ability calls
     public static Action<string, string, int> OnDiscardCard = delegate { };
     public static Action<Ability> OnSetActive = delegate { };
     public static Action<Ability> OnOpponentAbilityActivation = delegate { };

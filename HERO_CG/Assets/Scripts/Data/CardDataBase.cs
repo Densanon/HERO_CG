@@ -1,5 +1,5 @@
 ﻿//Created by Jordan Ezell
-//Last Edited: 6/30/23 Jordan
+//Last Edited: 6/12/24 Jordan
 
 using UnityEngine;
 using UnityEngine.UI;
@@ -13,6 +13,12 @@ public class CardDataBase : MonoBehaviour
 {
     public PhotonInGameManager myManager;
     public Referee GM;
+
+    public Button BOppInfo;
+    public Button BOppSelection;
+    public Button BMyInfo;
+    public Button BMySelection;
+
 
     public CardData CurrentActiveCard;
 
@@ -53,6 +59,7 @@ public class CardDataBase : MonoBehaviour
     public static int handSize = 0;
     public static int herosFatigued = 0;
     public static int herosModified = 0;
+    int heroCount = 0;
 
     #region Debuging
     public bool AiDraft = false;
@@ -135,6 +142,7 @@ public class CardDataBase : MonoBehaviour
         CardFunction.OnCardDiscarded += HandleChooseDiscardCard;
         UIConfirmation.OnBackfire += HandleAbilityListRequest;
         CardData.OnSendModifiedStatus += HandleHeroModifiedCensus;
+        UIConfirmation.OnBoost += HandleBoost;
 
         Heros[0] = new Card(Card.Type.Character, "AKIO", 20, 70, HeroImages[0], AlphaHeros[0]);
         Heros[1] = new Card(Card.Type.Character, "AYUMI", 40, 50, HeroImages[1], AlphaHeros[1]);
@@ -291,6 +299,7 @@ public class CardDataBase : MonoBehaviour
         CardFunction.OnCardDiscarded -= HandleChooseDiscardCard;
         UIConfirmation.OnBackfire -= HandleAbilityListRequest;
         CardData.OnSendModifiedStatus -= HandleHeroModifiedCensus;
+        UIConfirmation.OnBoost -= HandleBoost;
     }   
 
     private void HandleAbilityListRequest()
@@ -962,6 +971,31 @@ public class CardDataBase : MonoBehaviour
             DisplayCardList(MyHand);
     }
 
+    public void PlayerSelection(string who)
+    {
+        if (true)//isBoosting)
+        {
+            if(who == "Opp")
+            {
+                Debug.Log("Not implemented.");
+            }
+            else
+            {
+                Debug.Log("Clicked");
+                DrawFromEnhanceDeck(heroCount);
+                TogglePlayerSelect(false);
+                isBoosting = false;
+            }
+        }
+    }
+    private void TogglePlayerSelect(bool toggle)
+    {
+        BOppInfo.gameObject.SetActive(!toggle);
+        BOppSelection.gameObject.SetActive(toggle);
+        BMyInfo.gameObject.SetActive(!toggle);
+        BMySelection.gameObject.SetActive(toggle);
+    }
+
     #region Drawing and Removing Cards
     private void DrawRandomCard(List<Card> whatDeck)
     {
@@ -1044,6 +1078,15 @@ public class CardDataBase : MonoBehaviour
         DrawFromEnhanceDeck(3);
         ForceDiscard("Any", 2);
     }
+    bool isBoosting = false;
+    private void HandleBoost()
+    {
+        Debug.Log("Activating the discard of two cards for Boost.");
+        isBoosting = true;
+        ForceDiscard("Any", 2);
+        //Need to be able to pick a player??
+        //Then need to make them draw a card for the total hero amount on the field
+    }
     #endregion
 
     #region Force Discard
@@ -1083,12 +1126,15 @@ public class CardDataBase : MonoBehaviour
             case "Any":
                 Debug.Log("Setup for Force Discard");
                 forceCount = amount;
+                isDiscarding = true;
+                StartCoroutine(WaitForEndDiscard());
                 GM.ToggleDiscard();
                 HandButton.SetActive(false);
                 DisplayCardList(MyHand);
                 break;
         }
     }
+    bool isDiscarding = false;
     public void ReduceForceCount()
     {
         forceCount--;
@@ -1098,6 +1144,7 @@ public class CardDataBase : MonoBehaviour
             HandButton.SetActive(true);
             ToggleCardDisplayArea(false);
             GM.ToggleDiscard();
+            isDiscarding = false;
         }
         else
         {
@@ -1230,6 +1277,7 @@ public class CardDataBase : MonoBehaviour
         card.gameObject.SetActive(false);
 
         herosFatigued--;
+        heroCount--;
         myManager.RPCRequest("FieldCardDestroy", RpcTarget.Others, card.Name, loc);
     }
 
@@ -1294,6 +1342,7 @@ public class CardDataBase : MonoBehaviour
                 break;
         }
         herosFatigued--;
+        heroCount--;
     }
     #endregion
 
@@ -1407,6 +1456,7 @@ public class CardDataBase : MonoBehaviour
                 CardData data = obj.GetComponent<CardData>();
                 data.CardOverride(card, CardData.FieldPlacement.Opp);
                 OppField.Add(data);
+                heroCount++;
                 break;
             }
         }
@@ -1418,6 +1468,7 @@ public class CardDataBase : MonoBehaviour
         CardData data = obj.GetComponent<CardData>();
         data.CardOverride(card, CardData.FieldPlacement.Mine);
         MyField.Add(data);
+        heroCount++;
     }
     #endregion
 
@@ -2197,6 +2248,16 @@ public class CardDataBase : MonoBehaviour
         ToggleCardDisplayArea(false);
         //GM.ToldSwitchTurn(false);
         myManager.RPCRequest("DeclaredTurn", RpcTarget.Others, true);
+    }
+    private IEnumerator WaitForEndDiscard()
+    {
+        yield return new WaitUntil(() => !isDiscarding);
+        Debug.Log("Stopped the discard sequence.");
+        if (isBoosting)
+        {
+            TogglePlayerSelect(true);
+            GM.PopUpUpdater("Select target player.", 2f);
+        }
     }
     #endregion
 }

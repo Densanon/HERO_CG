@@ -1,5 +1,5 @@
 ﻿//Created by Jordan Ezell
-//Last Edited: 6/30/23 Jordan
+//Last Edited: 6/12/24 Jordan
 
 using UnityEngine;
 using TMPro;
@@ -37,7 +37,7 @@ public class UIAbilityDescriptor : MonoBehaviour
             {
                 //Debug.Log("Should be activated.");
                 activateAbility.gameObject.SetActive(true);
-                activateAbility.interactable = (ability.Name == "ZOE") ? (!ability.oncePerTurnUsed && Referee.myPhase == Referee.GamePhase.HEROSelect) : !ability.oncePerTurnUsed;
+                activateAbility.interactable = (ability.Name == "ZOE") ? (!ability.oncePerTurnUsed && Referee.myPhase == Referee.GamePhase.HEROSelect) : (ability.Name == "BOOST") ? (CardDataBase.handSize > 1 && !ability.oncePerTurnUsed) : !ability.oncePerTurnUsed;
                 return;
             }
             activateAbility.gameObject.SetActive(false);

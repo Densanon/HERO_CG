@@ -1,5 +1,5 @@
 ﻿//Created by Jordan Ezell
-//Last Edited: 3/29/24 Jordan
+//Last Edited: 6/12/24 Jordan
 
 using UnityEngine;
 using TMPro;
@@ -36,6 +36,7 @@ public class UIConfirmation : MonoBehaviour
 
     public static Action OnAccelerate = delegate { };
     public static Action OnBackfire = delegate { };
+    public static Action OnBoost = delegate { };
 
     #region Unity Methods
     private void Awake()
@@ -93,6 +94,7 @@ public class UIConfirmation : MonoBehaviour
 
         confirmationActions[ConfirmationAction.ConfirmationType.Accelerate] = () => { OnAccelerate?.Invoke(); OnAbilityComplete?.Invoke("ACCELERATE"); };
         confirmationActions[ConfirmationAction.ConfirmationType.Backfire] = () => { OnBackfire?.Invoke(); OnAbilityComplete?.Invoke("BACKFIRE"); };
+        confirmationActions[ConfirmationAction.ConfirmationType.Boost] = () => { OnBoost?.Invoke(); OnAbilityComplete?.Invoke("BOOST"); };
     }
     private void initializeConfirmationHandlers()
     {
@@ -115,7 +117,8 @@ public class UIConfirmation : MonoBehaviour
             {"Zhao", onZhaoConfirmationRequest },
             {"Zoe", onZoeConfirmationRequest },
             {"Accelerate", onAccelerateConfirmationRequest },
-            {"Backfire", onBackfireConfirmationRequest }
+            {"Backfire", onBackfireConfirmationRequest },
+            {"Boost", onBoostConfirmationRequest }
         };
     }
 
@@ -192,6 +195,10 @@ public class UIConfirmation : MonoBehaviour
     private void onBackfireConfirmationRequest()
     {
         queueConfirmation(new ConfirmationAction("Activate Backfire", ConfirmationAction.ConfirmationType.Backfire));
+    }
+    private void onBoostConfirmationRequest()
+    {
+        queueConfirmation(new ConfirmationAction("Activate Boost", ConfirmationAction.ConfirmationType.Boost));
     }
 
     private void displayNextConfirmation()
@@ -315,7 +322,7 @@ public class UIConfirmation : MonoBehaviour
 public class ConfirmationAction
 {
     public enum ConfirmationType { Heal, Enhance, Recruit, Overcome, Feat, Quit, Enhancing, Ability, AtDef, Ayumi, Isaac, Izumi, Mace, Michael, Origin, Rohan, Yasmine, Zhao, Zoe
-    , Accelerate, Backfire}
+    , Accelerate, Backfire, Boost}
     public ConfirmationType MyType = ConfirmationType.Heal;
     public string MyText;
 
