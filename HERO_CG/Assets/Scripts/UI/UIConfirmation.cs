@@ -95,6 +95,7 @@ public class UIConfirmation : MonoBehaviour
         confirmationActions[ConfirmationAction.ConfirmationType.Accelerate] = () => { OnAccelerate?.Invoke(); OnAbilityComplete?.Invoke("ACCELERATE"); };
         confirmationActions[ConfirmationAction.ConfirmationType.Backfire] = () => { OnBackfire?.Invoke(); OnAbilityComplete?.Invoke("BACKFIRE"); };
         confirmationActions[ConfirmationAction.ConfirmationType.Boost] = () => { OnBoost?.Invoke(); OnAbilityComplete?.Invoke("BOOST"); };
+        confirmationActions[ConfirmationAction.ConfirmationType.CollateralDamage] = () => OnAbilityComplete?.Invoke("COLLATERAL DAMAGE");
     }
     private void initializeConfirmationHandlers()
     {
@@ -118,7 +119,8 @@ public class UIConfirmation : MonoBehaviour
             {"Zoe", onZoeConfirmationRequest },
             {"Accelerate", onAccelerateConfirmationRequest },
             {"Backfire", onBackfireConfirmationRequest },
-            {"Boost", onBoostConfirmationRequest }
+            {"Boost", onBoostConfirmationRequest },
+            {"Collateral Damage", onCollateralDamageConfirmationRequest }
         };
     }
 
@@ -198,7 +200,11 @@ public class UIConfirmation : MonoBehaviour
     }
     private void onBoostConfirmationRequest()
     {
-        queueConfirmation(new ConfirmationAction("Activate Boost", ConfirmationAction.ConfirmationType.Boost));
+        queueConfirmation(new ConfirmationAction("Activate Boost?", ConfirmationAction.ConfirmationType.Boost));
+    }
+    private void onCollateralDamageConfirmationRequest()
+    {
+        queueConfirmation(new ConfirmationAction("Activate Collateral Damage?", ConfirmationAction.ConfirmationType.CollateralDamage));
     }
 
     private void displayNextConfirmation()
@@ -322,7 +328,8 @@ public class UIConfirmation : MonoBehaviour
 public class ConfirmationAction
 {
     public enum ConfirmationType { Heal, Enhance, Recruit, Overcome, Feat, Quit, Enhancing, Ability, AtDef, Ayumi, Isaac, Izumi, Mace, Michael, Origin, Rohan, Yasmine, Zhao, Zoe
-    , Accelerate, Backfire, Boost}
+    , Accelerate, Backfire, Boost, CollateralDamage
+    }
     public ConfirmationType MyType = ConfirmationType.Heal;
     public string MyText;
 

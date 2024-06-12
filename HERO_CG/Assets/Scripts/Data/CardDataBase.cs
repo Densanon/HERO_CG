@@ -59,7 +59,7 @@ public class CardDataBase : MonoBehaviour
     public static int handSize = 0;
     public static int herosFatigued = 0;
     public static int herosModified = 0;
-    int heroCount = 0;
+    public static int heroCount = 0;
 
     #region Debuging
     public bool AiDraft = false;
@@ -1492,13 +1492,13 @@ public class CardDataBase : MonoBehaviour
             case "BOOST":
                 a = cardToAttachTo.gameObject.AddComponent<aBoost>();
                 break;
-            case "COLLATERALDAMAGE":
+            case "COLLATERAL DAMAGE":
                 a = cardToAttachTo.gameObject.AddComponent<aCollateralDamage>();
                 break;
             case "CONVERT":
                 a = cardToAttachTo.gameObject.AddComponent<aConvert>();
                 break;
-            case "COUNTERMEASURES":
+            case "COUNTER MEASURES":
                 a = cardToAttachTo.gameObject.AddComponent<aCounterMeasures>();
                 break;
             case "DROUGHT":
@@ -1507,7 +1507,7 @@ public class CardDataBase : MonoBehaviour
             case "FORTIFICATION":
                 a = cardToAttachTo.gameObject.AddComponent<aFortification>();
                 break;
-            case "GOINGNUCLEAR":
+            case "GOING NUCLEAR":
                 a = cardToAttachTo.gameObject.AddComponent<aGoingNuclear>();
                 break;
             case "HARDENED":

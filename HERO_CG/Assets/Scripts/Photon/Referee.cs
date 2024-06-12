@@ -1,5 +1,5 @@
 ﻿//Created by Jordan Ezell
-//Last Edited: 6/12/24Jordan
+//Last Edited: 6/12/24 Jordan
 
 using System.Collections;
 using System.Collections.Generic;
@@ -21,7 +21,7 @@ public class Referee : MonoBehaviour
     public enum PlayerNum { P1, P2, P3, P4 }
     public static PlayerNum player;
 
-    public enum TargetType { Player, OppHero, MyHero, Hero, Attackers, Defender, Cancel, MyHurt}
+    public enum TargetType { Player, OppHero, MyHero, Hero, Attackers, Defender, Cancel, MyHurt, AllExhausted, AllUnExhausted}
 
     Stack<GameAction> gameActions;
 
@@ -583,6 +583,7 @@ public class Referee : MonoBehaviour
             gOvercome.SetActive(false);
             OnOvercomeTime?.Invoke(false);
         }
+        if (phaseToChangeTo == GamePhase.Targeting) abilityTargetting = true;
         prevPhase = myPhase;
         myPhase = phaseToChangeTo;
         HandlePhaseChange();
@@ -1416,7 +1417,12 @@ public class Referee : MonoBehaviour
                     }
                     break;
                 case GamePhase.Targeting:
-                    card.Targeted();
+                    if (abilityTargetting)
+                    {
+                        card.Exhaust(false);
+                        abilityTargetting = false;
+                        PhaseChange(prevPhase);
+                    }else card.Targeted();
                     break;
             }
         }
