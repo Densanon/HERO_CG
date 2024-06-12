@@ -106,7 +106,7 @@ public class PhotonInGameManager : MonoBehaviourPunCallbacks
     [PunRPC]
     private void HandlePlayerAction(bool responseNeeded, string showCard)
     {
-        Debug.Log($"Received a card to display: {showCard}");
+        //Debug.Log($"Received a card to display: {showCard}");
         if (responseNeeded)
         {
             Debug.Log("We need to set up some sort of response.");
@@ -323,6 +323,11 @@ public class PhotonInGameManager : MonoBehaviourPunCallbacks
         DataBase.SpawnCharacterToOpponentField(heroToSpawn);
     }
 
+    [PunRPC]
+    private void RemoveConvertedCharacter(string name)
+    {
+        DataBase.HandleRemoveConvertedCharacter(name);
+    }
     [PunRPC]
     private void AttachAbility(string abilityName, string cardName)
     {

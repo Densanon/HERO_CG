@@ -918,7 +918,7 @@ public class Referee : MonoBehaviour
     }
     public IEnumerator ShowOpponentPlayedCard(Card card)
     {
-        Debug.Log($"ShowOpponentplayedCard(Card): I received {card} and will zoom into it.");
+        //Debug.Log($"ShowOpponentplayedCard(Card): I received {card} and will zoom into it.");
         CardZoom(card);
         yield return new WaitForSeconds(2f);
         HandleDeselection();
@@ -1419,10 +1419,24 @@ public class Referee : MonoBehaviour
                 case GamePhase.Targeting:
                     if (abilityTargetting)
                     {
-                        card.Exhaust(false);
+                        if (aCollateralDamage.ColDam)
+                        {
+                            card.Exhaust(false);
+                            aCollateralDamage.ColDam = false;
+                        }else if(aConvert.convert && card.myPlacement == CardData.FieldPlacement.Opp)
+                        {
+                            CB.ConvertCharacter(card);
+                            aConvert.convert = false;
+                            OnRemoveTargeting?.Invoke();
+                        }
+                        else if (aConvert.convert && card.myPlacement != CardData.FieldPlacement.Opp)
+                        {
+                            return;
+                        }
                         abilityTargetting = false;
                         PhaseChange(prevPhase);
-                    }else card.Targeted();
+                    }
+                    else card.Targeted();
                     break;
             }
         }

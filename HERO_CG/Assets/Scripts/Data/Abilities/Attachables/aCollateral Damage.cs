@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class aCollateralDamage : Ability
 {
+    public static bool ColDam = false;
+
     private void Awake()
     {
         base.Awake();
@@ -24,6 +26,7 @@ public class aCollateralDamage : Ability
     public override void AbilityCompleteCleanup(string abilityName)
     {
         base.AbilityCompleteCleanup(abilityName);
+        ColDam = true;
         OnRequestTargeting?.Invoke(Referee.TargetType.AllUnExhausted);
     }
 }

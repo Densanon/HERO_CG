@@ -739,7 +739,7 @@ public class CardDataBase : MonoBehaviour
         }
         else
         {
-            Debug.Log($"Reserves: {HeroReserve.Count}, HQ: {HQ.Count}");
+            //Debug.Log($"Reserves: {HeroReserve.Count}, HQ: {HQ.Count}");
         }
     }
 
@@ -1445,6 +1445,47 @@ public class CardDataBase : MonoBehaviour
 
     #region Spawn Character, Ability, Enhancement Functions
 
+    public void ConvertCharacter(CardData character)
+    {
+        //Build new
+        CardData data = SpawnAndReturnCharacterToMyField(character.myCard);
+        myManager.RPCRequest("SpawnCharacterToOpponentField", RpcTarget.Others, character.Name);
+        if (character.Exhausted) data.Exhaust(false);
+
+        //Destroy old
+        cardAbilitiesOnField.Remove(character.charAbility);
+        OppField.Remove(character);
+
+        foreach (Ability a in character.myAbilities)
+        {
+            cardAbilitiesOnField.Remove(a);
+            AddCardToListByName("OppDiscard", a.Name);
+        }
+        character.gameObject.SetActive(false);
+
+        myManager.RPCRequest("RemoveConvertedCharacter", RpcTarget.Others, character.Name);
+    }
+    public void HandleRemoveConvertedCharacter(string character)
+    {
+        CardData da = null;
+        foreach(CardData dat in MyField)
+        {
+            if(dat.Name == character)
+            {
+                da = dat;
+                break;
+            }
+        }
+        cardAbilitiesOnField.Remove(da.charAbility);
+        MyField.Remove(da);
+        foreach (Ability a in da.myAbilities)
+        {
+            cardAbilitiesOnField.Remove(a);
+            AddCardToListByName("MyDiscard", a.Name);
+        }
+        da.gameObject.SetActive(false);
+    }
+
     #region Spawn Character to Field
     public void SpawnCharacterToOpponentField(string heroToSpawn)
     {
@@ -1470,6 +1511,15 @@ public class CardDataBase : MonoBehaviour
         data.CardOverride(card, CardData.FieldPlacement.Mine);
         MyField.Add(data);
         heroCount++;
+    }
+    private CardData SpawnAndReturnCharacterToMyField(Card card)
+    {
+        GameObject obj = Instantiate(CardMyFieldPrefab, MyHeroArea);
+        CardData data = obj.GetComponent<CardData>();
+        data.CardOverride(card, CardData.FieldPlacement.Mine);
+        MyField.Add(data);
+        heroCount++;
+        return data;
     }
     #endregion
 
