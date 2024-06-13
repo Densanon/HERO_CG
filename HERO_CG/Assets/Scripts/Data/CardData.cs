@@ -46,6 +46,7 @@ public class CardData : MonoBehaviour
     public static Action<string, int, int> OnSendStats = delegate { };
     public static Action OnValueAdjusted = delegate { };
     public static Action<bool> OnSendModifiedStatus = delegate { };
+    public static Action<int> UpdateFieldCardCount = delegate { };
 
     public bool Exhausted { get; private set; }
     public  Card myCard { get; private set; }
@@ -487,10 +488,12 @@ public class CardData : MonoBehaviour
         {
             if (amount > 0)
             {
+                UpdateFieldCardCount.Invoke(1);
                 myAbilities.Add(ability);
             }
             else
             {
+                UpdateFieldCardCount.Invoke(-1);
                 myAbilities.Remove(ability);
             }
             OnValueAdjusted?.Invoke();
@@ -513,7 +516,10 @@ public class CardData : MonoBehaviour
         }
 
         if(myAbilities != null)
+        {
+            UpdateFieldCardCount.Invoke(myAbilities.Count * -1);
             myAbilities.Clear();
+        }
 
         if (!told)
         {
@@ -531,14 +537,19 @@ public class CardData : MonoBehaviour
             AdjustCounter(1, a);
         }
 
-        if(!told)
-        OnGivenAbilities?.Invoke(abilities, this);
+        if (!told)
+        {
+            OnGivenAbilities?.Invoke(abilities, this);
+        }
         Debug.Log("GainAbilities complete.");
     }
     public void StripEnhancements(bool told)
     {
         if(myEnhancements != null)
+        {
+            UpdateFieldCardCount.Invoke(myEnhancements.Count * -1);
             myEnhancements.Clear();
+        }
         
         CardOverride(myCard, myPlacement);
         if (!told)
@@ -572,7 +583,10 @@ public class CardData : MonoBehaviour
         }
 
         if (!told)
+        {
             OnGivenEnhancements?.Invoke(enhancements, this);
+            UpdateFieldCardCount.Invoke(enhancements.Count);
+        }
         Debug.Log("Enhancement Gain complete.");
     }
     private void HandleEnhancementAddition(int amount, char type) {
@@ -592,6 +606,7 @@ public class CardData : MonoBehaviour
         {
             myEnhancements = new List<Enhancement>();
         }
+        UpdateFieldCardCount.Invoke(1);
         myEnhancements.Add(e);
 
     }

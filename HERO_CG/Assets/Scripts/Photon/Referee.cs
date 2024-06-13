@@ -135,6 +135,7 @@ public class Referee : MonoBehaviour
         UIConfirmation.OnActivateTempHealState += HandleTempHealState;
         UIOnOff.OnUpdateUI += HandleUpdateUI;
         CardData.OnValueAdjusted += HandleValueAdjusted;
+        Ability.OnHardenedUpdate += HandleNeedHardenedUpdate;
     }
     private void OnDestroy()
     {
@@ -158,7 +159,18 @@ public class Referee : MonoBehaviour
         UIConfirmation.OnActivateTempHealState -= HandleTempHealState;
         UIOnOff.OnUpdateUI -= HandleUpdateUI;
         CardData.OnValueAdjusted -= HandleValueAdjusted;
+        Ability.OnHardenedUpdate -= HandleNeedHardenedUpdate;
     }
+
+    private void HandleNeedHardenedUpdate()
+    {
+        myManager.RPCRequest("HardenedUpdate", RpcTarget.Others, "Yes");
+    }
+    public void HandleHardenedUpdate()
+    {
+        OnAbilityComplete.Invoke("HARDENED");
+    }
+
     private void Start()
     {
         gameActions = new Stack<GameAction>();
@@ -869,7 +881,8 @@ public class Referee : MonoBehaviour
             iEnhanceCardsToCollect = 0;
             tCardsToDrawMyDeck.text = $"{CB.CardsRemaining(CardDataBase.CardDecks.MyDeck)}";
             bDrawEnhancementCards.interactable = false;
-            TurnCounterDecrement();         
+            TurnCounterDecrement();
+            ActivatePassive(Ability.PassiveType.CardPlayed);
         }
         else
         {

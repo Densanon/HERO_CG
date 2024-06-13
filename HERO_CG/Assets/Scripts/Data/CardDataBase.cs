@@ -60,6 +60,19 @@ public class CardDataBase : MonoBehaviour
     public static int herosFatigued = 0;
     public static int herosModified = 0;
     public static int heroCount = 0;
+    public static int oppFieldCardCount = 0;
+    private static int myFieldCardCount = 0;
+    public int MyFieldCardCount { get => myFieldCardCount; private set { myFieldCardCount = value; myManager.RPCRequest("OnSendFieldCountAdjustment", RpcTarget.Others, value); } }
+    public void UpdateOppFieldCount(int value)
+    {
+        oppFieldCardCount = value;
+        if(HardenedPresent)GM.HandleHardenedUpdate();
+    }
+    private void UpdateMyFieldCardCount(int adjustment)
+    {
+        MyFieldCardCount += adjustment;
+    }
+    public static bool HardenedPresent = false;
 
     #region Debuging
     public bool AiDraft = false;
@@ -113,7 +126,6 @@ public class CardDataBase : MonoBehaviour
     #endregion
 
     #region Unity Methods
-
     private void Awake()
     { 
 
@@ -144,6 +156,7 @@ public class CardDataBase : MonoBehaviour
         CardData.OnSendModifiedStatus += HandleHeroModifiedCensus;
         UIConfirmation.OnBoost += HandleBoost;
         Ability.OnGoingNuclear += HandleBoardWipe;
+        CardData.UpdateFieldCardCount += UpdateMyFieldCardCount;
 
         Heros[0] = new Card(Card.Type.Character, "AKIO", 20, 70, HeroImages[0], AlphaHeros[0]);
         Heros[1] = new Card(Card.Type.Character, "AYUMI", 40, 50, HeroImages[1], AlphaHeros[1]);
@@ -272,7 +285,6 @@ public class CardDataBase : MonoBehaviour
             }
         }
     }
-
     private void OnDestroy()
     {
         UIConfirmation.OnTargetAccepted -= HandleTargetAccepted;
@@ -302,50 +314,7 @@ public class CardDataBase : MonoBehaviour
         CardData.OnSendModifiedStatus -= HandleHeroModifiedCensus;
         UIConfirmation.OnBoost -= HandleBoost;
         Ability.OnGoingNuclear -= HandleBoardWipe;
-    }
-
-    private void HandleBoardWipe()
-    {
-        for(int i = MyField.Count; i>0; i--)
-        {
-            HandleCharacterDestroyed(MyField[i-1]);
-        }
-        for (int i = OppField.Count; i > 0; i--)
-        {
-            HandleCharacterDestroyed(OppField[i - 1]);
-        }
-        GM.PopUpUpdater("Going Nuclear has gone off!", 2.5f);
-    }
-
-    private void HandleAbilityListRequest()
-    {
-        ShowAbilityList(Ability.Type.Activate);
-    }
-
-    private void ShowAbilityList(Ability.Type t)
-    {
-        List<Ability> list = new List<Ability>();
-        switch (t)
-        {
-            case Ability.Type.Activate:
-                foreach(Ability a in heroAbilitiesOnField)
-                {
-                    if (a.GetPlacement() == CardData.FieldPlacement.Opp && a.secondaryType == Ability.Type.Activate) list.Add(a);
-                }
-                foreach (Ability a in cardAbilitiesOnField)
-                {
-                    if (a.GetPlacement() == CardData.FieldPlacement.Opp && a.myType == Ability.Type.Activate) list.Add(a);
-                }
-                break;
-            case Ability.Type.Character:
-                break;
-            case Ability.Type.Feat:
-                break;
-            case Ability.Type.Passive:
-                break;
-        }
-        GM.ShowAbilityList(list);
-        list = null;
+        CardData.UpdateFieldCardCount -= UpdateMyFieldCardCount;
     }
     #endregion
 
@@ -1103,6 +1072,18 @@ public class CardDataBase : MonoBehaviour
         //Need to be able to pick a player??
         //Then need to make them draw a card for the total hero amount on the field
     }
+    private void HandleBoardWipe()
+    {
+        for (int i = MyField.Count; i > 0; i--)
+        {
+            HandleCharacterDestroyed(MyField[i - 1]);
+        }
+        for (int i = OppField.Count; i > 0; i--)
+        {
+            HandleCharacterDestroyed(OppField[i - 1]);
+        }
+        GM.PopUpUpdater("Going Nuclear has gone off!", 2.5f);
+    }
     #endregion
 
     #region Force Discard
@@ -1258,6 +1239,7 @@ public class CardDataBase : MonoBehaviour
                 }
             }
         }
+        GM.ActivatePassive(Ability.PassiveType.CardPlayed);
     }
     #endregion
 
@@ -1278,10 +1260,12 @@ public class CardDataBase : MonoBehaviour
                 cardAbilitiesOnField.Remove(a);
                 AddCardToListByName("OppDiscard", a.Name);
             }
-        }else if (MyField.Contains(card))
+        }
+        else if (MyField.Contains(card))
         {
             MyField.Remove(card);
             loc = "MyField";
+            MyFieldCardCount -= (1 + card.myAbilities.Count + card.myEnhancements.Count);
             foreach (Ability a in card.myAbilities)
             {
                 cardAbilitiesOnField.Remove(a);
@@ -1459,6 +1443,36 @@ public class CardDataBase : MonoBehaviour
     #endregion
 
     #region Spawn Character, Ability, Enhancement Functions
+    private void HandleAbilityListRequest()
+    {
+        ShowAbilityList(Ability.Type.Activate);
+    }
+
+    private void ShowAbilityList(Ability.Type t)
+    {
+        List<Ability> list = new List<Ability>();
+        switch (t)
+        {
+            case Ability.Type.Activate:
+                foreach (Ability a in heroAbilitiesOnField)
+                {
+                    if (a.GetPlacement() == CardData.FieldPlacement.Opp && a.secondaryType == Ability.Type.Activate) list.Add(a);
+                }
+                foreach (Ability a in cardAbilitiesOnField)
+                {
+                    if (a.GetPlacement() == CardData.FieldPlacement.Opp && a.myType == Ability.Type.Activate) list.Add(a);
+                }
+                break;
+            case Ability.Type.Character:
+                break;
+            case Ability.Type.Feat:
+                break;
+            case Ability.Type.Passive:
+                break;
+        }
+        GM.ShowAbilityList(list);
+        list = null;
+    }
 
     public void ConvertCharacter(CardData character)
     {
@@ -1466,6 +1480,7 @@ public class CardDataBase : MonoBehaviour
         CardData data = SpawnAndReturnCharacterToMyField(character.myCard);
         myManager.RPCRequest("SpawnCharacterToOpponentField", RpcTarget.Others, character.Name);
         if (character.Exhausted) data.Exhaust(false);
+        MyFieldCardCount += 1;
 
         //Destroy old
         cardAbilitiesOnField.Remove(character.charAbility);
@@ -1543,7 +1558,7 @@ public class CardDataBase : MonoBehaviour
     private void SpawnAbility(string AbilityName, CardData cardToAttachTo, bool told)
     {
         Debug.Log($"Spawning {AbilityName} on {cardToAttachTo}.");
-        Ability a = new Ability();
+        Ability a = null;
         switch (AbilityName)
         {
             case "ACCELERATE":
@@ -1610,11 +1625,13 @@ public class CardDataBase : MonoBehaviour
                 Debug.Log($"An ability was requested that doesn't exist. {AbilityName}");
                 break;
         }
-        cardToAttachTo.AdjustCounter(1, a);
         if (!told)
         {
+            MyFieldCardCount += 1;
             myManager.RPCRequest("AttachAbility", RpcTarget.OthersBuffered, AbilityName, cardToAttachTo.Name);
         }
+        else GM.ActivatePassive(Ability.PassiveType.CardPlayed);
+        cardToAttachTo.AdjustCounter(1, a);
     }
 
     public void AttachAbility(string abilityName, string cardName)
@@ -1627,8 +1644,7 @@ public class CardDataBase : MonoBehaviour
 
     private void HandleAbilitiesGiven(List<Ability> abilities, CardData card)
     {
-        List<string> abilityNames = new List<string>();
-
+        MyFieldCardCount += abilities.Count;
         foreach(Ability a in abilities)
         {
             myManager.RPCRequest("AttachAbility", RpcTarget.Others, a.Name, card.Name);
@@ -1834,7 +1850,7 @@ public class CardDataBase : MonoBehaviour
 
             enhancementNums.Add(i);
         }
-
+        MyFieldCardCount += enhancements.Count;
         if(enhancementNums.Count > 1)
         {
             myManager.RPCRequest("GiveEnhancements", RpcTarget.Others, enhancementNums, card.Name);
@@ -1861,6 +1877,7 @@ public class CardDataBase : MonoBehaviour
         }
 
         card.GainEnhancements(en, true);
+        GM.ActivatePassive(Ability.PassiveType.CardPlayed);
     }
     #endregion
 
@@ -2019,6 +2036,7 @@ public class CardDataBase : MonoBehaviour
                 //Place Character on the field
                 //Spawn a Character on the field
                 SpawnCharacterToMyField(card);
+                MyFieldCardCount++;
                 myManager.RPCRequest("SpawnCharacterToOpponentField", RpcTarget.Others, card.Name);
                 myManager.RPCRequest("HandlePlayerAction", RpcTarget.Others, false, card.Name);
                 break;

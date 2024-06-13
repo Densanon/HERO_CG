@@ -363,6 +363,16 @@ public class PhotonInGameManager : MonoBehaviourPunCallbacks
     {
         DataBase.HandleAbilityHandOver(nameOfAbilityToGiveControl);
     }
+    [PunRPC]
+    private void OnSendFieldCountAdjustment(int value)
+    {
+        DataBase.UpdateOppFieldCount(value);
+    }
+    [PunRPC]
+    private void HardenedUpdate(string yes)
+    {
+        GameManager.HandleHardenedUpdate();
+    }
     #endregion
 
 
