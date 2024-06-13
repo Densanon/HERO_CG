@@ -1499,11 +1499,11 @@ public class CardDataBase : MonoBehaviour
                 data.CardOverride(card, CardData.FieldPlacement.Opp);
                 OppField.Add(data);
                 heroCount++;
+                GM.ActivatePassive(Ability.PassiveType.CharacterSpawn);
                 break;
             }
         }
     }
-
     private void SpawnCharacterToMyField(Card card)
     {
         GameObject obj = Instantiate(CardMyFieldPrefab, MyHeroArea);
@@ -1511,6 +1511,7 @@ public class CardDataBase : MonoBehaviour
         data.CardOverride(card, CardData.FieldPlacement.Mine);
         MyField.Add(data);
         heroCount++;
+        GM.ActivatePassive(Ability.PassiveType.CharacterSpawn);
     }
     private CardData SpawnAndReturnCharacterToMyField(Card card)
     {
