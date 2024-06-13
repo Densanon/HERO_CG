@@ -612,6 +612,21 @@ public class CardData : MonoBehaviour
             OnSendModifiedStatus?.Invoke(CheckIsModified());
         }
     }
+    public void UseCounterMeasures()
+    {
+        Debug.Log("Told to boost defense.");
+        foreach(CardData dat in Referee.AttackingHeros)
+        {
+            Debug.Log($"Adding defense from {dat.Name} to {Name}.");
+            Defense = Defense + dat.myCard.Defense;
+        }
+        tDefense.text = Defense.ToString();
+        tDefense.color = Color.green;
+    }
+    public void ResetValues()
+    {
+        ValuesSetup();
+    }
     #endregion
 
     #region Combat

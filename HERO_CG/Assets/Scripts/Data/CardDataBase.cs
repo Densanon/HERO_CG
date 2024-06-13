@@ -1548,7 +1548,7 @@ public class CardDataBase : MonoBehaviour
             case "CONVERT":
                 a = cardToAttachTo.gameObject.AddComponent<aConvert>();
                 break;
-            case "COUNTER MEASURES":
+            case "COUNTER-MEASURES":
                 a = cardToAttachTo.gameObject.AddComponent<aCounterMeasures>();
                 break;
             case "DROUGHT":

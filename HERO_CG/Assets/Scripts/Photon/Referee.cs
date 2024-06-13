@@ -383,12 +383,12 @@ public class Referee : MonoBehaviour
     private void HandleCheckNeedResponse(string obj)
     {
         ResponseType = obj;
-        if (obj == "Origin" && DefendingHero.Name == "ORIGIN")
+        if ((obj == "Origin" && DefendingHero.Name == "ORIGIN")||obj == "Counter-Measures")
         {
             PopUpUpdater("Waiting on a response.");
             gOvercome.SetActive(false);
             OnTurnWaitResponse?.Invoke(true);
-            myManager.RPCRequest("HandleOriginRequest", RpcTarget.Others, "Origin");
+            myManager.RPCRequest("HandleOriginRequest", RpcTarget.Others, obj);
         }
     }
     public void RecieveResponse(bool decide)
@@ -398,6 +398,12 @@ public class Referee : MonoBehaviour
             gOvercome.SetActive(true);
             aOrigin.blockActive = decide;
             OnAbilityComplete("ORIGIN");
+        }else if (ResponseType == "Counter-Measures")
+        {
+            if (decide) { OnAbilityComplete("COUNTER-MEASURES");
+                PopUpUpdater("Opponent has used Counter-Measures to add your attacker's defense to their own.", 2.5f);
+            }
+            gOvercome.SetActive(true);
         }
     }
     #endregion
