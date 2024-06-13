@@ -41,6 +41,8 @@ public class Ability : MonoBehaviour
     public static Action<string> OnCheckNeedResponse = delegate { };
     public static Action OnRohanAbility = delegate { };
 
+    public static Action OnGoingNuclear = delegate { };
+
     public static Action OnNeedModifiedCounter = delegate { };
 
     protected virtual void Awake()

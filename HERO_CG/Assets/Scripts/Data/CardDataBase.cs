@@ -143,6 +143,7 @@ public class CardDataBase : MonoBehaviour
         UIConfirmation.OnBackfire += HandleAbilityListRequest;
         CardData.OnSendModifiedStatus += HandleHeroModifiedCensus;
         UIConfirmation.OnBoost += HandleBoost;
+        Ability.OnGoingNuclear += HandleBoardWipe;
 
         Heros[0] = new Card(Card.Type.Character, "AKIO", 20, 70, HeroImages[0], AlphaHeros[0]);
         Heros[1] = new Card(Card.Type.Character, "AYUMI", 40, 50, HeroImages[1], AlphaHeros[1]);
@@ -300,7 +301,21 @@ public class CardDataBase : MonoBehaviour
         UIConfirmation.OnBackfire -= HandleAbilityListRequest;
         CardData.OnSendModifiedStatus -= HandleHeroModifiedCensus;
         UIConfirmation.OnBoost -= HandleBoost;
-    }   
+        Ability.OnGoingNuclear -= HandleBoardWipe;
+    }
+
+    private void HandleBoardWipe()
+    {
+        for(int i = MyField.Count; i>0; i--)
+        {
+            HandleCharacterDestroyed(MyField[i-1]);
+        }
+        for (int i = OppField.Count; i > 0; i--)
+        {
+            HandleCharacterDestroyed(OppField[i - 1]);
+        }
+        GM.PopUpUpdater("Going Nuclear has gone off!", 2.5f);
+    }
 
     private void HandleAbilityListRequest()
     {
