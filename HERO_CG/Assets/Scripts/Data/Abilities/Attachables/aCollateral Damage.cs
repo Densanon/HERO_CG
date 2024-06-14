@@ -19,7 +19,7 @@ public class aCollateralDamage : Ability
         if(passiveType == PassiveType.CharacterDestroyed && CardDataBase.herosFatigued < CardDataBase.heroCount && Referee.PreviousAttackers.Contains(myHero) && Referee.myTurn)
         {
             base.PassiveCheck(passiveType);
-            OnCharacterAbilityRequest.Invoke("Collateral Damage");
+            OnAbilityRequest.Invoke("Collateral Damage");
         }
     }
 

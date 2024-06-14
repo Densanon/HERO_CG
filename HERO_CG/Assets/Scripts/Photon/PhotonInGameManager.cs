@@ -11,7 +11,7 @@ public class PhotonInGameManager : MonoBehaviourPunCallbacks
     public CardDataBase DataBase;
     public Referee GameManager;
 
-    public static Action<string> OnOriginRequest = delegate { };
+    public static Action<string> OnResponseRequest = delegate { };
 
     private void Awake()
     {
@@ -138,15 +138,21 @@ public class PhotonInGameManager : MonoBehaviourPunCallbacks
     }
 
     [PunRPC]
-    private void HandleOriginRequest(string name)
+    private void HandleResponseRequest(string name)
     {
-        OnOriginRequest?.Invoke(name);
+        OnResponseRequest?.Invoke(name);
     }
 
     [PunRPC]
     private void HandleSendAbilityResponse(bool decide)
     {
         GameManager.RecieveResponse(decide);
+    }
+
+    [PunRPC]
+    private void RevealActivatedAbility(string name, string description)
+    {
+        GameManager.PopUpUpdater(System.Text.RegularExpressions.Regex.Unescape($"{name}:\n{description}\nIs being activated."), 5f);
     }
     #endregion
 

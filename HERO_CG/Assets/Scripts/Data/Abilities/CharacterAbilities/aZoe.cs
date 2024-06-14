@@ -19,12 +19,12 @@ public class aZoe : Ability
     public override void AbilityAwake()
     {
         base.AbilityAwake();
-        OnCharacterAbilityRequest?.Invoke("Zoe");
+        OnAbilityRequest?.Invoke("Zoe");
     }
 
     private void OnDestroy()
     {
-        base.OnDestroy();
         UIConfirmation.OnActivateTempHealState -= () => { ZoeHeal = true; };
+        base.OnDestroy();
     }
 }

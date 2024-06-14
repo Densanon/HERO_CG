@@ -10,7 +10,7 @@ public class Ability : MonoBehaviour
     public Type myType;
     public Type secondaryType;
 
-    public enum PassiveType { TurnStart, CharacterSpawn, ValueSet, CharacterDestroyed, BattleCalculation, BattleComplete, BattleStart, HeroRecruited, HandCardAdjustment, ActionComplete, HeroFatigued, HeroHealed, CardPlayed }
+    public enum PassiveType { TurnStart, CharacterSpawn, ValueSet, CharacterDestroyed, BattleCalculation, BattleComplete, BattleStart, HeroRecruited, HandCardAdjustment, ActionComplete, HeroFatigued, HeroHealed, CardPlayed, AbilityActivated }
 
     public string Name;
     public string Description;
@@ -22,7 +22,7 @@ public class Ability : MonoBehaviour
 
     public static Action<Ability> OnAddAbilityToMasterList = delegate { };
     public static Action OnFeatComplete = delegate { };
-    public static Action<string> OnCharacterAbilityRequest = delegate { }; //Actually does all generic ability calls
+    public static Action<string> OnAbilityRequest = delegate { }; 
     public static Action<string, string, int> OnDiscardCard = delegate { };
     public static Action<Ability> OnSetActive = delegate { };
     public static Action<Ability> OnOpponentAbilityActivation = delegate { };
@@ -117,6 +117,11 @@ public class Ability : MonoBehaviour
     {
         ChangeOncePerTurn(true);
         if (copy) Destroy(this,1f);
+    }
+
+    public void Deactivate()
+    {
+        ChangeOncePerTurn(true);
     }
 
     public virtual void AbilityCompleteCleanup(string abilityName)

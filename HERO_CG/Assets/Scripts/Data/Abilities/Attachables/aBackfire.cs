@@ -16,7 +16,7 @@ public class aBackfire : Ability
     public override void AbilityAwake()
     {
         base.AbilityAwake();
-        OnCharacterAbilityRequest?.Invoke("Backfire");
+        OnAbilityRequest?.Invoke("Backfire");
     }
 
     public override void AbilityCompleteCleanup(string abilityName)

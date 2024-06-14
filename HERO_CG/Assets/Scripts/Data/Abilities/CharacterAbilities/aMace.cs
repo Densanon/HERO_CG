@@ -22,7 +22,7 @@ public class aMace : Ability {
         {
             Debug.Log("Mace says it is time to check to play ability.");
             used = oncePerTurnUsed;
-            OnCharacterAbilityRequest?.Invoke("Mace");
+            OnAbilityRequest?.Invoke("Mace");
         }
     }
 

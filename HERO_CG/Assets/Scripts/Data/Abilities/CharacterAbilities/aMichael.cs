@@ -17,7 +17,7 @@ public class aMichael : Ability
     public override void AbilityAwake()
     {
         base.AbilityAwake();
-        OnCharacterAbilityRequest?.Invoke("Michael");
+        OnAbilityRequest?.Invoke("Michael");
     }
 
     public override void AbilityCompleteCleanup(string abilityName)

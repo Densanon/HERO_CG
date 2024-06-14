@@ -6,6 +6,7 @@ using TMPro;
 using System;
 using System.Collections.Generic;
 using UnityEngine.UI;
+using System.Collections;
 
 public class UIConfirmation : MonoBehaviour
 {
@@ -50,9 +51,9 @@ public class UIConfirmation : MonoBehaviour
         CardDataBase.OnZhaoAbilityRequest += onConfirmationRequest;
         CardData.IsTarget += HandleTarget;
         Ability.OnTargetedFrom += HandleActiveHero;
-        Ability.OnCharacterAbilityRequest += onConfirmationRequest;
+        Ability.OnAbilityRequest += onConfirmationRequest;
         OnActionConfirmation += Accept;
-        PhotonInGameManager.OnOriginRequest += onConfirmationRequest;
+        PhotonInGameManager.OnResponseRequest += onConfirmationRequest;
     }
     private void OnDestroy()
     {
@@ -61,9 +62,9 @@ public class UIConfirmation : MonoBehaviour
         CardDataBase.OnZhaoAbilityRequest -= onConfirmationRequest;
         CardData.IsTarget -= HandleTarget;
         Ability.OnTargetedFrom -= HandleActiveHero;
-        Ability.OnCharacterAbilityRequest -= onConfirmationRequest;
+        Ability.OnAbilityRequest -= onConfirmationRequest;
         OnActionConfirmation -= Accept;
-        PhotonInGameManager.OnOriginRequest -= onConfirmationRequest;
+        PhotonInGameManager.OnResponseRequest -= onConfirmationRequest;
     }
     #endregion
 
@@ -97,6 +98,7 @@ public class UIConfirmation : MonoBehaviour
         confirmationActions[ConfirmationAction.ConfirmationType.Boost] = () => { OnBoost?.Invoke(); OnAbilityComplete?.Invoke("BOOST"); };
         confirmationActions[ConfirmationAction.ConfirmationType.CollateralDamage] = () => OnAbilityComplete?.Invoke("COLLATERAL DAMAGE");
         confirmationActions[ConfirmationAction.ConfirmationType.CounterMeasures] = () => OnSendAbilityResponse?.Invoke(true);
+        confirmationActions[ConfirmationAction.ConfirmationType.Impede] = () => OnSendAbilityResponse?.Invoke(true);
     }
     private void initializeConfirmationHandlers()
     {
@@ -122,7 +124,8 @@ public class UIConfirmation : MonoBehaviour
             {"Backfire", onBackfireConfirmationRequest },
             {"Boost", onBoostConfirmationRequest },
             {"Collateral Damage", onCollateralDamageConfirmationRequest },
-            {"Counter-Measures", onCounterMeasuresConfirmationRequest }
+            {"Counter-Measures", onCounterMeasuresConfirmationRequest },
+            {"Impede", onImpedeConfirmationRequest }
         };
     }
 
@@ -212,6 +215,11 @@ public class UIConfirmation : MonoBehaviour
     {
         needSendResponse = true;
         queueConfirmation(new ConfirmationAction("Confirm: Add Attacker(s) base defense to yours", ConfirmationAction.ConfirmationType.CounterMeasures));
+    }
+    private void onImpedeConfirmationRequest()
+    {
+        needSendResponse = true;
+        queueConfirmation(new ConfirmationAction("Confirm: Stop activated ability", ConfirmationAction.ConfirmationType.Impede));
     }
 
     private void displayNextConfirmation()
@@ -330,12 +338,30 @@ public class UIConfirmation : MonoBehaviour
         }
     }
     #endregion
+
+    public IEnumerator WaitForResponse(string type)
+    {
+        yield return new WaitUntil(() => aImpede.impedeNeedResponse == false);
+        if (!aImpede.isImpede)
+        {
+            // Check if the dictionary contains the specified confirmation type
+            if (confirmationHandlers.ContainsKey(type))
+            {
+                // Invoke the corresponding handler method
+                confirmationHandlers[type]?.Invoke();
+            }
+            else
+            {
+                Debug.Log($"Unhandled confirmation request: {type}");
+            }
+        }
+    }
 }
 
 public class ConfirmationAction
 {
     public enum ConfirmationType { Heal, Enhance, Recruit, Overcome, Feat, Quit, Enhancing, Ability, AtDef, Ayumi, Isaac, Izumi, Mace, Michael, Origin, Rohan, Yasmine, Zhao, Zoe
-    , Accelerate, Backfire, Boost, CollateralDamage, CounterMeasures
+    , Accelerate, Backfire, Boost, CollateralDamage, CounterMeasures, Impede
     }
     public ConfirmationType MyType = ConfirmationType.Heal;
     public string MyText;

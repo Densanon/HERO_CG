@@ -266,6 +266,17 @@ public class Referee : MonoBehaviour
     {
         if (canPlayAbilityToField)
         {
+            Debug.Log("Ability is playable.");
+            ActivatePassive(Ability.PassiveType.AbilityActivated);
+            myManager.RPCRequest("RevealActivatedAbility", RpcTarget.Others, ability.Name, ability.Description);
+            Debug.Log("Activatine Ability Passive");
+            if (aImpede.impedeNeedResponse)
+            {
+                Debug.Log("Impede caught the ability.");
+                StartCoroutine(WaitForResponseContinueActivation(ability));
+                return;
+            }
+
             activeAbility = ability;
             ability.AbilityAwake();
         }
@@ -395,12 +406,12 @@ public class Referee : MonoBehaviour
     private void HandleCheckNeedResponse(string obj)
     {
         ResponseType = obj;
-        if ((obj == "Origin" && DefendingHero.Name == "ORIGIN")||obj == "Counter-Measures")
+        if ((obj == "Origin" && DefendingHero.Name == "ORIGIN")||obj == "Counter-Measures"||obj == "Impede")
         {
             PopUpUpdater("Waiting on a response.");
             gOvercome.SetActive(false);
             OnTurnWaitResponse?.Invoke(true);
-            myManager.RPCRequest("HandleOriginRequest", RpcTarget.Others, obj);
+            myManager.RPCRequest("HandleResponseRequest", RpcTarget.Others, obj);
         }
     }
     public void RecieveResponse(bool decide)
@@ -409,13 +420,42 @@ public class Referee : MonoBehaviour
         {
             gOvercome.SetActive(true);
             aOrigin.blockActive = decide;
-            OnAbilityComplete("ORIGIN");
+            OnAbilityComplete.Invoke("ORIGIN");
         }else if (ResponseType == "Counter-Measures")
         {
-            if (decide) { OnAbilityComplete("COUNTER-MEASURES");
+            if (decide) { OnAbilityComplete.Invoke("COUNTER-MEASURES");
                 PopUpUpdater("Opponent has used Counter-Measures to add your attacker's defense to their own.", 2.5f);
             }
             gOvercome.SetActive(true);
+        }else if(ResponseType == "Impede")
+        {
+            if(decide)
+            {
+                Debug.Log("Real Decision to impede starts here.");
+                aImpede.isImpede = true;
+                activeAbility = null;
+                PopUpUpdater("Opponent has stopped your ability with Impede.", 2.5f);
+            }
+            aImpede.impedeNeedResponse = false;
+        }
+    }
+    public IEnumerator WaitForResponseContinueActivation(Ability ability)
+    {
+        Debug.Log("Started the Impede response waiter.");
+        yield return new WaitUntil(() => !aImpede.impedeNeedResponse);
+        Debug.Log("Impede had a decision.");
+        if (!aImpede.isImpede)
+        {
+            Debug.Log("Decision was to ignore the Ability.");
+            activeAbility = ability;
+            ability.AbilityAwake();
+        }
+        else
+        {
+            ability.Deactivate();
+            Debug.Log("Decided to Impede the ability.");
+            OnAbilityComplete.Invoke("IMPEDE");
+            PopUpUpdater("Opponent used Impede to stop your ability.");
         }
     }
     #endregion

@@ -16,7 +16,7 @@ public class aAccelerate : Ability
     public override void AbilityAwake()
     {
         base.AbilityAwake();
-        OnCharacterAbilityRequest.Invoke("Accelerate");
+        OnAbilityRequest.Invoke("Accelerate");
     }
 
     public override void AbilityCompleteCleanup(string abilityName)

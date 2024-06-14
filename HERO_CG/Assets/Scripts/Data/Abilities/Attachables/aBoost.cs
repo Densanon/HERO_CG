@@ -18,7 +18,7 @@ public class aBoost : Ability
     public override void AbilityAwake()
     {
         base.AbilityAwake();
-        OnCharacterAbilityRequest.Invoke("Boost");
+        OnAbilityRequest.Invoke("Boost");
     }
 
     public override void AbilityCompleteCleanup(string abilityName)
